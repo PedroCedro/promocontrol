@@ -1,4 +1,5 @@
 # PromoControl
+**Controle inteligente de acesso de promotores integrado ao Winthor**
 
 Sistema web para **controle de acesso e movimento diário de promotores**, integrado ao ecossistema Winthor.
 Projeto desenvolvido com foco em resolver dores reais de operação de loja, substituindo controles manuais em planilhas por uma API segura e estruturada.
