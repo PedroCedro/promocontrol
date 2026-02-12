@@ -51,6 +51,12 @@ Stack utilizada:
 ./mvnw spring-boot:run
 ```
 
+No Windows (PowerShell):
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
 Aplicação sobe em:
 
 ```
@@ -311,4 +317,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.1.0` – Estrutura inicial do PromoControl com API de Promotores, autenticação básica e persistência.
+`v0.2.0` – Fluxo de entrada/saída de promotores com ajuste de horário (ADMIN), padronização de erros e testes iniciais com MockMvc.
