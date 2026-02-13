@@ -329,4 +329,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.2.0` – Fluxo de entrada/saída de promotores com ajuste de horário (ADMIN), padronização de erros e testes iniciais com MockMvc.
+`v0.3.0` – Foco 100% interno do app, regra de status no fluxo de movimentos e renomeação de `fornecedorId` para `empresaId`.
