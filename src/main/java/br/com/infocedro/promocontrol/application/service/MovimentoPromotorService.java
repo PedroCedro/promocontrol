@@ -2,6 +2,7 @@ package br.com.infocedro.promocontrol.application.service;
 
 import br.com.infocedro.promocontrol.core.model.MovimentoPromotor;
 import br.com.infocedro.promocontrol.core.model.Promotor;
+import br.com.infocedro.promocontrol.core.model.StatusPromotor;
 import br.com.infocedro.promocontrol.core.model.TipoMovimentoPromotor;
 import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
@@ -72,6 +73,10 @@ public class MovimentoPromotorService {
     private Promotor validarNovaMovimentacao(UUID promotorId, TipoMovimentoPromotor novoTipo) {
         Promotor promotor = promotorRepository.findById(promotorId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Promotor nao encontrado"));
+
+        if (promotor.getStatus() != StatusPromotor.ATIVO) {
+            throw new ResponseStatusException(BAD_REQUEST, "Promotor inativo ou bloqueado");
+        }
 
         TipoMovimentoPromotor ultimoTipo = repository
                 .findTopByPromotor_IdOrderByDataHoraDescIdDesc(promotor.getId())

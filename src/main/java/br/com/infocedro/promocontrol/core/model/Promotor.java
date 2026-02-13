@@ -19,7 +19,8 @@ public class Promotor {
 
     private String telefone;
 
-    private Integer fornecedorId; // referência ao Winthor
+    @Column(name = "empresa_id")
+    private Integer empresaId; // identificador interno da empresa/parceiro
 
     @Enumerated(EnumType.STRING)
     private StatusPromotor status;

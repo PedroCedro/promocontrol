@@ -13,7 +13,7 @@
 	<artifactId>promocontrol</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>promocontrol</name>
-	<description>Sistema web para controle de acesso e movimento diário de promotores, integrado ao Winthor.</description>
+	<description>Sistema web para controle de acesso e movimento diário de promotores.</description>
 	<url />
 	<licenses>
 		<license />

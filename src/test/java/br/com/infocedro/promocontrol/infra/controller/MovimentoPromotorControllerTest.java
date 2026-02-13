@@ -99,6 +99,24 @@ class MovimentoPromotorControllerTest {
     }
 
     @Test
+    void deveRetornar400QuandoPromotorInativoOuBloqueado() throws Exception {
+        Promotor promotor = criarPromotor();
+        promotor.setStatus(StatusPromotor.BLOQUEADO);
+        promotorRepository.save(promotor);
+
+        mockMvc.perform(post("/movimentos/entrada")
+                        .with(httpBasic("user", "user123"))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"promotorId\":\"" + promotor.getId() + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").exists())
+                .andExpect(jsonPath("$.message").value("Promotor inativo ou bloqueado"))
+                .andExpect(jsonPath("$.path").value("/movimentos/entrada"))
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
     void deveRetornar400QuandoPayloadInvalido() throws Exception {
         mockMvc.perform(post("/movimentos/entrada")
                         .with(httpBasic("user", "user123"))
@@ -179,7 +197,7 @@ class MovimentoPromotorControllerTest {
         Promotor promotor = new Promotor();
         promotor.setNome("Promotor Teste");
         promotor.setTelefone("123456789");
-        promotor.setFornecedorId(123);
+        promotor.setEmpresaId(123);
         promotor.setStatus(StatusPromotor.ATIVO);
         promotor.setFotoPath("");
         return promotorRepository.save(promotor);

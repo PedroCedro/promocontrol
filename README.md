@@ -1,7 +1,7 @@
 # PromoControl
-**Controle inteligente de acesso de promotores integrado ao Winthor**
+**Controle inteligente de acesso e movimento diário de promotores**
 
-Sistema web para **controle de acesso e movimento diário de promotores**, integrado ao ecossistema Winthor.
+Sistema web para **controle de acesso e movimento diário de promotores**.
 Projeto desenvolvido com foco em resolver dores reais de operação de loja, substituindo controles manuais em planilhas por uma API segura e estruturada.
 
 ---
@@ -13,7 +13,7 @@ Registrar e gerenciar:
 * Cadastro de promotores
 * Entrada e saída diária
 * Responsáveis pela autorização
-* Integração futura com usuários do Winthor (PCEMPR)
+* Rastreabilidade e consistência do fluxo operacional
 
 ---
 
@@ -101,7 +101,7 @@ Body:
 {
   "nome": "Promotor Teste",
   "telefone": "123456789",
-  "fornecedorId": 123,
+  "empresaId": 123,
   "status": "ATIVO",
   "fotoPath": ""
 }
@@ -137,6 +137,7 @@ Regras:
 
 * A data/hora é gerada no servidor no momento da requisição.
 * Não permite nova entrada se já existir entrada em aberto.
+* Apenas promotor com status `ATIVO` pode registrar movimento.
 
 ---
 
@@ -160,6 +161,7 @@ Regras:
 
 * A data/hora é gerada no servidor no momento da requisição.
 * Não permite saída sem entrada em aberto.
+* Apenas promotor com status `ATIVO` pode registrar movimento.
 
 ---
 
@@ -206,7 +208,7 @@ curl -X POST "http://localhost:8080/promotores" \
   -d '{
     "nome": "Promotor Teste",
     "telefone": "123456789",
-    "fornecedorId": 123,
+    "empresaId": 123,
     "status": "ATIVO",
     "fotoPath": ""
   }'
@@ -301,10 +303,20 @@ Próximos passos planejados:
 
 * [x] Entrada e saída de promotor
 * [x] Ajuste manual de horário com trilha de auditoria (ADMIN)
-* [ ] Integração com PCEMPR (usuário logado)
+* [ ] Melhorias de integridade e auditoria
 * [ ] Upload de foto
-* [ ] Status lógico (bloqueado/inativo)
+* [x] Status lógico (bloqueado/inativo)
 * [ ] Dashboard de movimento do dia
+
+---
+
+## Migração de Banco
+
+Para bancos já existentes com a coluna antiga `fornecedor_id`, execute:
+
+```sql
+ALTER TABLE PROMOTOR RENAME COLUMN fornecedor_id TO empresa_id;
+```
 
 ---
 
