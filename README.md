@@ -367,4 +367,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.3.3` - Sprint 2 de maturidade de dados: Flyway habilitado, migration inicial versionada e validacao de schema com Hibernate.
+`v0.3.4` - Sprint 3 de seguranca e ambiente: perfis dev/homolog/prod separados, CORS configuravel por ambiente e orientacoes operacionais atualizadas.

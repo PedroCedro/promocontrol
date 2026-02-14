@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.4 - 2026-02-14
+
+### Added
+- Perfis de ambiente separados (`dev`, `homolog`, `prod`) com arquivos dedicados.
+- Configuracao de CORS por variavel de ambiente (`APP_CORS_ALLOWED_ORIGINS`).
+
+### Changed
+- Configuracao base centralizada em `application.properties` com `spring.profiles.default=dev`.
+- README atualizado com execucao por perfil e variaveis de banco para homolog/prod.
+
 ## v0.3.3 - 2026-02-14
 
 ### Added
