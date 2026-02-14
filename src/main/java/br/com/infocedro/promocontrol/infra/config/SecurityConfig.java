@@ -46,6 +46,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable()) // 👈 desativa CSRF pra API
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/movimentos/*/ajuste-horario").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )

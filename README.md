@@ -63,6 +63,12 @@ Aplicação sobe em:
 http://localhost:8080
 ```
 
+Documentacao OpenAPI/Swagger:
+
+```
+http://localhost:8080/swagger-ui/index.html
+```
+
 ---
 
 ## Autenticação
