@@ -1,5 +1,12 @@
 package br.com.infocedro.promocontrol.application.service;
 
+import br.com.infocedro.promocontrol.core.exception.EntradaEmAbertoException;
+import br.com.infocedro.promocontrol.core.exception.MotivoAjusteObrigatorioException;
+import br.com.infocedro.promocontrol.core.exception.MovimentoNaoEncontradoException;
+import br.com.infocedro.promocontrol.core.exception.NovaDataHoraObrigatoriaException;
+import br.com.infocedro.promocontrol.core.exception.PromotorInativoOuBloqueadoException;
+import br.com.infocedro.promocontrol.core.exception.PromotorNaoEncontradoException;
+import br.com.infocedro.promocontrol.core.exception.SemEntradaEmAbertoException;
 import br.com.infocedro.promocontrol.core.model.MovimentoPromotor;
 import br.com.infocedro.promocontrol.core.model.Promotor;
 import br.com.infocedro.promocontrol.core.model.StatusPromotor;
@@ -11,9 +18,6 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
 @Transactional(readOnly = true)
@@ -54,14 +58,14 @@ public class MovimentoPromotorService {
             String motivo,
             String usernameAdmin) {
         MovimentoPromotor movimento = repository.findById(movimentoId)
-                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Movimento nao encontrado"));
+                .orElseThrow(MovimentoNaoEncontradoException::new);
 
         if (novaDataHora == null) {
-            throw new ResponseStatusException(BAD_REQUEST, "Nova data/hora obrigatoria");
+            throw new NovaDataHoraObrigatoriaException();
         }
 
         if (motivo == null || motivo.isBlank()) {
-            throw new ResponseStatusException(BAD_REQUEST, "Motivo do ajuste obrigatorio");
+            throw new MotivoAjusteObrigatorioException();
         }
 
         if (movimento.getDataHoraOriginal() == null) {
@@ -77,10 +81,10 @@ public class MovimentoPromotorService {
 
     private Promotor validarNovaMovimentacao(UUID promotorId, TipoMovimentoPromotor novoTipo) {
         Promotor promotor = promotorRepository.findById(promotorId)
-                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Promotor nao encontrado"));
+                .orElseThrow(PromotorNaoEncontradoException::new);
 
         if (promotor.getStatus() != StatusPromotor.ATIVO) {
-            throw new ResponseStatusException(BAD_REQUEST, "Promotor inativo ou bloqueado");
+            throw new PromotorInativoOuBloqueadoException();
         }
 
         TipoMovimentoPromotor ultimoTipo = repository
@@ -89,11 +93,11 @@ public class MovimentoPromotorService {
                 .orElse(null);
 
         if (novoTipo == TipoMovimentoPromotor.ENTRADA && ultimoTipo == TipoMovimentoPromotor.ENTRADA) {
-            throw new ResponseStatusException(BAD_REQUEST, "Promotor ja esta com entrada em aberto");
+            throw new EntradaEmAbertoException();
         }
 
         if (novoTipo == TipoMovimentoPromotor.SAIDA && ultimoTipo != TipoMovimentoPromotor.ENTRADA) {
-            throw new ResponseStatusException(BAD_REQUEST, "Promotor nao possui entrada em aberto");
+            throw new SemEntradaEmAbertoException();
         }
 
         return promotor;

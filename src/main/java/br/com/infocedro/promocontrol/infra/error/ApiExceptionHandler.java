@@ -1,5 +1,6 @@
 package br.com.infocedro.promocontrol.infra.error;
 
+import br.com.infocedro.promocontrol.core.exception.BusinessException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.time.OffsetDateTime;
@@ -13,7 +14,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -71,16 +71,16 @@ public class ApiExceptionHandler {
                 null);
     }
 
-    @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<ApiErrorResponse> handleResponseStatus(
-            ResponseStatusException ex,
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiErrorResponse> handleBusinessException(
+            BusinessException ex,
             HttpServletRequest request) {
-        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        HttpStatus status = ex.getStatus();
         ApiErrorResponse body = new ApiErrorResponse(
                 OffsetDateTime.now(),
                 status.value(),
                 status.getReasonPhrase(),
-                ex.getReason() != null ? ex.getReason() : "Erro de negocio",
+                ex.getMessage(),
                 request.getRequestURI(),
                 null);
         return ResponseEntity.status(status).body(body);
