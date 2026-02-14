@@ -82,8 +82,7 @@ class MovimentoPromotorConcorrenciaTest {
         executor.shutdownNow();
 
         List<Integer> statuses = List.of(status1, status2);
-        assertThat(statuses).contains(200);
-        assertThat(statuses.stream().filter(s -> s >= 400).count()).isEqualTo(1);
+        assertThat(statuses).contains(200, 409);
 
         long entradas = movimentoPromotorRepository
                 .countByPromotor_IdAndTipo(promotor.getId(), TipoMovimentoPromotor.ENTRADA);
