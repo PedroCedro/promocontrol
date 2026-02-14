@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromoControl - Front Temp</title>
+  <link rel="stylesheet" href="/front-temp/styles.css">
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <p class="kicker">Rascunho Operacional</p>
+      <h1>PromoControl - Front Temp</h1>
+      <p>Tela simples para validar backend e persistencia na pratica.</p>
+    </header>
+
+    <section class="card">
+      <h2>Conexao API</h2>
+      <div class="grid three">
+        <label>
+          Base URL
+          <input id="baseUrl" value="http://localhost:8080" />
+        </label>
+        <label>
+          Usuario
+          <input id="username" value="user" />
+        </label>
+        <label>
+          Senha
+          <input id="password" type="password" value="user123" />
+        </label>
+      </div>
+      <div class="actions">
+        <button id="btnRefresh">Atualizar Listas</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Criar Promotor</h2>
+      <div class="grid four">
+        <label>Nome <input id="pNome" value="Promotor Temp" /></label>
+        <label>Telefone <input id="pTelefone" value="11999999999" /></label>
+        <label>Empresa ID <input id="pEmpresaId" type="number" value="1001" /></label>
+        <label>Status
+          <select id="pStatus">
+            <option>ATIVO</option>
+            <option>INATIVO</option>
+            <option>BLOQUEADO</option>
+          </select>
+        </label>
+      </div>
+      <div class="actions">
+        <button id="btnCriarPromotor">Criar</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Movimentos</h2>
+      <div class="grid three">
+        <label>Promotor
+          <select id="movPromotor"></select>
+        </label>
+        <label>Responsavel <input id="movResponsavel" value="Operador" /></label>
+        <label>Observacao <input id="movObservacao" value="Registro manual" /></label>
+      </div>
+      <div class="actions">
+        <button id="btnEntrada">Registrar Entrada</button>
+        <button id="btnSaida">Registrar Saida</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Ajuste de Horario (Admin)</h2>
+      <div class="grid four">
+        <label>Admin Usuario <input id="adminUsername" value="admin" /></label>
+        <label>Admin Senha <input id="adminPassword" type="password" value="admin123" /></label>
+        <label>Movimento ID <input id="ajusteMovId" placeholder="UUID movimento" /></label>
+        <label>Nova DataHora <input id="ajusteDataHora" type="datetime-local" /></label>
+      </div>
+      <label>Motivo <input id="ajusteMotivo" value="Correcao operacional" /></label>
+      <div class="actions">
+        <button id="btnAjustar">Ajustar</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Promotores</h2>
+      <div class="grid two">
+        <label>Filtro Empresa ID <input id="filtroEmpresaPromotor" type="number" placeholder="ex.: 1001" /></label>
+        <div class="actions inline"><button id="btnFiltroPromotor">Filtrar</button></div>
+      </div>
+      <div class="table-wrap">
+        <table id="tblPromotores">
+          <thead>
+            <tr><th>ID</th><th>Nome</th><th>Empresa</th><th>Status</th><th>Telefone</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Movimentos</h2>
+      <div class="grid two">
+        <label>Filtro Promotor ID <input id="filtroPromotorMov" placeholder="UUID promotor" /></label>
+        <div class="actions inline"><button id="btnFiltroMov">Filtrar</button></div>
+      </div>
+      <div class="table-wrap">
+        <table id="tblMovimentos">
+          <thead>
+            <tr><th>ID</th><th>Promotor</th><th>Tipo</th><th>DataHora</th><th>Responsavel</th><th>Obs</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Log de Respostas</h2>
+      <pre id="log"></pre>
+    </section>
+  </main>
+
+  <script src="/front-temp/app.js"></script>
+</body>
+</html>

@@ -77,6 +77,12 @@ Documentacao OpenAPI/Swagger:
 http://localhost:8080/swagger-ui/index.html
 ```
 
+Front temporario para validacao manual:
+
+```
+http://localhost:8080/front-temp/index.html
+```
+
 Healthcheck e info:
 
 ```
@@ -404,4 +410,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.3.6` - Sprint 5 de prontidao para front: CI automatizado, smoke test operacional e checklist de readiness consolidado.
+`v0.4.0` - Front temporario para validacao pratica do backend com fluxos operacionais (cadastro, entrada, saida e ajuste), mantendo base robusta de API, observabilidade e CI.

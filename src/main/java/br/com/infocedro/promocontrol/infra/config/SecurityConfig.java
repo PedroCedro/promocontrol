@@ -58,6 +58,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // 👈 desativa CSRF pra API
             .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/front-temp/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

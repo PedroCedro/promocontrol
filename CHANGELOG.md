@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.4.0 - 2026-02-14
+
+### Added
+- Front temporario de validacao em `src/main/resources/static/front-temp` com `html+css+js`.
+- Fluxos operacionais no front-temp para:
+  - criar promotor;
+  - registrar entrada/saida;
+  - ajustar horario com admin;
+  - listar e filtrar promotores/movimentos.
+
+### Changed
+- Security passou a liberar apenas `"/front-temp/**"` sem autenticacao para rascunho visual.
+- README atualizado com referencia da versao `v0.4.0`.
+
 ## v0.3.6 - 2026-02-14
 
 ### Added
