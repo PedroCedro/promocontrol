@@ -57,6 +57,14 @@ No Windows (PowerShell):
 .\mvnw.cmd spring-boot:run
 ```
 
+Executar com perfil especifico:
+
+```powershell
+.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=dev
+.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=homolog
+.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=prod
+```
+
 Aplicação sobe em:
 
 ```
@@ -90,6 +98,14 @@ APP_SECURITY_USER_PASSWORD
 APP_SECURITY_ADMIN_USERNAME
 APP_SECURITY_ADMIN_PASSWORD
 ```
+
+Origem CORS permitida (front):
+
+```
+APP_CORS_ALLOWED_ORIGINS
+```
+
+Valor padrao em dev: `http://localhost:3000,http://127.0.0.1:3000`.
 
 ---
 
@@ -330,6 +346,14 @@ Para bancos legados que ainda usam a coluna antiga `fornecedor_id`, execute:
 
 ```sql
 ALTER TABLE PROMOTOR RENAME COLUMN fornecedor_id TO empresa_id;
+```
+
+Para perfis `homolog` e `prod` (PostgreSQL), configure:
+
+```
+APP_DB_URL
+APP_DB_USERNAME
+APP_DB_PASSWORD
 ```
 
 ---
