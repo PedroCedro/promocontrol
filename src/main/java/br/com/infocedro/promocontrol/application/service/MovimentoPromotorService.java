@@ -80,7 +80,7 @@ public class MovimentoPromotorService {
     }
 
     private Promotor validarNovaMovimentacao(UUID promotorId, TipoMovimentoPromotor novoTipo) {
-        Promotor promotor = promotorRepository.findById(promotorId)
+        Promotor promotor = promotorRepository.findWithLockById(promotorId)
                 .orElseThrow(PromotorNaoEncontradoException::new);
 
         if (promotor.getStatus() != StatusPromotor.ATIVO) {

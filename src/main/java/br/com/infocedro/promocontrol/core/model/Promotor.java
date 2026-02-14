@@ -9,11 +9,14 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "PROMOTOR")
-public class Promotor {
+public class Promotor extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @Version
+    private Long version;
 
     private String nome;
 

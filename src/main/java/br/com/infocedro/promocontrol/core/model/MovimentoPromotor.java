@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "MOVIMENTO_PROMOTOR")
-public class MovimentoPromotor {
+public class MovimentoPromotor extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
