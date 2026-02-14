@@ -303,7 +303,7 @@ Próximos passos planejados:
 
 * [x] Entrada e saída de promotor
 * [x] Ajuste manual de horário com trilha de auditoria (ADMIN)
-* [ ] Melhorias de integridade e auditoria
+* [x] Melhorias de integridade e auditoria
 * [ ] Upload de foto
 * [x] Status lógico (bloqueado/inativo)
 * [ ] Dashboard de movimento do dia
@@ -329,4 +329,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.3.0` – Foco 100% interno do app, regra de status no fluxo de movimentos e renomeação de `fornecedorId` para `empresaId`.
+`v0.3.1` - Endurecimento arquitetural interno: DTOs na API, excecoes de negocio padronizadas, transacoes explicitas, lock otimista, auditoria JPA e teste de concorrencia.
