@@ -77,6 +77,13 @@ Documentacao OpenAPI/Swagger:
 http://localhost:8080/swagger-ui/index.html
 ```
 
+Healthcheck e info:
+
+```
+http://localhost:8080/actuator/health
+http://localhost:8080/actuator/info
+```
+
 ---
 
 ## Autenticação
@@ -106,6 +113,14 @@ APP_CORS_ALLOWED_ORIGINS
 ```
 
 Valor padrao em dev: `http://localhost:3000,http://127.0.0.1:3000`.
+
+Cabecalho de correlacao para rastreio de requisicoes:
+
+```
+APP_CORRELATION_HEADER
+```
+
+Padrao: `X-Correlation-Id`.
 
 ---
 
