@@ -404,4 +404,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.3.5` - Sprint 4 de observabilidade: actuator para health/info, correlacao de requisicoes com `X-Correlation-Id` e cobertura de testes operacionais.
+`v0.3.6` - Sprint 5 de prontidao para front: CI automatizado, smoke test operacional e checklist de readiness consolidado.

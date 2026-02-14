@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3.6 - 2026-02-14
+
+### Added
+- Pipeline CI com GitHub Actions para executar testes em `push` e `pull_request`.
+- Script de smoke test (`scripts/smoke_test.ps1`) para validar fluxos essenciais da API.
+
+### Changed
+- README com checklist "Pronto Para Front" e instrucoes de execucao do smoke test.
+
 ## v0.3.5 - 2026-02-14
 
 ### Added
