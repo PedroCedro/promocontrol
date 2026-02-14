@@ -318,7 +318,15 @@ Próximos passos planejados:
 
 ## Migração de Banco
 
-Para bancos já existentes com a coluna antiga `fornecedor_id`, execute:
+As migracoes de schema agora sao versionadas com **Flyway** em:
+
+```
+src/main/resources/db/migration
+```
+
+A aplicacao executa as migracoes automaticamente na inicializacao.
+
+Para bancos legados que ainda usam a coluna antiga `fornecedor_id`, execute:
 
 ```sql
 ALTER TABLE PROMOTOR RENAME COLUMN fornecedor_id TO empresa_id;
