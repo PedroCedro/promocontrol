@@ -343,4 +343,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.3.2` - Sprint 1 de contrato de API: OpenAPI/Swagger integrado, seguranca Basic Auth documentada e endpoints com respostas/erros especificados.
+`v0.3.3` - Sprint 2 de maturidade de dados: Flyway habilitado, migration inicial versionada e validacao de schema com Hibernate.

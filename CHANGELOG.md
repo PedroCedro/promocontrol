@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.3 - 2026-02-14
+
+### Added
+- Flyway integrado ao projeto para migracoes versionadas de schema.
+- Migration inicial `V1__init_schema.sql` com estrutura base das tabelas de promotores e movimentos.
+
+### Changed
+- Hibernate alterado para `ddl-auto=validate` para garantir aderencia ao schema versionado.
+- README atualizado com fluxo de migracoes em `src/main/resources/db/migration`.
+
 ## v0.3.2 - 2026-02-14
 
 ### Added
