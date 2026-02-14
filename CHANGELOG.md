@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3.2 - 2026-02-14
+
+### Added
+- Swagger UI e OpenAPI com esquema de seguranca Basic Auth.
+
+### Changed
+- Documentacao dos endpoints de promotores e movimentos com operacoes, respostas e erros.
+- Liberacao de rotas de documentacao (`/v3/api-docs/**`, `/swagger-ui/**`) na configuracao de seguranca.
+
 ## v0.3.1 - 2026-02-14
 
 ### Added

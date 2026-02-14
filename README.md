@@ -335,4 +335,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.3.1` - Endurecimento arquitetural interno: DTOs na API, excecoes de negocio padronizadas, transacoes explicitas, lock otimista, auditoria JPA e teste de concorrencia.
+`v0.3.2` - Sprint 1 de contrato de API: OpenAPI/Swagger integrado, seguranca Basic Auth documentada e endpoints com respostas/erros especificados.
