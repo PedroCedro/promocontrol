@@ -382,4 +382,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.3.4` - Sprint 3 de seguranca e ambiente: perfis dev/homolog/prod separados, CORS configuravel por ambiente e orientacoes operacionais atualizadas.
+`v0.3.5` - Sprint 4 de observabilidade: actuator para health/info, correlacao de requisicoes com `X-Correlation-Id` e cobertura de testes operacionais.

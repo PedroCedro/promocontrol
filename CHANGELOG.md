@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.5 - 2026-02-14
+
+### Added
+- Observabilidade com Spring Boot Actuator (`/actuator/health` e `/actuator/info`).
+- Filtro de correlacao de requisicoes com cabecalho `X-Correlation-Id`.
+- Testes de seguranca/observabilidade para health e correlacao.
+
+### Changed
+- Security liberando endpoints operacionais de health/info sem autenticacao.
+- Padrao de log com identificador de correlacao.
+
 ## v0.3.4 - 2026-02-14
 
 ### Added
