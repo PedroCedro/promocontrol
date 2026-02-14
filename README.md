@@ -347,6 +347,28 @@ Próximos passos planejados:
 
 ---
 
+## Pronto Para Front
+
+Checklist de prontidao do backend:
+
+* [x] Contrato de API documentado em OpenAPI/Swagger
+* [x] Migracao versionada de banco com Flyway
+* [x] Perfis de ambiente (`dev`, `homolog`, `prod`)
+* [x] CORS configuravel por variavel de ambiente
+* [x] Observabilidade com `/actuator/health` e `/actuator/info`
+* [x] Correlacao de requisicoes via `X-Correlation-Id`
+* [x] Testes automatizados (`.\mvnw.cmd -q test`)
+* [x] Pipeline CI em `.github/workflows/ci.yml`
+* [x] Smoke test de API em `scripts/smoke_test.ps1`
+
+Executar smoke test local/homolog:
+
+```powershell
+.\scripts\smoke_test.ps1 -BaseUrl "http://localhost:8080"
+```
+
+---
+
 ## Migração de Banco
 
 As migracoes de schema agora sao versionadas com **Flyway** em:
