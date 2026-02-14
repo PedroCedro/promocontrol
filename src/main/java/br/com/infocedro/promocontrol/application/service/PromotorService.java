@@ -6,8 +6,10 @@ import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class PromotorService {
 
     private final PromotorRepository repository;
@@ -16,11 +18,13 @@ public class PromotorService {
         this.repository = repository;
     }
 
+    @Transactional
     public Promotor salvar(Promotor promotor) {
         return repository.save(promotor);
     }
+
     public List<Promotor> listar() {
-    return repository.findAll();
-}
+        return repository.findAll();
+    }
 
 }

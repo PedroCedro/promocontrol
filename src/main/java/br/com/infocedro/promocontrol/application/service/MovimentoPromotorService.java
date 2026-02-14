@@ -10,11 +10,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
+@Transactional(readOnly = true)
 public class MovimentoPromotorService {
 
     private final MovimentoPromotorRepository repository;
@@ -27,12 +29,14 @@ public class MovimentoPromotorService {
         this.promotorRepository = promotorRepository;
     }
 
+    @Transactional
     public MovimentoPromotor registrarEntrada(
             UUID promotorId, String responsavel, String observacao) {
         Promotor promotor = validarNovaMovimentacao(promotorId, TipoMovimentoPromotor.ENTRADA);
         return salvarMovimento(promotor, TipoMovimentoPromotor.ENTRADA, responsavel, observacao);
     }
 
+    @Transactional
     public MovimentoPromotor registrarSaida(
             UUID promotorId, String responsavel, String observacao) {
         Promotor promotor = validarNovaMovimentacao(promotorId, TipoMovimentoPromotor.SAIDA);
@@ -43,6 +47,7 @@ public class MovimentoPromotorService {
         return repository.findAll();
     }
 
+    @Transactional
     public MovimentoPromotor ajustarHorario(
             UUID movimentoId,
             LocalDateTime novaDataHora,
