@@ -3,6 +3,7 @@ package br.com.infocedro.promocontrol.core.model;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
+import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,10 +20,14 @@ class AuditoriaPersistenceTest {
     @Autowired
     private MovimentoPromotorRepository movimentoPromotorRepository;
 
+    @Autowired
+    private FornecedorRepository fornecedorRepository;
+
     @BeforeEach
     void setup() {
         movimentoPromotorRepository.deleteAll();
         promotorRepository.deleteAll();
+        fornecedorRepository.deleteAll();
     }
 
     @Test
@@ -63,12 +68,20 @@ class AuditoriaPersistenceTest {
     }
 
     private Promotor criarPromotor() {
+        Fornecedor fornecedor = criarFornecedor();
         Promotor promotor = new Promotor();
         promotor.setNome("Promotor Teste");
         promotor.setTelefone("123456789");
-        promotor.setEmpresaId(123);
+        promotor.setFornecedor(fornecedor);
         promotor.setStatus(StatusPromotor.ATIVO);
         promotor.setFotoPath("");
         return promotorRepository.save(promotor);
+    }
+
+    private Fornecedor criarFornecedor() {
+        Fornecedor fornecedor = new Fornecedor();
+        fornecedor.setNome("Fornecedor Auditoria");
+        fornecedor.setAtivo(true);
+        return fornecedorRepository.save(fornecedor);
     }
 }

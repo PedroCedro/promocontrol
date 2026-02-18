@@ -22,8 +22,9 @@ public class Promotor extends AuditableEntity {
 
     private String telefone;
 
-    @Column(name = "empresa_id")
-    private Integer empresaId; // identificador interno da empresa/parceiro
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "fornecedor_id", nullable = false)
+    private Fornecedor fornecedor;
 
     @Enumerated(EnumType.STRING)
     private StatusPromotor status;

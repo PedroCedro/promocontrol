@@ -43,7 +43,8 @@ public class PromotorController {
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     public PromotorResponse criar(@Valid @RequestBody CriarPromotorRequest request) {
-        return mapper.toPromotorResponse(service.salvar(mapper.toPromotor(request)));
+        return mapper.toPromotorResponse(
+                service.salvar(mapper.toPromotor(request), request.fornecedorId()));
     }
 
     @GetMapping

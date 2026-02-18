@@ -1,6 +1,7 @@
 package br.com.infocedro.promocontrol.application.service;
 
 import br.com.infocedro.promocontrol.core.exception.EntradaEmAbertoException;
+import br.com.infocedro.promocontrol.core.exception.LiberacaoSaidaObrigatoriaException;
 import br.com.infocedro.promocontrol.core.exception.MotivoAjusteObrigatorioException;
 import br.com.infocedro.promocontrol.core.exception.MovimentoNaoEncontradoException;
 import br.com.infocedro.promocontrol.core.exception.NovaDataHoraObrigatoriaException;
@@ -37,14 +38,17 @@ public class MovimentoPromotorService {
     public MovimentoPromotor registrarEntrada(
             UUID promotorId, String responsavel, String observacao) {
         Promotor promotor = validarNovaMovimentacao(promotorId, TipoMovimentoPromotor.ENTRADA);
-        return salvarMovimento(promotor, TipoMovimentoPromotor.ENTRADA, responsavel, observacao);
+        return salvarMovimento(promotor, TipoMovimentoPromotor.ENTRADA, responsavel, null, observacao);
     }
 
     @Transactional
     public MovimentoPromotor registrarSaida(
-            UUID promotorId, String responsavel, String observacao) {
+            UUID promotorId, String responsavel, String liberadoPor, String observacao) {
+        if (liberadoPor == null || liberadoPor.isBlank()) {
+            throw new LiberacaoSaidaObrigatoriaException();
+        }
         Promotor promotor = validarNovaMovimentacao(promotorId, TipoMovimentoPromotor.SAIDA);
-        return salvarMovimento(promotor, TipoMovimentoPromotor.SAIDA, responsavel, observacao);
+        return salvarMovimento(promotor, TipoMovimentoPromotor.SAIDA, responsavel, liberadoPor.trim(), observacao);
     }
 
     public List<MovimentoPromotor> listar() {
@@ -107,12 +111,14 @@ public class MovimentoPromotorService {
             Promotor promotor,
             TipoMovimentoPromotor tipo,
             String responsavel,
+            String liberadoPor,
             String observacao) {
         MovimentoPromotor movimento = new MovimentoPromotor();
         movimento.setPromotor(promotor);
         movimento.setTipo(tipo);
         movimento.setDataHora(LocalDateTime.now());
         movimento.setResponsavel(responsavel);
+        movimento.setLiberadoPor(liberadoPor);
         movimento.setObservacao(observacao);
         return repository.save(movimento);
     }

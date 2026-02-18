@@ -132,6 +132,27 @@ Padrao: `X-Correlation-Id`.
 
 ## Endpoints atuais
 
+### CRUD de Fornecedor
+
+```
+POST /fornecedores
+GET /fornecedores
+GET /fornecedores/{id}
+PUT /fornecedores/{id}
+DELETE /fornecedores/{id}
+```
+
+Body (POST/PUT):
+
+```json
+{
+  "nome": "Fornecedor Exemplo",
+  "ativo": true
+}
+```
+
+---
+
 ### Criar Promotor
 
 ```
@@ -144,7 +165,7 @@ Body:
 {
   "nome": "Promotor Teste",
   "telefone": "123456789",
-  "empresaId": 123,
+  "fornecedorId": 1,
   "status": "ATIVO",
   "fotoPath": ""
 }
@@ -196,6 +217,7 @@ Body:
 {
   "promotorId": "uuid-do-promotor",
   "responsavel": "Joao",
+  "liberadoPor": "Gerente Loja",
   "observacao": "Saida final"
 }
 ```
@@ -205,6 +227,7 @@ Regras:
 * A data/hora é gerada no servidor no momento da requisição.
 * Não permite saída sem entrada em aberto.
 * Apenas promotor com status `ATIVO` pode registrar movimento.
+* Campo `liberadoPor` é obrigatório na saída.
 
 ---
 
@@ -213,6 +236,21 @@ Regras:
 ```
 GET /movimentos
 ```
+
+---
+
+### Dashboard Principal (Planilha)
+
+```
+GET /dashboard/planilha-principal?data=YYYY-MM-DD&fornecedorId={id}&status=ATIVO
+```
+
+Retorna cards do dia e linhas da planilha com:
+
+* promotor e fornecedor;
+* entrada (horario e usuario);
+* saida (se saiu, horario, usuario);
+* liberacao da saida (`liberadoPor`).
 
 ---
 
@@ -251,7 +289,7 @@ curl -X POST "http://localhost:8080/promotores" \
   -d '{
     "nome": "Promotor Teste",
     "telefone": "123456789",
-    "empresaId": 123,
+    "fornecedorId": 1,
     "status": "ATIVO",
     "fotoPath": ""
   }'
@@ -286,6 +324,7 @@ curl -X POST "http://localhost:8080/movimentos/saida" \
   -d '{
     "promotorId": "UUID_PROMOTOR",
     "responsavel": "Joao",
+    "liberadoPor": "Gerente Loja",
     "observacao": "Saida final"
   }'
 ```
@@ -385,11 +424,7 @@ src/main/resources/db/migration
 
 A aplicacao executa as migracoes automaticamente na inicializacao.
 
-Para bancos legados que ainda usam a coluna antiga `fornecedor_id`, execute:
-
-```sql
-ALTER TABLE PROMOTOR RENAME COLUMN fornecedor_id TO empresa_id;
-```
+Para bancos legados com o modelo antigo (campo `empresa_id` em `PROMOTOR`), use a migration `V2__fornecedor_e_relacao_promotor.sql` para normalizacao em `FORNECEDOR`.
 
 Para perfis `homolog` e `prod` (PostgreSQL), configure:
 
@@ -410,4 +445,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.4.0` - Front temporario para validacao pratica do backend com fluxos operacionais (cadastro, entrada, saida e ajuste), mantendo base robusta de API, observabilidade e CI.
+`v0.5.0.0` - Fornecedor como entidade de dominio, promotor vinculado por `fornecedorId`, dashboard principal estilo planilha e saida com `liberadoPor`.

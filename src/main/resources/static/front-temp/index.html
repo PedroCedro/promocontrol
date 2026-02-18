@@ -36,11 +36,29 @@
     </section>
 
     <section class="card">
+      <h2>Fornecedores</h2>
+      <div class="grid three">
+        <label>Nome <input id="fNome" value="Fornecedor Temp" /></label>
+        <label>Ativo
+          <select id="fAtivo">
+            <option value="true">Sim</option>
+            <option value="false">Nao</option>
+          </select>
+        </label>
+      </div>
+      <div class="actions">
+        <button id="btnCriarFornecedor">Criar Fornecedor</button>
+      </div>
+    </section>
+
+    <section class="card">
       <h2>Criar Promotor</h2>
       <div class="grid four">
         <label>Nome <input id="pNome" value="Promotor Temp" /></label>
         <label>Telefone <input id="pTelefone" value="11999999999" /></label>
-        <label>Empresa ID <input id="pEmpresaId" type="number" value="1001" /></label>
+        <label>Fornecedor
+          <select id="pFornecedorId"></select>
+        </label>
         <label>Status
           <select id="pStatus">
             <option>ATIVO</option>
@@ -55,12 +73,59 @@
     </section>
 
     <section class="card">
+      <h2>Dashboard Principal (Planilha)</h2>
+      <div class="grid four">
+        <label>Data <input id="dashData" type="date" /></label>
+        <label>Fornecedor
+          <select id="dashFornecedorId">
+            <option value="">Todos</option>
+          </select>
+        </label>
+        <label>Status
+          <select id="dashStatus">
+            <option value="">Todos</option>
+            <option value="ATIVO">ATIVO</option>
+            <option value="INATIVO">INATIVO</option>
+            <option value="BLOQUEADO">BLOQUEADO</option>
+          </select>
+        </label>
+      </div>
+      <div class="actions">
+        <button id="btnRefreshDashboard">Atualizar Dashboard</button>
+      </div>
+      <div class="grid four">
+        <label>Em loja agora <input id="dashCardEmLoja" readonly /></label>
+        <label>Entradas hoje <input id="dashCardEntradas" readonly /></label>
+        <label>Saidas hoje <input id="dashCardSaidas" readonly /></label>
+        <label>Ajustes hoje <input id="dashCardAjustes" readonly /></label>
+      </div>
+      <div class="table-wrap">
+        <table id="tblDashboardPrincipal">
+          <thead>
+            <tr>
+              <th>Promotor</th>
+              <th>Fornecedor</th>
+              <th>Entrada em</th>
+              <th>Usuario entrada</th>
+              <th>Saiu?</th>
+              <th>Saida em</th>
+              <th>Usuario saida</th>
+              <th>Liberado por</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
       <h2>Movimentos</h2>
       <div class="grid three">
         <label>Promotor
           <select id="movPromotor"></select>
         </label>
         <label>Responsavel <input id="movResponsavel" value="Operador" /></label>
+        <label>Liberado por (somente saida) <input id="movLiberadoPor" value="Gerente Loja" /></label>
         <label>Observacao <input id="movObservacao" value="Registro manual" /></label>
       </div>
       <div class="actions">
@@ -86,13 +151,13 @@
     <section class="card">
       <h2>Promotores</h2>
       <div class="grid two">
-        <label>Filtro Empresa ID <input id="filtroEmpresaPromotor" type="number" placeholder="ex.: 1001" /></label>
+        <label>Filtro Fornecedor <input id="filtroFornecedorPromotor" placeholder="ex.: Fornecedor Temp" /></label>
         <div class="actions inline"><button id="btnFiltroPromotor">Filtrar</button></div>
       </div>
       <div class="table-wrap">
         <table id="tblPromotores">
           <thead>
-            <tr><th>ID</th><th>Nome</th><th>Empresa</th><th>Status</th><th>Telefone</th></tr>
+            <tr><th>ID</th><th>Nome</th><th>Fornecedor</th><th>Status</th><th>Telefone</th></tr>
           </thead>
           <tbody></tbody>
         </table>
@@ -108,7 +173,7 @@
       <div class="table-wrap">
         <table id="tblMovimentos">
           <thead>
-            <tr><th>ID</th><th>Promotor</th><th>Tipo</th><th>DataHora</th><th>Responsavel</th><th>Obs</th></tr>
+            <tr><th>ID</th><th>Promotor</th><th>Tipo</th><th>DataHora</th><th>Responsavel</th><th>Liberado por</th><th>Obs</th></tr>
           </thead>
           <tbody></tbody>
         </table>

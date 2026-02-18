@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import br.com.infocedro.promocontrol.core.model.Promotor;
 import br.com.infocedro.promocontrol.core.model.StatusPromotor;
 import br.com.infocedro.promocontrol.core.model.TipoMovimentoPromotor;
+import br.com.infocedro.promocontrol.core.model.Fornecedor;
+import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
 import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
 import java.util.List;
@@ -40,16 +42,21 @@ class MovimentoPromotorConcorrenciaTest {
     @Autowired
     private MovimentoPromotorRepository movimentoPromotorRepository;
 
+    @Autowired
+    private FornecedorRepository fornecedorRepository;
+
     @BeforeEach
     void setup() {
         movimentoPromotorRepository.deleteAll();
         promotorRepository.deleteAll();
+        fornecedorRepository.deleteAll();
     }
 
     @AfterEach
     void cleanup() {
         movimentoPromotorRepository.deleteAll();
         promotorRepository.deleteAll();
+        fornecedorRepository.deleteAll();
     }
 
     @Test
@@ -105,12 +112,20 @@ class MovimentoPromotorConcorrenciaTest {
     }
 
     private Promotor criarPromotor() {
+        Fornecedor fornecedor = criarFornecedor();
         Promotor promotor = new Promotor();
         promotor.setNome("Promotor Teste");
         promotor.setTelefone("123456789");
-        promotor.setEmpresaId(123);
+        promotor.setFornecedor(fornecedor);
         promotor.setStatus(StatusPromotor.ATIVO);
         promotor.setFotoPath("");
         return promotorRepository.save(promotor);
+    }
+
+    private Fornecedor criarFornecedor() {
+        Fornecedor fornecedor = new Fornecedor();
+        fornecedor.setNome("Fornecedor Concorrencia");
+        fornecedor.setAtivo(true);
+        return fornecedorRepository.save(fornecedor);
     }
 }

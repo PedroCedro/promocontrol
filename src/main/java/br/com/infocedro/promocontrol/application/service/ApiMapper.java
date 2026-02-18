@@ -1,8 +1,12 @@
 package br.com.infocedro.promocontrol.application.service;
 
 import br.com.infocedro.promocontrol.core.model.MovimentoPromotor;
+import br.com.infocedro.promocontrol.core.model.Fornecedor;
 import br.com.infocedro.promocontrol.core.model.Promotor;
+import br.com.infocedro.promocontrol.infra.controller.dto.AtualizarFornecedorRequest;
+import br.com.infocedro.promocontrol.infra.controller.dto.CriarFornecedorRequest;
 import br.com.infocedro.promocontrol.infra.controller.dto.CriarPromotorRequest;
+import br.com.infocedro.promocontrol.infra.controller.dto.FornecedorResponse;
 import br.com.infocedro.promocontrol.infra.controller.dto.MovimentoPromotorResponse;
 import br.com.infocedro.promocontrol.infra.controller.dto.PromotorResponse;
 import org.springframework.stereotype.Component;
@@ -14,7 +18,6 @@ public class ApiMapper {
         Promotor promotor = new Promotor();
         promotor.setNome(request.nome());
         promotor.setTelefone(request.telefone());
-        promotor.setEmpresaId(request.empresaId());
         promotor.setStatus(request.status());
         promotor.setFotoPath(request.fotoPath());
         return promotor;
@@ -25,9 +28,31 @@ public class ApiMapper {
                 promotor.getId(),
                 promotor.getNome(),
                 promotor.getTelefone(),
-                promotor.getEmpresaId(),
+                promotor.getFornecedor().getId(),
+                promotor.getFornecedor().getNome(),
                 promotor.getStatus(),
                 promotor.getFotoPath());
+    }
+
+    public Fornecedor toFornecedor(CriarFornecedorRequest request) {
+        Fornecedor fornecedor = new Fornecedor();
+        fornecedor.setNome(request.nome());
+        fornecedor.setAtivo(request.ativo());
+        return fornecedor;
+    }
+
+    public Fornecedor toFornecedor(AtualizarFornecedorRequest request) {
+        Fornecedor fornecedor = new Fornecedor();
+        fornecedor.setNome(request.nome());
+        fornecedor.setAtivo(request.ativo());
+        return fornecedor;
+    }
+
+    public FornecedorResponse toFornecedorResponse(Fornecedor fornecedor) {
+        return new FornecedorResponse(
+                fornecedor.getId(),
+                fornecedor.getNome(),
+                fornecedor.getAtivo());
     }
 
     public MovimentoPromotorResponse toMovimentoResponse(MovimentoPromotor movimento) {
@@ -37,6 +62,7 @@ public class ApiMapper {
                 movimento.getTipo(),
                 movimento.getDataHora(),
                 movimento.getResponsavel(),
+                movimento.getLiberadoPor(),
                 movimento.getObservacao(),
                 movimento.getDataHoraOriginal(),
                 movimento.getAjustadoPor(),

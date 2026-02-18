@@ -30,6 +30,9 @@ public class MovimentoPromotor extends AuditableEntity {
     @Column(length = 120)
     private String responsavel;
 
+    @Column(length = 120)
+    private String liberadoPor;
+
     @Column(length = 255)
     private String observacao;
 

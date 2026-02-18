@@ -7,7 +7,8 @@ public record PromotorResponse(
         UUID id,
         String nome,
         String telefone,
-        Integer empresaId,
+        Integer fornecedorId,
+        String fornecedorNome,
         StatusPromotor status,
         String fotoPath) {
 }

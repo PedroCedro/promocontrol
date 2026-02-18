@@ -48,20 +48,30 @@ if ($health.status -ne "UP") {
 $userHeaders = New-BasicAuthHeader -Username $UserName -Password $UserPassword
 $adminHeaders = New-BasicAuthHeader -Username $AdminName -Password $AdminPassword
 
-Write-Host "2) Criando promotor..."
+Write-Host "2) Criando fornecedor..."
+$novoFornecedor = @{
+    nome  = "Fornecedor Smoke"
+    ativo = $true
+}
+$fornecedor = Invoke-Api -Method Post -Url "$BaseUrl/fornecedores" -Headers $userHeaders -Body $novoFornecedor
+if (-not $fornecedor.id) {
+    throw "Falha ao criar fornecedor: id ausente."
+}
+
+Write-Host "3) Criando promotor..."
 $novoPromotor = @{
-    nome     = "Smoke Test Promotor"
-    telefone = "11999999999"
-    empresaId = 1001
-    status   = "ATIVO"
-    fotoPath = ""
+    nome        = "Smoke Test Promotor"
+    telefone    = "11999999999"
+    fornecedorId = $fornecedor.id
+    status      = "ATIVO"
+    fotoPath    = ""
 }
 $promotor = Invoke-Api -Method Post -Url "$BaseUrl/promotores" -Headers $userHeaders -Body $novoPromotor
 if (-not $promotor.id) {
     throw "Falha ao criar promotor: id ausente."
 }
 
-Write-Host "3) Registrando entrada..."
+Write-Host "4) Registrando entrada..."
 $entradaBody = @{
     promotorId  = $promotor.id
     responsavel = "SmokeUser"
@@ -72,10 +82,11 @@ if ($entrada.tipo -ne "ENTRADA") {
     throw "Falha na entrada: tipo retornado '$($entrada.tipo)'."
 }
 
-Write-Host "4) Registrando saida..."
+Write-Host "5) Registrando saida..."
 $saidaBody = @{
     promotorId  = $promotor.id
     responsavel = "SmokeUser"
+    liberadoPor = "Gerente Smoke"
     observacao  = "Saida de smoke test"
 }
 $saida = Invoke-Api -Method Post -Url "$BaseUrl/movimentos/saida" -Headers $userHeaders -Body $saidaBody
@@ -83,7 +94,7 @@ if ($saida.tipo -ne "SAIDA") {
     throw "Falha na saida: tipo retornado '$($saida.tipo)'."
 }
 
-Write-Host "5) Verificando ajuste de horario com admin..."
+Write-Host "6) Verificando ajuste de horario com admin..."
 $ajusteBody = @{
     novaDataHora = (Get-Date).AddHours(-1).ToString("yyyy-MM-ddTHH:mm:ss")
     motivo       = "Smoke test de ajuste"
@@ -93,7 +104,7 @@ if (-not $ajuste.ajustadoPor) {
     throw "Falha no ajuste de horario: campo ajustadoPor ausente."
 }
 
-Write-Host "6) Listando movimentos..."
+Write-Host "7) Listando movimentos..."
 $movimentos = Invoke-Api -Method Get -Url "$BaseUrl/movimentos" -Headers $userHeaders
 if ($movimentos.Count -lt 2) {
     throw "Quantidade inesperada de movimentos: $($movimentos.Count)."

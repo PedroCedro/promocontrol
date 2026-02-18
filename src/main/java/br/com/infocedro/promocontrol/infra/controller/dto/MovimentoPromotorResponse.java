@@ -10,6 +10,7 @@ public record MovimentoPromotorResponse(
         TipoMovimentoPromotor tipo,
         LocalDateTime dataHora,
         String responsavel,
+        String liberadoPor,
         String observacao,
         LocalDateTime dataHoraOriginal,
         String ajustadoPor,

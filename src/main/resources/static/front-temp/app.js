@@ -1,6 +1,8 @@
 const state = {
+  fornecedores: [],
   promotores: [],
-  movimentos: []
+  movimentos: [],
+  dashboard: null
 };
 
 const el = (id) => document.getElementById(id);
@@ -35,6 +37,12 @@ function getUserAuth() {
   };
 }
 
+function initDashboardDefaults() {
+  if (!el("dashData").value) {
+    el("dashData").value = new Date().toISOString().slice(0, 10);
+  }
+}
+
 async function apiRequest(path, method = "GET", body = null, auth = null) {
   const creds = auth || getUserAuth();
   const response = await fetch(`${getBaseUrl()}${path}`, {
@@ -63,7 +71,7 @@ function renderPromotores(list) {
     tr.innerHTML = `
       <td>${p.id}</td>
       <td>${p.nome ?? ""}</td>
-      <td>${p.empresaId ?? ""}</td>
+      <td>${p.fornecedorNome ?? ""}</td>
       <td>${p.status ?? ""}</td>
       <td>${p.telefone ?? ""}</td>`;
     tbody.appendChild(tr);
@@ -81,7 +89,32 @@ function renderMovimentos(list) {
       <td>${m.tipo ?? ""}</td>
       <td>${m.dataHora ?? ""}</td>
       <td>${m.responsavel ?? ""}</td>
+      <td>${m.liberadoPor ?? ""}</td>
       <td>${m.observacao ?? ""}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderDashboard(resumo) {
+  el("dashCardEmLoja").value = resumo.emLojaAgora ?? 0;
+  el("dashCardEntradas").value = resumo.entradasHoje ?? 0;
+  el("dashCardSaidas").value = resumo.saidasHoje ?? 0;
+  el("dashCardAjustes").value = resumo.ajustesHoje ?? 0;
+
+  const tbody = el("tblDashboardPrincipal").querySelector("tbody");
+  tbody.innerHTML = "";
+  (resumo.linhas ?? []).forEach((linha) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${linha.promotorNome ?? ""}</td>
+      <td>${linha.fornecedorNome ?? ""}</td>
+      <td>${linha.entradaEm ?? ""}</td>
+      <td>${linha.usuarioEntrada ?? ""}</td>
+      <td>${linha.saiu ? "SIM" : "NAO"}</td>
+      <td>${linha.saidaEm ?? ""}</td>
+      <td>${linha.usuarioSaida ?? ""}</td>
+      <td>${linha.liberadoPor ?? ""}</td>`;
+    tr.style.backgroundColor = linha.saiu ? "#f3f4f6" : "#dcfce7";
     tbody.appendChild(tr);
   });
 }
@@ -97,19 +130,66 @@ function syncPromotorSelect() {
   });
 }
 
+function syncFornecedorSelect() {
+  const select = el("pFornecedorId");
+  const dashSelect = el("dashFornecedorId");
+  select.innerHTML = "";
+  dashSelect.innerHTML = "<option value=\"\">Todos</option>";
+  state.fornecedores.forEach((f) => {
+    const opt = document.createElement("option");
+    opt.value = f.id;
+    opt.textContent = f.nome;
+    select.appendChild(opt);
+
+    const optDash = document.createElement("option");
+    optDash.value = f.id;
+    optDash.textContent = f.nome;
+    dashSelect.appendChild(optDash);
+  });
+}
+
+function buildDashboardQuery() {
+  const params = new URLSearchParams();
+  const data = el("dashData").value;
+  const fornecedorId = el("dashFornecedorId").value;
+  const status = el("dashStatus").value;
+  if (data) params.set("data", data);
+  if (fornecedorId) params.set("fornecedorId", fornecedorId);
+  if (status) params.set("status", status);
+  const query = params.toString();
+  return query ? `/dashboard/planilha-principal?${query}` : "/dashboard/planilha-principal";
+}
+
+async function refreshDashboard() {
+  state.dashboard = await apiRequest(buildDashboardQuery());
+  renderDashboard(state.dashboard);
+}
+
 async function refreshData() {
+  state.fornecedores = await apiRequest("/fornecedores");
   state.promotores = await apiRequest("/promotores");
   state.movimentos = await apiRequest("/movimentos");
   renderPromotores(state.promotores);
   renderMovimentos(state.movimentos);
+  syncFornecedorSelect();
   syncPromotorSelect();
+  await refreshDashboard();
+}
+
+async function criarFornecedor() {
+  const payload = {
+    nome: el("fNome").value.trim(),
+    ativo: el("fAtivo").value === "true"
+  };
+  await apiRequest("/fornecedores", "POST", payload);
+  await refreshData();
 }
 
 async function criarPromotor() {
   const payload = {
     nome: el("pNome").value.trim(),
     telefone: el("pTelefone").value.trim(),
-    empresaId: Number(el("pEmpresaId").value),
+    fornecedorId: Number(el("pFornecedorId").value),
     status: el("pStatus").value,
     fotoPath: ""
   };
@@ -122,6 +202,7 @@ async function registrarMovimento(tipo) {
   const payload = {
     promotorId: el("movPromotor").value,
     responsavel: el("movResponsavel").value.trim(),
+    liberadoPor: tipo === "SAIDA" ? el("movLiberadoPor").value.trim() : null,
     observacao: el("movObservacao").value.trim()
   };
   await apiRequest(path, "POST", payload);
@@ -144,15 +225,17 @@ async function ajustarHorario() {
 
 function bindActions() {
   el("btnRefresh").addEventListener("click", () => refreshData().catch((e) => log("Falha ao atualizar", { error: e.message })));
+  el("btnRefreshDashboard").addEventListener("click", () => refreshDashboard().catch((e) => log("Falha dashboard", { error: e.message })));
+  el("btnCriarFornecedor").addEventListener("click", () => criarFornecedor().catch((e) => log("Falha ao criar fornecedor", { error: e.message })));
   el("btnCriarPromotor").addEventListener("click", () => criarPromotor().catch((e) => log("Falha ao criar", { error: e.message })));
   el("btnEntrada").addEventListener("click", () => registrarMovimento("ENTRADA").catch((e) => log("Falha entrada", { error: e.message })));
   el("btnSaida").addEventListener("click", () => registrarMovimento("SAIDA").catch((e) => log("Falha saida", { error: e.message })));
   el("btnAjustar").addEventListener("click", () => ajustarHorario().catch((e) => log("Falha ajuste", { error: e.message })));
 
   el("btnFiltroPromotor").addEventListener("click", () => {
-    const empresaId = el("filtroEmpresaPromotor").value.trim();
-    if (!empresaId) return renderPromotores(state.promotores);
-    renderPromotores(state.promotores.filter((p) => String(p.empresaId) === empresaId));
+    const fornecedor = el("filtroFornecedorPromotor").value.trim().toLowerCase();
+    if (!fornecedor) return renderPromotores(state.promotores);
+    renderPromotores(state.promotores.filter((p) => (p.fornecedorNome ?? "").toLowerCase().includes(fornecedor)));
   });
 
   el("btnFiltroMov").addEventListener("click", () => {
@@ -163,4 +246,5 @@ function bindActions() {
 }
 
 bindActions();
+initDashboardDefaults();
 refreshData().catch((e) => log("Falha inicial. Confira base URL e credenciais.", { error: e.message }));

@@ -1,5 +1,39 @@
 # Changelog
 
+## v0.5.0.0 - 2026-02-18
+
+### Added
+- Dominio de `Fornecedor` com entidade, repositorio, service e CRUD HTTP (`/fornecedores`).
+- Migration `V2__fornecedor_e_relacao_promotor.sql` para normalizar `Promotor` com `fornecedor_id`.
+- Endpoint agregador de dashboard estilo planilha: `GET /dashboard/planilha-principal` com:
+  - cards do dia (`emLojaAgora`, `entradasHoje`, `saidasHoje`, `ajustesHoje`);
+  - linhas da planilha principal com promotor/fornecedor/entrada/saida/liberacao.
+- Campo `liberadoPor` no movimento de saida com migration `V3__add_liberado_por_movimento_saida.sql`.
+- Testes de controller para `Fornecedor` e `Dashboard`.
+
+### Changed
+- Contrato de `Promotor` migrado de `empresaId` para `fornecedorId`.
+- Regras de saida exigindo `liberadoPor`.
+- Front temporario atualizado para fluxo de fornecedor e visualizacao da planilha principal.
+- Smoke test atualizado para o novo contrato.
+- Versao exposta em `actuator/info` alinhada para `v0.5.0.0`.
+
+## v0.4.1 - 2026-02-17
+
+### Added
+- Testes de controller para `Promotor` cobrindo:
+  - criacao com sucesso;
+  - validacao de payload invalido;
+  - listagem autenticada;
+  - bloqueio sem autenticacao (`401`).
+- Novos cenarios em `MovimentoPromotorControllerTest` para:
+  - sucesso de ajuste de horario por `ADMIN` com validacao da trilha de auditoria;
+  - contrato de resposta da listagem `GET /movimentos`.
+
+### Changed
+- Versao exposta em `actuator/info` alinhada para `v0.4.1`.
+- README atualizado com referencia da versao `v0.4.1` e foco da entrega em cobertura de testes.
+
 ## v0.4.0 - 2026-02-14
 
 ### Added

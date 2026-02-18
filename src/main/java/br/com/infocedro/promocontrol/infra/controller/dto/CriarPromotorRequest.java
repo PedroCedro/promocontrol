@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 public record CriarPromotorRequest(
         @NotBlank @Size(max = 120) String nome,
         @Size(max = 40) String telefone,
-        @NotNull Integer empresaId,
+        @NotNull Integer fornecedorId,
         @NotNull StatusPromotor status,
         @Size(max = 255) String fotoPath) {
 }

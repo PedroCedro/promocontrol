@@ -73,6 +73,7 @@ public class MovimentoPromotorController {
         return mapper.toMovimentoResponse(service.registrarSaida(
                 request.promotorId(),
                 request.responsavel(),
+                request.liberadoPor(),
                 request.observacao()));
     }
 
