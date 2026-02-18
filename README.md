@@ -100,6 +100,7 @@ Usuários padrão (modo dev):
 
 ```
 user / user123
+viewer / viewer123
 admin / admin123
 ```
 
@@ -108,6 +109,8 @@ As credenciais podem ser sobrescritas por variáveis de ambiente:
 ```
 APP_SECURITY_USER_USERNAME
 APP_SECURITY_USER_PASSWORD
+APP_SECURITY_VIEWER_USERNAME
+APP_SECURITY_VIEWER_PASSWORD
 APP_SECURITY_ADMIN_USERNAME
 APP_SECURITY_ADMIN_PASSWORD
 ```
@@ -127,6 +130,12 @@ APP_CORRELATION_HEADER
 ```
 
 Padrao: `X-Correlation-Id`.
+
+Perfis de acesso:
+
+* `VIEWER`: leitura (`GET`) de promotores, fornecedores, movimentos e dashboards.
+* `OPERATOR`: leitura + operacoes de cadastro e movimentos.
+* `ADMIN`: mesmas permissoes de operador + ajuste de horario (`PATCH /movimentos/{id}/ajuste-horario`).
 
 ---
 
@@ -251,6 +260,16 @@ Retorna cards do dia e linhas da planilha com:
 * entrada (horario e usuario);
 * saida (se saiu, horario, usuario);
 * liberacao da saida (`liberadoPor`).
+
+---
+
+### Dashboard de Cumprimento por Fornecedor
+
+```
+GET /dashboard/cumprimento-fornecedores?data=YYYY-MM-DD&percentualMinimo=80
+```
+
+Retorna previsto x realizado por fornecedor, percentual de cumprimento e alertas de desvio.
 
 ---
 
@@ -412,6 +431,12 @@ Executar smoke test local/homolog:
 .\scripts\smoke_test.ps1 -BaseUrl "http://localhost:8080"
 ```
 
+Executar checklist de prontidao para homolog:
+
+```powershell
+.\scripts\homolog_readiness_check.ps1 -BaseUrl "http://localhost:8080" -RunSmoke
+```
+
 ---
 
 ## Migração de Banco
@@ -445,4 +470,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.5.0.0` - Fornecedor como entidade de dominio, promotor vinculado por `fornecedorId`, dashboard principal estilo planilha e saida com `liberadoPor`.
+`v0.5.1.0` - Cumprimento por fornecedor com alertas, harden de seguranca por perfis (`VIEWER/OPERATOR/ADMIN`) e checklist executavel para homologacao.

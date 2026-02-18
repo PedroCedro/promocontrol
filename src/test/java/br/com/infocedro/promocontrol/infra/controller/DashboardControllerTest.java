@@ -66,6 +66,32 @@ class DashboardControllerTest {
                 .andExpect(jsonPath("$.linhas[0].liberadoPor").value("Gerente A"));
     }
 
+    @Test
+    void deveRetornarCumprimentoPorFornecedorComAlerta() throws Exception {
+        Fornecedor fornecedorA = criarFornecedor("Fornecedor Cumprimento A");
+        Fornecedor fornecedorB = criarFornecedor("Fornecedor Cumprimento B");
+
+        Promotor promotorA1 = criarPromotor("Promotor A1", fornecedorA, StatusPromotor.ATIVO);
+        Promotor promotorA2 = criarPromotor("Promotor A2", fornecedorA, StatusPromotor.ATIVO);
+        Promotor promotorB1 = criarPromotor("Promotor B1", fornecedorB, StatusPromotor.ATIVO);
+
+        criarMovimento(promotorA1, TipoMovimentoPromotor.ENTRADA, "Operador A", null, LocalDateTime.now().minusHours(3));
+        criarMovimento(promotorB1, TipoMovimentoPromotor.ENTRADA, "Operador B", null, LocalDateTime.now().minusHours(2));
+
+        mockMvc.perform(get("/dashboard/cumprimento-fornecedores?percentualMinimo=75")
+                        .with(httpBasic("user", "user123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.percentualMinimo").value(75.0))
+                .andExpect(jsonPath("$.totalFornecedores").value(2))
+                .andExpect(jsonPath("$.fornecedoresEmAlerta").value(1))
+                .andExpect(jsonPath("$.itens[0].fornecedorNome").exists())
+                .andExpect(jsonPath("$.itens[0].entradasPrevistas").exists())
+                .andExpect(jsonPath("$.itens[0].entradasRealizadas").exists())
+                .andExpect(jsonPath("$.itens[0].percentualCumprimento").exists())
+                .andExpect(jsonPath("$.itens[0].desvioPercentual").exists())
+                .andExpect(jsonPath("$.itens[0].alerta").exists());
+    }
+
     private Fornecedor criarFornecedor(String nome) {
         Fornecedor fornecedor = new Fornecedor();
         fornecedor.setNome(nome);

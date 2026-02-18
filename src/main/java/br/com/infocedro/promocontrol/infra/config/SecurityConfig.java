@@ -34,6 +34,12 @@ public class SecurityConfig {
     @Value("${app.security.user.password:user123}")
     private String userPassword;
 
+    @Value("${app.security.viewer.username:viewer}")
+    private String viewerUsername;
+
+    @Value("${app.security.viewer.password:viewer123}")
+    private String viewerPassword;
+
     @Value("${app.security.admin.username:admin}")
     private String adminUsername;
 
@@ -63,7 +69,15 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/movimentos/*/ajuste-horario").hasRole("ADMIN")
-                .anyRequest().authenticated()
+                .requestMatchers(HttpMethod.GET, "/fornecedores/**", "/promotores/**", "/movimentos/**", "/dashboard/**")
+                    .hasAnyRole("VIEWER", "OPERATOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/fornecedores/**", "/promotores/**", "/movimentos/**")
+                    .hasAnyRole("OPERATOR", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/fornecedores/**")
+                    .hasAnyRole("OPERATOR", "ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/fornecedores/**")
+                    .hasAnyRole("OPERATOR", "ADMIN")
+                .anyRequest().denyAll()
             )
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, authException) ->
@@ -85,17 +99,22 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
+        UserDetails viewer = User.withUsername(viewerUsername)
+                .password(passwordEncoder.encode(viewerPassword))
+                .roles("VIEWER")
+                .build();
+
         UserDetails user = User.withUsername(userUsername)
                 .password(passwordEncoder.encode(userPassword))
-                .roles("USER")
+                .roles("OPERATOR", "VIEWER")
                 .build();
 
         UserDetails admin = User.withUsername(adminUsername)
                 .password(passwordEncoder.encode(adminPassword))
-                .roles("ADMIN")
+                .roles("ADMIN", "OPERATOR", "VIEWER")
                 .build();
 
-        return new InMemoryUserDetailsManager(user, admin);
+        return new InMemoryUserDetailsManager(viewer, user, admin);
     }
 
     @Bean

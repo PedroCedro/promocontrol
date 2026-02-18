@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.5.1.0 - 2026-02-18
+
+### Added
+- Endpoint de cumprimento por fornecedor: `GET /dashboard/cumprimento-fornecedores`.
+- Indicadores minimos de cumprimento (previstas x realizadas) com alerta de desvio por percentual minimo.
+- Teste de controller para o contrato de cumprimento do dashboard.
+- Teste de autorizacao para validar separacao de permissoes de leitura vs operacao.
+- Script de checklist de prontidao em homolog: `scripts/homolog_readiness_check.ps1`.
+
+### Changed
+- Seguranca revisada para perfis `VIEWER`, `OPERATOR` e `ADMIN`.
+- Perfis `homolog` e `prod` passaram a exigir credenciais de `viewer` e CORS por variavel de ambiente.
+- Front-temp atualizado com tabela de cumprimento por fornecedor.
+- Versao exposta em `actuator/info` alinhada para `v0.5.1.0`.
+
 ## v0.5.0.0 - 2026-02-18
 
 ### Added

@@ -2,7 +2,8 @@ const state = {
   fornecedores: [],
   promotores: [],
   movimentos: [],
-  dashboard: null
+  dashboard: null,
+  cumprimento: null
 };
 
 const el = (id) => document.getElementById(id);
@@ -37,9 +38,26 @@ function getUserAuth() {
   };
 }
 
+function setupTabs() {
+  const tabs = document.querySelectorAll(".tab-btn");
+  const panels = document.querySelectorAll(".tab-panel");
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      tabs.forEach((t) => t.classList.remove("is-active"));
+      panels.forEach((p) => p.classList.remove("is-active"));
+      tab.classList.add("is-active");
+      const panel = document.getElementById(tab.dataset.tab);
+      if (panel) panel.classList.add("is-active");
+    });
+  });
+}
+
 function initDashboardDefaults() {
   if (!el("dashData").value) {
     el("dashData").value = new Date().toISOString().slice(0, 10);
+  }
+  if (!el("cumprimentoData").value) {
+    el("cumprimentoData").value = new Date().toISOString().slice(0, 10);
   }
 }
 
@@ -119,6 +137,23 @@ function renderDashboard(resumo) {
   });
 }
 
+function renderCumprimento(resumo) {
+  const tbody = el("tblCumprimento").querySelector("tbody");
+  tbody.innerHTML = "";
+  (resumo.itens ?? []).forEach((item) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.fornecedorNome ?? ""}</td>
+      <td>${item.entradasPrevistas ?? 0}</td>
+      <td>${item.entradasRealizadas ?? 0}</td>
+      <td>${item.percentualCumprimento ?? 0}%</td>
+      <td>${item.desvioPercentual ?? 0}%</td>
+      <td>${item.alerta ? "SIM" : "NAO"}</td>`;
+    tr.style.backgroundColor = item.alerta ? "#fee2e2" : "#ecfeff";
+    tbody.appendChild(tr);
+  });
+}
+
 function syncPromotorSelect() {
   const select = el("movPromotor");
   select.innerHTML = "";
@@ -160,9 +195,26 @@ function buildDashboardQuery() {
   return query ? `/dashboard/planilha-principal?${query}` : "/dashboard/planilha-principal";
 }
 
+function buildCumprimentoQuery() {
+  const params = new URLSearchParams();
+  const data = el("cumprimentoData").value;
+  const percentualMinimo = el("cumprimentoMinimo").value;
+  if (data) params.set("data", data);
+  if (percentualMinimo) params.set("percentualMinimo", percentualMinimo);
+  const query = params.toString();
+  return query
+    ? `/dashboard/cumprimento-fornecedores?${query}`
+    : "/dashboard/cumprimento-fornecedores";
+}
+
 async function refreshDashboard() {
   state.dashboard = await apiRequest(buildDashboardQuery());
   renderDashboard(state.dashboard);
+}
+
+async function refreshCumprimento() {
+  state.cumprimento = await apiRequest(buildCumprimentoQuery());
+  renderCumprimento(state.cumprimento);
 }
 
 async function refreshData() {
@@ -174,6 +226,7 @@ async function refreshData() {
   syncFornecedorSelect();
   syncPromotorSelect();
   await refreshDashboard();
+  await refreshCumprimento();
 }
 
 async function criarFornecedor() {
@@ -226,6 +279,7 @@ async function ajustarHorario() {
 function bindActions() {
   el("btnRefresh").addEventListener("click", () => refreshData().catch((e) => log("Falha ao atualizar", { error: e.message })));
   el("btnRefreshDashboard").addEventListener("click", () => refreshDashboard().catch((e) => log("Falha dashboard", { error: e.message })));
+  el("btnRefreshCumprimento").addEventListener("click", () => refreshCumprimento().catch((e) => log("Falha cumprimento", { error: e.message })));
   el("btnCriarFornecedor").addEventListener("click", () => criarFornecedor().catch((e) => log("Falha ao criar fornecedor", { error: e.message })));
   el("btnCriarPromotor").addEventListener("click", () => criarPromotor().catch((e) => log("Falha ao criar", { error: e.message })));
   el("btnEntrada").addEventListener("click", () => registrarMovimento("ENTRADA").catch((e) => log("Falha entrada", { error: e.message })));
@@ -246,5 +300,6 @@ function bindActions() {
 }
 
 bindActions();
+setupTabs();
 initDashboardDefaults();
 refreshData().catch((e) => log("Falha inicial. Confira base URL e credenciais.", { error: e.message }));
