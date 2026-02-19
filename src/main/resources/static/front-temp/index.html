@@ -7,7 +7,33 @@
   <link rel="stylesheet" href="/front-temp/styles.css">
 </head>
 <body>
-  <main class="app-shell">
+  <section id="loginView" class="login-view">
+    <article class="login-card">
+      <h1>Entrar no PromoControl</h1>
+      <p>Use um usuario existente do backend (viewer, user ou admin).</p>
+      <div class="grid two">
+        <label>Usuario <input id="loginUsername" value="user" /></label>
+        <label>Senha <input id="loginPassword" type="password" value="user123" /></label>
+      </div>
+      <p id="loginMessage" class="login-message"></p>
+      <div class="actions">
+        <button id="btnLogin">Entrar</button>
+      </div>
+      <section id="forceChangeBox" class="force-change-box is-hidden">
+        <h2>Troca Obrigatoria de Senha</h2>
+        <p>Voce entrou com senha temporaria. Defina uma nova senha para continuar.</p>
+        <div class="grid two">
+          <label>Nova senha <input id="newPassword" type="password" /></label>
+          <label>Confirmar senha <input id="confirmPassword" type="password" /></label>
+        </div>
+        <div class="actions">
+          <button id="btnChangePassword">Alterar Senha e Entrar</button>
+        </div>
+      </section>
+    </article>
+  </section>
+
+  <main id="appShell" class="app-shell is-hidden">
     <header class="hero">
       <div>
         <p class="kicker">Homologacao</p>
@@ -21,17 +47,18 @@
     </header>
 
     <section class="topbar">
-      <label>Base URL <input id="baseUrl" value="http://localhost:8080" /></label>
-      <label>Usuario <input id="username" value="user" /></label>
-      <label>Senha <input id="password" type="password" value="user123" /></label>
+      <label>Base URL <input id="baseUrl" readonly /></label>
+      <label>Usuario logado <input id="currentUser" readonly /></label>
+      <label>Perfil <input id="currentRole" readonly /></label>
       <button id="btnRefresh">Sincronizar Dados</button>
+      <button id="btnLogout">Sair</button>
     </section>
 
     <nav class="tabs">
       <button class="tab-btn is-active" data-tab="tab-painel">Painel</button>
-      <button class="tab-btn" data-tab="tab-fornecedores">Cadastro Fornecedor</button>
-      <button class="tab-btn" data-tab="tab-promotores">Cadastro Promotor</button>
-      <button class="tab-btn" data-tab="tab-controle">Controle Entrada/Saida</button>
+      <button class="tab-btn" data-tab="tab-fornecedores">Fornecedores</button>
+      <button class="tab-btn" data-tab="tab-promotores">Promotores</button>
+      <button class="tab-btn" data-tab="tab-controle">Controle</button>
     </nav>
 
     <section id="tab-painel" class="tab-panel is-active">
@@ -168,16 +195,26 @@
         </div>
       </article>
 
-      <article class="card">
+      <article id="adminAjusteCard" class="card">
         <h2>Ajuste de Horario (Admin)</h2>
-        <div class="grid four">
-          <label>Admin Usuario <input id="adminUsername" value="admin" /></label>
-          <label>Admin Senha <input id="adminPassword" type="password" value="admin123" /></label>
+        <div class="grid three">
           <label>Movimento ID <input id="ajusteMovId" placeholder="UUID movimento" /></label>
           <label>Nova DataHora <input id="ajusteDataHora" type="datetime-local" /></label>
+          <div></div>
         </div>
         <label>Motivo <input id="ajusteMotivo" value="Correcao operacional" /></label>
         <div class="actions"><button id="btnAjustar">Aplicar Ajuste</button></div>
+      </article>
+
+      <article id="adminResetCard" class="card">
+        <h2>Resetar Senha de Usuario (Admin)</h2>
+        <div class="grid three">
+          <label>Usuario <input id="resetUsername" placeholder="viewer, user ou admin" /></label>
+          <div class="actions"><button id="btnResetSenha">Resetar Senha</button></div>
+          <label>Senha temporaria (visivel uma vez)
+            <input id="resetTempPassword" readonly placeholder="sera exibida somente apos reset" />
+          </label>
+        </div>
       </article>
 
       <article class="card">

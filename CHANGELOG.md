@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.5.2.0 - 2026-02-19
+
+### Added
+- Endpoints de autenticacao de sessao e senha:
+  - `GET /auth/sessao`
+  - `POST /auth/alterar-senha`
+  - `POST /auth/admin/resetar-senha` (somente `ADMIN`)
+- Fluxo de reset de senha por admin com retorno de senha temporaria exibida somente na resposta do reset.
+- Front-temp com tela de login dedicada, troca obrigatoria de senha temporaria e card admin para reset de senha de usuario.
+
+### Changed
+- Seguranca migrada para servico interno de usuarios com suporte a senha temporaria e flag de troca obrigatoria.
+- Inclusao de filtro de seguranca para bloquear uso da API enquanto o usuario estiver com senha temporaria ativa, permitindo apenas sessao e alteracao de senha.
+
 ## v0.5.1.0 - 2026-02-18
 
 ### Added

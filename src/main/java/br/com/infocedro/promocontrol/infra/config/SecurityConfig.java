@@ -1,6 +1,7 @@
 package br.com.infocedro.promocontrol.infra.config;
 
 import br.com.infocedro.promocontrol.infra.error.ApiErrorResponse;
+import br.com.infocedro.promocontrol.infra.security.PasswordChangeRequiredFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -13,14 +14,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -28,33 +26,20 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class SecurityConfig {
 
-    @Value("${app.security.user.username:user}")
-    private String userUsername;
-
-    @Value("${app.security.user.password:user123}")
-    private String userPassword;
-
-    @Value("${app.security.viewer.username:viewer}")
-    private String viewerUsername;
-
-    @Value("${app.security.viewer.password:viewer123}")
-    private String viewerPassword;
-
-    @Value("${app.security.admin.username:admin}")
-    private String adminUsername;
-
-    @Value("${app.security.admin.password:admin123}")
-    private String adminPassword;
-
     @Value("${app.cors.allowed-origins:http://localhost:3000,http://127.0.0.1:3000}")
     private String allowedOrigins;
 
     private final ObjectMapper objectMapper;
     private final CorrelationIdFilter correlationIdFilter;
+    private final PasswordChangeRequiredFilter passwordChangeRequiredFilter;
 
-    public SecurityConfig(ObjectMapper objectMapper, CorrelationIdFilter correlationIdFilter) {
+    public SecurityConfig(
+            ObjectMapper objectMapper,
+            CorrelationIdFilter correlationIdFilter,
+            PasswordChangeRequiredFilter passwordChangeRequiredFilter) {
         this.objectMapper = objectMapper;
         this.correlationIdFilter = correlationIdFilter;
+        this.passwordChangeRequiredFilter = passwordChangeRequiredFilter;
     }
 
     @Bean
@@ -63,11 +48,17 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable()) // 👈 desativa CSRF pra API
             .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(passwordChangeRequiredFilter, BasicAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/front-temp/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/auth/sessao")
+                    .hasAnyRole("VIEWER", "OPERATOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/auth/alterar-senha")
+                    .hasAnyRole("VIEWER", "OPERATOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/auth/admin/resetar-senha").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/movimentos/*/ajuste-horario").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/fornecedores/**", "/promotores/**", "/movimentos/**", "/dashboard/**")
                     .hasAnyRole("VIEWER", "OPERATOR", "ADMIN")
@@ -95,26 +86,6 @@ public class SecurityConfig {
             .httpBasic();
 
         return http.build();
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        UserDetails viewer = User.withUsername(viewerUsername)
-                .password(passwordEncoder.encode(viewerPassword))
-                .roles("VIEWER")
-                .build();
-
-        UserDetails user = User.withUsername(userUsername)
-                .password(passwordEncoder.encode(userPassword))
-                .roles("OPERATOR", "VIEWER")
-                .build();
-
-        UserDetails admin = User.withUsername(adminUsername)
-                .password(passwordEncoder.encode(adminPassword))
-                .roles("ADMIN", "OPERATOR", "VIEWER")
-                .build();
-
-        return new InMemoryUserDetailsManager(viewer, user, admin);
     }
 
     @Bean

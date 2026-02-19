@@ -1,15 +1,15 @@
 @import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap");
 
 :root {
-  --bg: #f6faf7;
+  --bg: #f7f5ff;
   --card: #ffffff;
-  --ink: #133132;
-  --muted: #4d6768;
-  --line: #d7e3df;
-  --brand: #0f9d91;
-  --brand-deep: #0c766e;
-  --accent: #ff8b3d;
-  --accent-deep: #d86116;
+  --ink: #1b2140;
+  --muted: #5f6285;
+  --line: #d9defc;
+  --brand: #2f6df6;
+  --brand-deep: #234fc0;
+  --accent: #ff6f61;
+  --accent-deep: #e24f40;
 }
 
 * { box-sizing: border-box; }
@@ -19,9 +19,60 @@ body {
   font-family: "Sora", sans-serif;
   color: var(--ink);
   background:
-    radial-gradient(circle at 10% 0%, #d6fff8 0%, transparent 35%),
-    radial-gradient(circle at 90% 10%, #ffe2cb 0%, transparent 35%),
-    linear-gradient(180deg, #f7fffd 0%, #f5f7fb 100%);
+    radial-gradient(circle at 8% 0%, #c8fff3 0%, transparent 32%),
+    radial-gradient(circle at 92% 8%, #ffd3d5 0%, transparent 32%),
+    radial-gradient(circle at 55% 100%, #ffeaa8 0%, transparent 30%),
+    linear-gradient(180deg, #f8fbff 0%, #f4f0ff 100%);
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+.login-view {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.login-card {
+  width: min(880px, 100%);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 16px 32px rgba(58, 56, 124, 0.16);
+}
+
+.login-card h1 {
+  margin: 0 0 6px;
+  font-size: 1.45rem;
+  color: #2b3573;
+}
+
+.login-card p {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+.force-change-box {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #ffd4cc;
+  border-radius: 12px;
+  background: #fff6f4;
+}
+
+.force-change-box h2 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: #8f2f22;
+}
+
+.force-change-box p {
+  margin: 0 0 10px;
+  color: #9b4136;
 }
 
 .app-shell {
@@ -37,11 +88,11 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  background: linear-gradient(120deg, #0a7d75, #10a9a0);
-  color: #eafffb;
+  background: linear-gradient(120deg, #2f6df6 0%, #5b4de7 45%, #ff6f61 100%);
+  color: #f6f8ff;
   border-radius: 18px;
   padding: 18px 20px;
-  box-shadow: 0 14px 32px rgba(0, 98, 89, 0.25);
+  box-shadow: 0 16px 34px rgba(54, 49, 135, 0.28);
 }
 
 .hero h1 {
@@ -51,7 +102,7 @@ body {
 
 .hero p {
   margin: 0;
-  color: #ccf8f2;
+  color: #e8edff;
 }
 
 .kicker {
@@ -71,21 +122,21 @@ body {
 .pill {
   padding: 8px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   font-size: 0.78rem;
   font-weight: 600;
 }
 
 .topbar {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
+  grid-template-columns: minmax(220px, 2fr) minmax(160px, 1fr) minmax(130px, 1fr) auto auto;
   gap: 10px;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 12px;
-  box-shadow: 0 8px 22px rgba(15, 42, 45, 0.08);
+  box-shadow: 0 10px 24px rgba(58, 56, 124, 0.12);
 }
 
 .tabs {
@@ -95,23 +146,28 @@ body {
 }
 
 .tab-btn {
-  border: 1px solid #a7ddd5;
+  border: 1px solid #d4dafd;
   border-radius: 999px;
-  background: #e9faf6;
-  color: #0f5c58;
+  background: #f0f3ff;
+  color: #2d3a78;
   padding: 9px 14px;
   font-weight: 600;
   cursor: pointer;
   transition: 0.2s;
 }
 
+.tab-btn:nth-child(1) { background: #d9f0ff; border-color: #b8dcff; }
+.tab-btn:nth-child(2) { background: #ddf9ea; border-color: #b8ebd1; }
+.tab-btn:nth-child(3) { background: #ffe8d2; border-color: #ffd2a8; }
+.tab-btn:nth-child(4) { background: #ffe0ea; border-color: #ffc2d3; }
+
 .tab-btn:hover {
-  border-color: #6ec9bf;
+  border-color: #95abf6;
   transform: translateY(-1px);
 }
 
 .tab-btn.is-active {
-  background: linear-gradient(120deg, var(--brand), #21b4aa);
+  background: linear-gradient(120deg, var(--brand), #7d56f8);
   color: #fff;
   border-color: transparent;
 }
@@ -130,13 +186,13 @@ body {
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 14px;
-  box-shadow: 0 8px 24px rgba(19, 53, 56, 0.08);
+  box-shadow: 0 8px 22px rgba(66, 69, 146, 0.1);
 }
 
 .card h2 {
   margin: 0 0 12px;
   font-size: 1.03rem;
-  color: #15464a;
+  color: #324080;
 }
 
 .grid {
@@ -168,7 +224,7 @@ input, select, button {
 
 input, select {
   width: 100%;
-  border: 1px solid #cce2dd;
+  border: 1px solid #d7defc;
   border-radius: 10px;
   background: #fff;
   color: var(--ink);
@@ -177,22 +233,22 @@ input, select {
 
 input:focus, select:focus {
   outline: none;
-  border-color: #6bc8be;
-  box-shadow: 0 0 0 3px rgba(26, 168, 156, 0.14);
+  border-color: #7592f8;
+  box-shadow: 0 0 0 3px rgba(73, 114, 241, 0.18);
 }
 
 button {
   border: 0;
   border-radius: 10px;
   padding: 10px 13px;
-  background: linear-gradient(120deg, var(--brand), #1fb7ac);
+  background: linear-gradient(120deg, var(--brand), #6f5bf8);
   color: #fff;
   cursor: pointer;
   font-weight: 700;
 }
 
 button:hover {
-  background: linear-gradient(120deg, var(--brand-deep), var(--brand));
+  background: linear-gradient(120deg, var(--brand-deep), #4a3ac4);
 }
 
 .actions {
@@ -210,7 +266,7 @@ button:hover {
 .table-wrap {
   margin-top: 10px;
   overflow: auto;
-  border: 1px solid #d2e4e0;
+  border: 1px solid #dbe1fd;
   border-radius: 12px;
 }
 
@@ -222,8 +278,8 @@ table {
 }
 
 thead th {
-  background: #ecf9f6;
-  color: #285a5a;
+  background: linear-gradient(180deg, #eaf0ff 0%, #f3eefe 100%);
+  color: #38427d;
   font-weight: 700;
 }
 
@@ -235,7 +291,7 @@ th, td {
 }
 
 tr:hover td {
-  background: #f8fffd;
+  background: #f6f8ff;
 }
 
 #log {
@@ -245,8 +301,8 @@ tr:hover td {
   max-height: 260px;
   overflow: auto;
   border-radius: 10px;
-  background: #082326;
-  color: #d6fff6;
+  background: #1f2142;
+  color: #d9e4ff;
   font-size: 0.76rem;
 }
 
@@ -264,3 +320,11 @@ tr:hover td {
     align-items: flex-start;
   }
 }
+
+.login-message {
+  min-height: 1.2rem;
+  margin: 0 0 8px;
+  color: var(--accent-deep);
+  font-size: 0.85rem;
+}
+

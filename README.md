@@ -137,6 +137,13 @@ Perfis de acesso:
 * `OPERATOR`: leitura + operacoes de cadastro e movimentos.
 * `ADMIN`: mesmas permissoes de operador + ajuste de horario (`PATCH /movimentos/{id}/ajuste-horario`).
 
+Fluxo de senha (v0.5.2.0):
+
+* `ADMIN` pode resetar senha de qualquer usuario via `POST /auth/admin/resetar-senha`.
+* O reset retorna uma senha temporaria apenas na resposta da operacao.
+* Login com senha temporaria exige troca imediata via `POST /auth/alterar-senha`.
+* Enquanto a troca nao for concluida, o sistema bloqueia os demais endpoints.
+
 ---
 
 ## Endpoints atuais
@@ -292,6 +299,41 @@ Observações:
 
 * Endpoint restrito ao perfil `ADMIN`.
 * O sistema registra auditoria do ajuste (`dataHoraOriginal`, `ajustadoPor`, `ajustadoEm`, `ajusteMotivo`).
+
+---
+
+### Sessao e senha
+
+```
+GET /auth/sessao
+POST /auth/alterar-senha
+POST /auth/admin/resetar-senha
+```
+
+Body (`POST /auth/alterar-senha`):
+
+```json
+{
+  "novaSenha": "NovaSenhaSegura123"
+}
+```
+
+Body (`POST /auth/admin/resetar-senha`):
+
+```json
+{
+  "username": "user"
+}
+```
+
+Resposta (`POST /auth/admin/resetar-senha`):
+
+```json
+{
+  "username": "user",
+  "senhaTemporaria": "AbC93kLm2Q"
+}
+```
 
 ---
 
@@ -470,4 +512,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.5.1.0` - Cumprimento por fornecedor com alertas, harden de seguranca por perfis (`VIEWER/OPERATOR/ADMIN`) e checklist executavel para homologacao.
+`v0.5.2.0` - Fluxo de senha temporaria com reset por admin, troca obrigatoria de senha no login e atualizacao do front-temp com autenticao guiada por sessao.
