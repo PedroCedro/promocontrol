@@ -1,6 +1,7 @@
 package br.com.infocedro.promocontrol.infra.security;
 
 import br.com.infocedro.promocontrol.core.exception.UsuarioNaoEncontradoException;
+import br.com.infocedro.promocontrol.core.exception.UsuarioJaExisteException;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +76,34 @@ public class AuthUserService implements UserDetailsService {
         return temporaryPassword;
     }
 
+    public CreatedUser createUserByAdmin(String username, String perfil) {
+        if (users.containsKey(username)) {
+            throw new UsuarioJaExisteException();
+        }
+
+        RoleSetup roleSetup = resolveRoleSetup(perfil);
+        String temporaryPassword = generateTemporaryPassword(10);
+
+        ManagedUser newUser = new ManagedUser(
+                username,
+                roleSetup.roles(),
+                passwordEncoder.encode(temporaryPassword),
+                true);
+        ManagedUser previous = users.putIfAbsent(username, newUser);
+        if (previous != null) {
+            throw new UsuarioJaExisteException();
+        }
+
+        return new CreatedUser(username, roleSetup.perfil(), temporaryPassword);
+    }
+
+    public List<UserSummary> listUsers() {
+        return users.values().stream()
+                .map(this::toSummary)
+                .sorted((a, b) -> a.username().compareToIgnoreCase(b.username()))
+                .toList();
+    }
+
     private ManagedUser getRequiredUser(String username) {
         ManagedUser user = users.get(username);
         if (user == null) {
@@ -89,6 +118,33 @@ public class AuthUserService implements UserDetailsService {
                 List.copyOf(roles),
                 passwordEncoder.encode(rawPassword),
                 false));
+    }
+
+    private UserSummary toSummary(ManagedUser user) {
+        synchronized (user) {
+            return new UserSummary(
+                    user.username,
+                    resolvePrimaryPerfil(user.roles),
+                    user.mustChangePassword);
+        }
+    }
+
+    private RoleSetup resolveRoleSetup(String perfil) {
+        return switch (perfil) {
+            case "ADMIN" -> new RoleSetup("ADMIN", List.of("ADMIN", "OPERATOR", "VIEWER"));
+            case "OPERATOR" -> new RoleSetup("OPERATOR", List.of("OPERATOR", "VIEWER"));
+            default -> new RoleSetup("VIEWER", List.of("VIEWER"));
+        };
+    }
+
+    private String resolvePrimaryPerfil(List<String> roles) {
+        if (roles.contains("ADMIN")) {
+            return "ADMIN";
+        }
+        if (roles.contains("OPERATOR")) {
+            return "OPERATOR";
+        }
+        return "VIEWER";
     }
 
     private String generateTemporaryPassword(int length) {
@@ -116,5 +172,14 @@ public class AuthUserService implements UserDetailsService {
             this.encodedPassword = encodedPassword;
             this.mustChangePassword = mustChangePassword;
         }
+    }
+
+    private record RoleSetup(String perfil, List<String> roles) {
+    }
+
+    public record CreatedUser(String username, String perfil, String temporaryPassword) {
+    }
+
+    public record UserSummary(String username, String perfil, boolean mustChangePassword) {
     }
 }

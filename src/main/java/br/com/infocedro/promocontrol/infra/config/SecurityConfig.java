@@ -14,8 +14,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
@@ -59,6 +57,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/auth/alterar-senha")
                     .hasAnyRole("VIEWER", "OPERATOR", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/auth/admin/resetar-senha").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/auth/admin/usuarios").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/auth/admin/usuarios").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/movimentos/*/ajuste-horario").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/fornecedores/**", "/promotores/**", "/movimentos/**", "/dashboard/**")
                     .hasAnyRole("VIEWER", "OPERATOR", "ADMIN")
@@ -103,11 +103,6 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 
     private void writeSecurityError(

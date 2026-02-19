@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.5.3.0 - 2026-02-19
+
+### Added
+- Gestao administrativa de usuarios:
+  - `GET /auth/admin/usuarios`
+  - `POST /auth/admin/usuarios`
+- Front-temp com aba de `Usuarios` para cadastro/listagem por `ADMIN`.
+- Perfil lateral (`Meu Perfil`) com avatar local, dados basicos e navegação para tela de edicao.
+- Auto-refresh do front ao detectar novos movimentos no backend (polling silencioso).
+
+### Changed
+- Correcao de ciclo de beans de seguranca com extracao do `PasswordEncoder` para `CryptoConfig`.
+- Dashboard do front refinado para visual de planilha (foco em linhas/colunas essenciais e secoes recolgiveis).
+- Navegacao lateral reorganizada para reduzir ruido visual e melhorar ergonomia operacional.
+
 ## v0.5.2.0 - 2026-02-19
 
 ### Added

@@ -308,6 +308,8 @@ Observações:
 GET /auth/sessao
 POST /auth/alterar-senha
 POST /auth/admin/resetar-senha
+GET /auth/admin/usuarios
+POST /auth/admin/usuarios
 ```
 
 Body (`POST /auth/alterar-senha`):
@@ -331,6 +333,25 @@ Resposta (`POST /auth/admin/resetar-senha`):
 ```json
 {
   "username": "user",
+  "senhaTemporaria": "AbC93kLm2Q"
+}
+```
+
+Body (`POST /auth/admin/usuarios`):
+
+```json
+{
+  "username": "novo.usuario",
+  "perfil": "OPERATOR"
+}
+```
+
+Resposta (`POST /auth/admin/usuarios`):
+
+```json
+{
+  "username": "novo.usuario",
+  "perfil": "OPERATOR",
   "senhaTemporaria": "AbC93kLm2Q"
 }
 ```
@@ -512,4 +533,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.5.2.0` - Fluxo de senha temporaria com reset por admin, troca obrigatoria de senha no login e atualizacao do front-temp com autenticao guiada por sessao.
+`v0.5.3.0` - Gestao administrativa de usuarios, refinamento visual do front-temp em estilo planilha/ERP, perfil lateral e auto-refresh por deteccao de atualizacoes no backend.

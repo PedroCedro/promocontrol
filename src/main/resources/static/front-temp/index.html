@@ -10,8 +10,8 @@
   <section id="loginView" class="login-view">
     <article class="login-card">
       <h1>Entrar no PromoControl</h1>
-      <p>Use um usuario existente do backend (viewer, user ou admin).</p>
-      <div class="grid two">
+      <p>Painel operacional para fornecedores e promotores.</p>
+      <div class="grid one">
         <label>Usuario <input id="loginUsername" value="user" /></label>
         <label>Senha <input id="loginPassword" type="password" value="user123" /></label>
       </div>
@@ -22,7 +22,7 @@
       <section id="forceChangeBox" class="force-change-box is-hidden">
         <h2>Troca Obrigatoria de Senha</h2>
         <p>Voce entrou com senha temporaria. Defina uma nova senha para continuar.</p>
-        <div class="grid two">
+        <div class="grid one">
           <label>Nova senha <input id="newPassword" type="password" /></label>
           <label>Confirmar senha <input id="confirmPassword" type="password" /></label>
         </div>
@@ -34,209 +34,221 @@
   </section>
 
   <main id="appShell" class="app-shell is-hidden">
-    <header class="hero">
-      <div>
+    <aside class="side-nav">
+      <div class="brand-block">
         <p class="kicker">Homologacao</p>
-        <h1>PromoControl Operacao</h1>
-        <p>Painel principal com abas para cadastro e controle diario.</p>
+        <h1>PromoControl</h1>
+        <p>Operacao de loja com foco em rastreabilidade.</p>
       </div>
-      <div class="quick-status">
-        <span class="pill">Planilha viva</span>
-        <span class="pill">Fluxo auditavel</span>
-      </div>
-    </header>
-
-    <section class="topbar">
-      <label>Base URL <input id="baseUrl" readonly /></label>
-      <label>Usuario logado <input id="currentUser" readonly /></label>
-      <label>Perfil <input id="currentRole" readonly /></label>
-      <button id="btnRefresh">Sincronizar Dados</button>
-      <button id="btnLogout">Sair</button>
-    </section>
-
-    <nav class="tabs">
-      <button class="tab-btn is-active" data-tab="tab-painel">Painel</button>
-      <button class="tab-btn" data-tab="tab-fornecedores">Fornecedores</button>
-      <button class="tab-btn" data-tab="tab-promotores">Promotores</button>
-      <button class="tab-btn" data-tab="tab-controle">Controle</button>
-    </nav>
-
-    <section id="tab-painel" class="tab-panel is-active">
-      <article class="card">
-        <h2>Resumo Operacional</h2>
-        <div class="grid four">
-          <label>Data <input id="dashData" type="date" /></label>
-          <label>Fornecedor
-            <select id="dashFornecedorId"><option value="">Todos</option></select>
-          </label>
-          <label>Status
-            <select id="dashStatus">
-              <option value="">Todos</option>
-              <option value="ATIVO">ATIVO</option>
-              <option value="INATIVO">INATIVO</option>
-              <option value="BLOQUEADO">BLOQUEADO</option>
-            </select>
-          </label>
-          <div class="actions"><button id="btnRefreshDashboard">Atualizar Painel</button></div>
+      <section class="profile-card">
+        <h2><button id="btnOpenProfile" class="profile-link" type="button">Meu Perfil</button></h2>
+        <div class="profile-avatar-wrap">
+          <img id="profileAvatarPreview" class="profile-avatar is-hidden" alt="Avatar do usuario" />
+          <div id="profileAvatarFallback" class="profile-avatar-fallback">U</div>
         </div>
-        <div class="stats-row">
-          <label>Em loja agora <input id="dashCardEmLoja" readonly /></label>
-          <label>Entradas hoje <input id="dashCardEntradas" readonly /></label>
-          <label>Saidas hoje <input id="dashCardSaidas" readonly /></label>
-          <label>Ajustes hoje <input id="dashCardAjustes" readonly /></label>
-        </div>
-        <div class="table-wrap">
-          <table id="tblDashboardPrincipal">
-            <thead>
-              <tr>
-                <th>Promotor</th>
-                <th>Fornecedor</th>
-                <th>Entrada em</th>
-                <th>Usuario entrada</th>
-                <th>Saiu?</th>
-                <th>Saida em</th>
-                <th>Usuario saida</th>
-                <th>Liberado por</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </article>
-
-      <article class="card">
-        <h2>Cumprimento por Fornecedor</h2>
-        <div class="grid three">
-          <label>Data <input id="cumprimentoData" type="date" /></label>
-          <label>% minimo <input id="cumprimentoMinimo" type="number" value="80" min="1" max="100" /></label>
-          <div class="actions"><button id="btnRefreshCumprimento">Atualizar Cumprimento</button></div>
-        </div>
-        <div class="table-wrap">
-          <table id="tblCumprimento">
-            <thead>
-              <tr>
-                <th>Fornecedor</th>
-                <th>Previstas</th>
-                <th>Realizadas</th>
-                <th>% Cumprimento</th>
-                <th>Desvio</th>
-                <th>Alerta</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </article>
-    </section>
-
-    <section id="tab-fornecedores" class="tab-panel">
-      <article class="card">
-        <h2>Novo Fornecedor</h2>
-        <div class="grid three">
-          <label>Nome <input id="fNome" value="Fornecedor Temp" /></label>
-          <label>Ativo
-            <select id="fAtivo">
-              <option value="true">Sim</option>
-              <option value="false">Nao</option>
-            </select>
-          </label>
-          <div class="actions"><button id="btnCriarFornecedor">Cadastrar Fornecedor</button></div>
-        </div>
-      </article>
-    </section>
-
-    <section id="tab-promotores" class="tab-panel">
-      <article class="card">
-        <h2>Novo Promotor</h2>
-        <div class="grid four">
-          <label>Nome <input id="pNome" value="Promotor Temp" /></label>
-          <label>Telefone <input id="pTelefone" value="11999999999" /></label>
-          <label>Fornecedor <select id="pFornecedorId"></select></label>
-          <label>Status
-            <select id="pStatus">
-              <option>ATIVO</option>
-              <option>INATIVO</option>
-              <option>BLOQUEADO</option>
-            </select>
-          </label>
-        </div>
-        <div class="actions"><button id="btnCriarPromotor">Cadastrar Promotor</button></div>
-      </article>
-
-      <article class="card">
-        <h2>Promotores Cadastrados</h2>
-        <div class="grid two">
-          <label>Filtro Fornecedor <input id="filtroFornecedorPromotor" placeholder="Digite nome do fornecedor" /></label>
-          <div class="actions inline"><button id="btnFiltroPromotor">Filtrar</button></div>
-        </div>
-        <div class="table-wrap">
-          <table id="tblPromotores">
-            <thead>
-              <tr><th>ID</th><th>Nome</th><th>Fornecedor</th><th>Status</th><th>Telefone</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </article>
-    </section>
-
-    <section id="tab-controle" class="tab-panel">
-      <article class="card">
-        <h2>Controle de Entrada/Saida</h2>
-        <div class="grid three">
-          <label>Promotor <select id="movPromotor"></select></label>
-          <label>Responsavel <input id="movResponsavel" value="Operador" /></label>
-          <label>Liberado por (somente saida) <input id="movLiberadoPor" value="Gerente Loja" /></label>
-          <label>Observacao <input id="movObservacao" value="Registro manual" /></label>
-        </div>
+        <input id="baseUrl" type="hidden" />
+        <input id="currentUser" type="hidden" />
+        <input id="currentRole" type="hidden" />
+        <p id="profileUserName" class="profile-name">user</p>
+        <p id="profileRoleName" class="profile-role">OPERATOR</p>
         <div class="actions">
-          <button id="btnEntrada">Registrar Entrada</button>
-          <button id="btnSaida">Registrar Saida</button>
+          <button id="btnLogout">Sair</button>
         </div>
-      </article>
+      </section>
+      <nav class="tabs">
+        <button class="tab-btn is-active" data-tab="tab-dashboard">Dashboard</button>
+        <button class="tab-btn" data-tab="tab-fornecedores">Fornecedores</button>
+        <button class="tab-btn" data-tab="tab-promotores">Promotores</button>
+        <button id="tabUsersBtn" class="tab-btn is-hidden" data-tab="tab-usuarios">Usuarios</button>
+      </nav>
+    </aside>
 
-      <article id="adminAjusteCard" class="card">
-        <h2>Ajuste de Horario (Admin)</h2>
-        <div class="grid three">
-          <label>Movimento ID <input id="ajusteMovId" placeholder="UUID movimento" /></label>
-          <label>Nova DataHora <input id="ajusteDataHora" type="datetime-local" /></label>
-          <div></div>
-        </div>
-        <label>Motivo <input id="ajusteMotivo" value="Correcao operacional" /></label>
-        <div class="actions"><button id="btnAjustar">Aplicar Ajuste</button></div>
-      </article>
+    <section class="workspace">
+      <section class="panel-body">
+        <section id="tab-perfil" class="tab-panel">
+          <article class="card">
+            <h2>Ajustes de perfil</h2>
+            <div class="grid two">
+              <label>Nome completo <input id="profileFullName" placeholder="Seu nome" /></label>
+              <label>E-mail <input id="profileEmail" type="email" placeholder="voce@empresa.com" /></label>
+              <label>Telefone <input id="profilePhone" placeholder="(11) 99999-9999" /></label>
+              <label class="profile-upload">
+                Foto do perfil
+                <input id="profileAvatarInput" type="file" accept="image/*" />
+              </label>
+            </div>
+            <div class="actions">
+              <button id="btnSaveProfile">Salvar perfil</button>
+            </div>
+          </article>
+        </section>
 
-      <article id="adminResetCard" class="card">
-        <h2>Resetar Senha de Usuario (Admin)</h2>
-        <div class="grid three">
-          <label>Usuario <input id="resetUsername" placeholder="viewer, user ou admin" /></label>
-          <div class="actions"><button id="btnResetSenha">Resetar Senha</button></div>
-          <label>Senha temporaria (visivel uma vez)
-            <input id="resetTempPassword" readonly placeholder="sera exibida somente apos reset" />
-          </label>
-        </div>
-      </article>
+        <section id="tab-dashboard" class="tab-panel is-active">
+          <article class="card">
+            <h2>Movimento diario</h2>
+            <p class="section-note">Visual em planilha para acompanhamento de entradas e saidas.</p>
+            <div class="grid four">
+              <label>Data <input id="dashData" type="date" /></label>
+              <label>Fornecedor
+                <select id="dashFornecedorId"><option value="">Todos</option></select>
+              </label>
+              <label>Status
+                <select id="dashStatus">
+                  <option value="">Todos</option>
+                  <option value="ATIVO">ATIVO</option>
+                  <option value="INATIVO">INATIVO</option>
+                  <option value="BLOQUEADO">BLOQUEADO</option>
+                </select>
+              </label>
+              <div class="actions"><button id="btnRefreshDashboard">Atualizar planilha</button></div>
+            </div>
+            <div class="stats-row">
+              <label class="metric">Em loja agora <input id="dashCardEmLoja" readonly /></label>
+              <label class="metric">Entradas hoje <input id="dashCardEntradas" readonly /></label>
+              <label class="metric">Saidas hoje <input id="dashCardSaidas" readonly /></label>
+              <label class="metric">Ajustes hoje <input id="dashCardAjustes" readonly /></label>
+            </div>
+            <div class="table-wrap">
+              <table id="tblDashboardPrincipal">
+                <thead>
+                  <tr>
+                    <th>Promotor</th>
+                    <th>Fornecedor</th>
+                    <th>Entrada em</th>
+                    <th>Saiu?</th>
+                    <th>Saida em</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
 
-      <article class="card">
-        <h2>Historico de Movimentos</h2>
-        <div class="grid two">
-          <label>Filtro Promotor ID <input id="filtroPromotorMov" placeholder="UUID promotor" /></label>
-          <div class="actions inline"><button id="btnFiltroMov">Filtrar</button></div>
-        </div>
-        <div class="table-wrap">
-          <table id="tblMovimentos">
-            <thead>
-              <tr><th>ID</th><th>Promotor</th><th>Tipo</th><th>DataHora</th><th>Responsavel</th><th>Liberado por</th><th>Obs</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </article>
-    </section>
+          <details class="card card-collapsible">
+            <summary>Cumprimento por Fornecedor (opcional)</summary>
+            <div class="grid three">
+              <label>Data <input id="cumprimentoData" type="date" /></label>
+              <label>% minimo <input id="cumprimentoMinimo" type="number" value="80" min="1" max="100" /></label>
+              <div class="actions"><button id="btnRefreshCumprimento">Atualizar Cumprimento</button></div>
+            </div>
+            <div class="table-wrap">
+              <table id="tblCumprimento">
+                <thead>
+                  <tr>
+                    <th>Fornecedor</th>
+                    <th>Previstas</th>
+                    <th>Realizadas</th>
+                    <th>% Cumprimento</th>
+                    <th>Desvio</th>
+                    <th>Alerta</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </details>
+        </section>
 
-    <section class="card">
-      <h2>Log de Integracao</h2>
-      <pre id="log"></pre>
+        <section id="tab-fornecedores" class="tab-panel">
+          <article class="card">
+            <h2>Cadastro de Fornecedores</h2>
+            <div class="grid three">
+              <label>Nome <input id="fNome" value="Fornecedor Temp" /></label>
+              <label>Ativo
+                <select id="fAtivo">
+                  <option value="true">Sim</option>
+                  <option value="false">Nao</option>
+                </select>
+              </label>
+              <div class="actions"><button id="btnCriarFornecedor">Cadastrar Fornecedor</button></div>
+            </div>
+          </article>
+        </section>
+
+        <section id="tab-promotores" class="tab-panel">
+          <details class="card card-collapsible">
+            <summary>Novo Promotor</summary>
+            <div class="grid four">
+              <label>Nome <input id="pNome" value="Promotor Temp" /></label>
+              <label>Telefone <input id="pTelefone" value="11999999999" /></label>
+              <label>Fornecedor <select id="pFornecedorId"></select></label>
+              <label>Status
+                <select id="pStatus">
+                  <option>ATIVO</option>
+                  <option>INATIVO</option>
+                  <option>BLOQUEADO</option>
+                </select>
+              </label>
+            </div>
+            <div class="actions"><button id="btnCriarPromotor">Cadastrar Promotor</button></div>
+          </details>
+
+          <article class="card">
+            <h2>Promotores Cadastrados</h2>
+            <div class="grid two">
+              <label>Filtro por Fornecedor <input id="filtroFornecedorPromotor" placeholder="Digite nome do fornecedor" /></label>
+              <div class="actions inline"><button id="btnFiltroPromotor">Filtrar</button></div>
+            </div>
+            <div class="table-wrap">
+              <table id="tblPromotores">
+                <thead>
+                  <tr><th>ID</th><th>Nome</th><th>Fornecedor</th><th>Status</th><th>Telefone</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="tab-usuarios" class="tab-panel">
+          <details id="adminUsersCard" class="card card-collapsible">
+            <summary>Cadastro de Usuarios (Admin)</summary>
+            <div class="grid three">
+              <label>Usuario <input id="uUsername" placeholder="novo.usuario" /></label>
+              <label>Perfil
+                <select id="uPerfil">
+                  <option value="VIEWER">VIEWER</option>
+                  <option value="OPERATOR">OPERATOR</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+              </label>
+              <div class="actions"><button id="btnCriarUsuario">Cadastrar Usuario</button></div>
+            </div>
+            <label>Senha temporaria gerada (visivel uma vez)
+              <input id="uTempPassword" readonly placeholder="sera exibida ao cadastrar/resetar" />
+            </label>
+          </details>
+
+          <details id="adminResetCard" class="card card-collapsible">
+            <summary>Resetar Senha de Usuario (Admin)</summary>
+            <div class="grid three">
+              <label>Usuario <input id="resetUsername" placeholder="viewer, user ou admin" /></label>
+              <div class="actions"><button id="btnResetSenha">Resetar Senha</button></div>
+              <label>Senha temporaria (visivel uma vez)
+                <input id="resetTempPassword" readonly placeholder="sera exibida somente apos reset" />
+              </label>
+            </div>
+          </details>
+
+          <article id="adminUsersListCard" class="card">
+            <h2>Usuarios Cadastrados</h2>
+            <div class="actions"><button id="btnRefreshUsuarios">Atualizar Usuarios</button></div>
+            <div class="table-wrap">
+              <table id="tblUsuarios">
+                <thead>
+                  <tr><th>Usuario</th><th>Perfil</th><th>Troca Senha Pendente</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <details class="card card-collapsible">
+          <summary>Log de Integracao</summary>
+          <pre id="log"></pre>
+        </details>
+      </section>
     </section>
   </main>
 

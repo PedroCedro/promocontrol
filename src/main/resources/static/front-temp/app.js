@@ -1,12 +1,23 @@
 const state = {
   fornecedores: [],
   promotores: [],
-  movimentos: [],
+  usuarios: [],
   dashboard: null,
   cumprimento: null,
   auth: null,
-  pendingAuth: null
+  pendingAuth: null,
+  profile: {
+    fullName: "",
+    email: "",
+    phone: "",
+    avatarDataUrl: ""
+  },
+  autoSyncIntervalId: null,
+  autoSyncSignature: null,
+  autoSyncRunning: false
 };
+
+const AUTO_SYNC_INTERVAL_MS = 8000;
 
 const el = (id) => document.getElementById(id);
 
@@ -52,16 +63,26 @@ function hideForceChangeBox() {
 
 function setupTabs() {
   const tabs = document.querySelectorAll(".tab-btn");
-  const panels = document.querySelectorAll(".tab-panel");
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
-      tabs.forEach((t) => t.classList.remove("is-active"));
-      panels.forEach((p) => p.classList.remove("is-active"));
-      tab.classList.add("is-active");
-      const panel = document.getElementById(tab.dataset.tab);
-      if (panel) panel.classList.add("is-active");
+      activateTab(tab.dataset.tab);
     });
   });
+}
+
+function activateTab(tabId) {
+  const tabs = document.querySelectorAll(".tab-btn");
+  const panels = document.querySelectorAll(".tab-panel");
+  tabs.forEach((t) => t.classList.remove("is-active"));
+  panels.forEach((p) => p.classList.remove("is-active"));
+
+  const targetButton = Array.from(tabs).find((t) => t.dataset.tab === tabId);
+  if (targetButton) {
+    targetButton.classList.add("is-active");
+  }
+
+  const panel = document.getElementById(tabId);
+  if (panel) panel.classList.add("is-active");
 }
 
 function initDashboardDefaults() {
@@ -76,6 +97,7 @@ function initDashboardDefaults() {
 function loadSavedLogin() {
   const savedUsername = localStorage.getItem("pc_username");
   if (savedUsername) el("loginUsername").value = savedUsername;
+  loadProfileSettings();
 }
 
 function setLoginMessage(message) {
@@ -86,12 +108,85 @@ function saveLogin(username) {
   localStorage.setItem("pc_username", username);
 }
 
+function loadProfileSettings() {
+  state.profile = {
+    fullName: localStorage.getItem("pc_profile_full_name") || "",
+    email: localStorage.getItem("pc_profile_email") || "",
+    phone: localStorage.getItem("pc_profile_phone") || "",
+    avatarDataUrl: localStorage.getItem("pc_profile_avatar") || ""
+  };
+  applyProfileToUI();
+}
+
+function saveProfileSettings() {
+  localStorage.setItem("pc_profile_full_name", state.profile.fullName || "");
+  localStorage.setItem("pc_profile_email", state.profile.email || "");
+  localStorage.setItem("pc_profile_phone", state.profile.phone || "");
+  localStorage.setItem("pc_profile_avatar", state.profile.avatarDataUrl || "");
+}
+
 function applySessionToUI() {
   el("baseUrl").value = state.auth.baseUrl;
   el("currentUser").value = state.auth.username;
   el("currentRole").value = state.auth.role;
-  el("adminAjusteCard").classList.toggle("is-hidden", !state.auth.isAdmin);
+  el("profileUserName").textContent = state.auth.username;
+  el("profileRoleName").textContent = state.auth.role;
+  updateProfileInitials(state.auth.username);
+  applyProfileToUI();
+  el("tabUsersBtn").classList.toggle("is-hidden", !state.auth.isAdmin);
+  el("adminUsersCard").classList.toggle("is-hidden", !state.auth.isAdmin);
   el("adminResetCard").classList.toggle("is-hidden", !state.auth.isAdmin);
+  el("adminUsersListCard").classList.toggle("is-hidden", !state.auth.isAdmin);
+}
+
+function updateProfileInitials(username) {
+  const safe = (username || "U").trim();
+  const initials = safe.length >= 2 ? safe.slice(0, 2).toUpperCase() : safe.toUpperCase();
+  el("profileAvatarFallback").textContent = initials;
+}
+
+function bindProfileAvatar() {
+  const input = el("profileAvatarInput");
+  input.addEventListener("change", () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      state.profile.avatarDataUrl = String(reader.result || "");
+      saveProfileSettings();
+      applyProfileToUI();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function applyProfileToUI() {
+  if (el("profileFullName")) el("profileFullName").value = state.profile.fullName || "";
+  if (el("profileEmail")) el("profileEmail").value = state.profile.email || "";
+  if (el("profilePhone")) el("profilePhone").value = state.profile.phone || "";
+
+  if (state.profile.avatarDataUrl) {
+    el("profileAvatarPreview").src = state.profile.avatarDataUrl;
+    el("profileAvatarPreview").classList.remove("is-hidden");
+    el("profileAvatarFallback").classList.add("is-hidden");
+  } else {
+    el("profileAvatarPreview").src = "";
+    el("profileAvatarPreview").classList.add("is-hidden");
+    el("profileAvatarFallback").classList.remove("is-hidden");
+  }
+}
+
+function saveProfileFromForm() {
+  state.profile.fullName = el("profileFullName").value.trim();
+  state.profile.email = el("profileEmail").value.trim();
+  state.profile.phone = el("profilePhone").value.trim();
+  saveProfileSettings();
+  applyProfileToUI();
+  log("Perfil salvo localmente", {
+    fullName: state.profile.fullName,
+    email: state.profile.email
+  });
 }
 
 async function rawRequest(path, method, auth, body = null) {
@@ -124,6 +219,19 @@ async function apiRequest(path, method = "GET", body = null, auth = null) {
   return data;
 }
 
+async function silentApiRequest(path, method = "GET", body = null, auth = null) {
+  const creds = auth || state.auth;
+  if (!creds) {
+    throw new Error("Sessao nao autenticada");
+  }
+
+  const { response, data } = await rawRequest(path, method, creds, body);
+  if (!response.ok) {
+    throw new Error(`${response.status} ${response.statusText}`);
+  }
+  return data;
+}
+
 async function loadSession(auth) {
   const sessionData = await apiRequest("/auth/sessao", "GET", null, auth);
   return {
@@ -149,19 +257,17 @@ function renderPromotores(list) {
   });
 }
 
-function renderMovimentos(list) {
-  const tbody = el("tblMovimentos").querySelector("tbody");
+function renderUsuarios(list) {
+  const table = el("tblUsuarios");
+  if (!table) return;
+  const tbody = table.querySelector("tbody");
   tbody.innerHTML = "";
-  list.forEach((m) => {
+  list.forEach((u) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${m.id}</td>
-      <td>${m.promotorId ?? ""}</td>
-      <td>${m.tipo ?? ""}</td>
-      <td>${m.dataHora ?? ""}</td>
-      <td>${m.responsavel ?? ""}</td>
-      <td>${m.liberadoPor ?? ""}</td>
-      <td>${m.observacao ?? ""}</td>`;
+      <td>${u.username ?? ""}</td>
+      <td>${u.perfil ?? ""}</td>
+      <td>${u.precisaTrocarSenha ? "SIM" : "NAO"}</td>`;
     tbody.appendChild(tr);
   });
 }
@@ -180,11 +286,8 @@ function renderDashboard(resumo) {
       <td>${linha.promotorNome ?? ""}</td>
       <td>${linha.fornecedorNome ?? ""}</td>
       <td>${linha.entradaEm ?? ""}</td>
-      <td>${linha.usuarioEntrada ?? ""}</td>
       <td>${linha.saiu ? "SIM" : "NAO"}</td>
-      <td>${linha.saidaEm ?? ""}</td>
-      <td>${linha.usuarioSaida ?? ""}</td>
-      <td>${linha.liberadoPor ?? ""}</td>`;
+      <td>${linha.saidaEm ?? ""}</td>`;
     tr.style.backgroundColor = linha.saiu ? "#f3f4f6" : "#dcfce7";
     tbody.appendChild(tr);
   });
@@ -204,17 +307,6 @@ function renderCumprimento(resumo) {
       <td>${item.alerta ? "SIM" : "NAO"}</td>`;
     tr.style.backgroundColor = item.alerta ? "#fee2e2" : "#ecfeff";
     tbody.appendChild(tr);
-  });
-}
-
-function syncPromotorSelect() {
-  const select = el("movPromotor");
-  select.innerHTML = "";
-  state.promotores.forEach((p) => {
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = `${p.nome} (${p.id.slice(0, 8)}...)`;
-    select.appendChild(opt);
   });
 }
 
@@ -273,13 +365,74 @@ async function refreshCumprimento() {
 async function refreshData() {
   state.fornecedores = await apiRequest("/fornecedores");
   state.promotores = await apiRequest("/promotores");
-  state.movimentos = await apiRequest("/movimentos");
   renderPromotores(state.promotores);
-  renderMovimentos(state.movimentos);
   syncFornecedorSelect();
-  syncPromotorSelect();
+  if (state.auth?.isAdmin) {
+    await refreshUsuarios();
+  } else {
+    state.usuarios = [];
+    renderUsuarios([]);
+  }
   await refreshDashboard();
   await refreshCumprimento();
+}
+
+function computeMovimentosSignature(list) {
+  if (!Array.isArray(list) || list.length === 0) {
+    return "0|none";
+  }
+
+  const sorted = [...list].sort((a, b) => String(a.dataHora ?? "").localeCompare(String(b.dataHora ?? "")));
+  const latest = sorted[sorted.length - 1];
+  return `${list.length}|${latest.id ?? "none"}|${latest.dataHora ?? "none"}|${latest.tipo ?? "none"}`;
+}
+
+async function checkBackendUpdates() {
+  if (!state.auth || state.autoSyncRunning) return;
+  state.autoSyncRunning = true;
+
+  try {
+    const movimentos = await silentApiRequest("/movimentos");
+    const signature = computeMovimentosSignature(movimentos);
+
+    if (state.autoSyncSignature === null) {
+      state.autoSyncSignature = signature;
+      return;
+    }
+
+    if (signature !== state.autoSyncSignature) {
+      state.autoSyncSignature = signature;
+      await refreshData();
+      log("Atualizacao detectada no backend. Tela sincronizada automaticamente.");
+    }
+  } catch (e) {
+    log("Falha no monitoramento automatico de atualizacoes", { error: e.message });
+  } finally {
+    state.autoSyncRunning = false;
+  }
+}
+
+function startAutoSync() {
+  stopAutoSync();
+  state.autoSyncSignature = null;
+  state.autoSyncIntervalId = setInterval(() => {
+    checkBackendUpdates().catch(() => {});
+  }, AUTO_SYNC_INTERVAL_MS);
+}
+
+function stopAutoSync() {
+  if (state.autoSyncIntervalId) {
+    clearInterval(state.autoSyncIntervalId);
+    state.autoSyncIntervalId = null;
+  }
+  state.autoSyncSignature = null;
+  state.autoSyncRunning = false;
+}
+
+async function refreshUsuarios() {
+  if (!state.auth?.isAdmin) return;
+  state.usuarios = await apiRequest("/auth/admin/usuarios");
+  renderUsuarios(state.usuarios);
 }
 
 async function criarFornecedor() {
@@ -300,35 +453,6 @@ async function criarPromotor() {
     fotoPath: ""
   };
   await apiRequest("/promotores", "POST", payload);
-  await refreshData();
-}
-
-async function registrarMovimento(tipo) {
-  const path = tipo === "ENTRADA" ? "/movimentos/entrada" : "/movimentos/saida";
-  const payload = {
-    promotorId: el("movPromotor").value,
-    responsavel: el("movResponsavel").value.trim(),
-    liberadoPor: tipo === "SAIDA" ? el("movLiberadoPor").value.trim() : null,
-    observacao: el("movObservacao").value.trim()
-  };
-  await apiRequest(path, "POST", payload);
-  await refreshData();
-}
-
-async function ajustarHorario() {
-  if (!state.auth?.isAdmin) {
-    throw new Error("Apenas ADMIN pode ajustar horario");
-  }
-
-  const movId = el("ajusteMovId").value.trim();
-  const novaDataHora = el("ajusteDataHora").value;
-  const motivo = el("ajusteMotivo").value.trim();
-  if (!movId || !novaDataHora || !motivo) {
-    throw new Error("Informe movimento, nova data/hora e motivo");
-  }
-
-  const payload = { novaDataHora, motivo };
-  await apiRequest(`/movimentos/${movId}/ajuste-horario`, "PATCH", payload);
   await refreshData();
 }
 
@@ -362,6 +486,7 @@ async function completeLogin(fullSession) {
   applySessionToUI();
   showAppView();
   await refreshData();
+  startAutoSync();
   log("Login efetuado", { usuario: fullSession.username, perfil: fullSession.role });
 }
 
@@ -404,10 +529,31 @@ async function resetarSenhaUsuario() {
 
   const response = await apiRequest("/auth/admin/resetar-senha", "POST", { username });
   el("resetTempPassword").value = response.senhaTemporaria ?? "";
+  el("uTempPassword").value = response.senhaTemporaria ?? "";
   log("Senha resetada por admin", { username: response.username });
 }
 
+async function criarUsuario() {
+  if (!state.auth?.isAdmin) {
+    throw new Error("Apenas ADMIN pode cadastrar usuario");
+  }
+
+  const username = el("uUsername").value.trim();
+  const perfil = el("uPerfil").value;
+  if (!username) {
+    throw new Error("Informe o username");
+  }
+
+  const response = await apiRequest("/auth/admin/usuarios", "POST", { username, perfil });
+  el("uTempPassword").value = response.senhaTemporaria ?? "";
+  el("resetTempPassword").value = response.senhaTemporaria ?? "";
+  el("uUsername").value = "";
+  await refreshUsuarios();
+  log("Usuario criado por admin", { username: response.username, perfil: response.perfil });
+}
+
 function logout() {
+  stopAutoSync();
   state.auth = null;
   state.pendingAuth = null;
   showLoginView();
@@ -416,11 +562,17 @@ function logout() {
   el("currentRole").value = "";
   el("baseUrl").value = "";
   el("loginPassword").value = "";
+  el("profileUserName").textContent = "user";
+  el("profileRoleName").textContent = "OPERATOR";
   el("resetTempPassword").value = "";
+  el("uTempPassword").value = "";
+  updateProfileInitials("U");
+  applyProfileToUI();
   setLoginMessage("");
 }
 
 function bindActions() {
+  el("btnOpenProfile").addEventListener("click", () => activateTab("tab-perfil"));
   el("btnLogin").addEventListener("click", () => {
     login().catch((e) => {
       setLoginMessage(`Falha no login: ${e.message}`);
@@ -435,15 +587,14 @@ function bindActions() {
   });
 
   el("btnLogout").addEventListener("click", logout);
-  el("btnRefresh").addEventListener("click", () => refreshData().catch((e) => log("Falha ao atualizar", { error: e.message })));
   el("btnRefreshDashboard").addEventListener("click", () => refreshDashboard().catch((e) => log("Falha dashboard", { error: e.message })));
   el("btnRefreshCumprimento").addEventListener("click", () => refreshCumprimento().catch((e) => log("Falha cumprimento", { error: e.message })));
+  el("btnRefreshUsuarios").addEventListener("click", () => refreshUsuarios().catch((e) => log("Falha usuarios", { error: e.message })));
   el("btnCriarFornecedor").addEventListener("click", () => criarFornecedor().catch((e) => log("Falha ao criar fornecedor", { error: e.message })));
   el("btnCriarPromotor").addEventListener("click", () => criarPromotor().catch((e) => log("Falha ao criar", { error: e.message })));
-  el("btnEntrada").addEventListener("click", () => registrarMovimento("ENTRADA").catch((e) => log("Falha entrada", { error: e.message })));
-  el("btnSaida").addEventListener("click", () => registrarMovimento("SAIDA").catch((e) => log("Falha saida", { error: e.message })));
-  el("btnAjustar").addEventListener("click", () => ajustarHorario().catch((e) => log("Falha ajuste", { error: e.message })));
+  el("btnCriarUsuario").addEventListener("click", () => criarUsuario().catch((e) => log("Falha ao criar usuario", { error: e.message })));
   el("btnResetSenha").addEventListener("click", () => resetarSenhaUsuario().catch((e) => log("Falha reset de senha", { error: e.message })));
+  el("btnSaveProfile").addEventListener("click", saveProfileFromForm);
 
   el("btnFiltroPromotor").addEventListener("click", () => {
     const fornecedor = el("filtroFornecedorPromotor").value.trim().toLowerCase();
@@ -451,14 +602,10 @@ function bindActions() {
     renderPromotores(state.promotores.filter((p) => (p.fornecedorNome ?? "").toLowerCase().includes(fornecedor)));
   });
 
-  el("btnFiltroMov").addEventListener("click", () => {
-    const promotorId = el("filtroPromotorMov").value.trim();
-    if (!promotorId) return renderMovimentos(state.movimentos);
-    renderMovimentos(state.movimentos.filter((m) => String(m.promotorId) === promotorId));
-  });
 }
 
 bindActions();
+bindProfileAvatar();
 setupTabs();
 initDashboardDefaults();
 loadSavedLogin();
