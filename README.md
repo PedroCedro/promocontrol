@@ -540,4 +540,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.5.6.0` - Persistencia de usuarios no banco (fim do armazenamento em memoria para autenticacao), mantendo criacao/reset/troca obrigatoria de senha entre reinicios.
+`v0.5.6.1` - Ajustes de UX no login do front-temp: placeholders claros, sem preenchimento automatico e validacao explicita para usuario/senha obrigatorios.

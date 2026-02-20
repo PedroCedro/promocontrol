@@ -92,8 +92,6 @@ function initDashboardDefaults() {
 }
 
 function loadSavedLogin() {
-  const savedUsername = localStorage.getItem("pc_username");
-  if (savedUsername) el("loginUsername").value = savedUsername;
   loadProfileSettings();
 }
 
@@ -710,7 +708,7 @@ async function login() {
   const username = el("loginUsername").value.trim();
   const password = el("loginPassword").value;
   if (!username || !password) {
-    throw new Error("Preencha usuario e senha");
+    throw new Error("Digite Usuário e Senha");
   }
 
   const session = { baseUrl, username, password, role: "", isAdmin: false };
@@ -829,6 +827,10 @@ function getRoleDisplayName(role) {
 function bindActions() {
   const triggerLogin = () => {
     login().catch((e) => {
+      if (e.message === "Digite Usuário e Senha") {
+        setLoginMessage(e.message);
+        return;
+      }
       setLoginMessage(`Falha no login: ${e.message}`);
       log("Falha no login", { error: e.message });
     });

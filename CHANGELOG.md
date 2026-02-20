@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.6.1 - 2026-02-20
+
+### Changed
+- Tela de login do front-temp ajustada para usar placeholders em vez de valores pre-preenchidos.
+- Validacao de login aprimorada: ao tentar entrar sem usuario/senha, mensagem explicita `Digite Usuário e Senha`.
+- Removido preenchimento automatico de usuario salvo no campo de login para reduzir tentativa involuntaria com credenciais antigas.
+
 ## v0.5.6.0 - 2026-02-20
 
 ### Added
