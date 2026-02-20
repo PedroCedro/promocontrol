@@ -87,7 +87,7 @@ body {
 
 .side-nav {
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto 1fr auto;
   gap: 14px;
   padding: 16px;
   border-radius: 18px;
@@ -122,6 +122,14 @@ body {
   align-content: start;
 }
 
+.side-nav-footer {
+  align-self: end;
+}
+
+.side-nav-footer button {
+  width: 100%;
+}
+
 .tab-btn {
   text-align: left;
   border: 1px solid rgba(255, 255, 255, 0.24);
@@ -133,8 +141,6 @@ body {
   cursor: pointer;
   transition: transform 0.15s, background 0.15s, border-color 0.15s;
 }
-
-.tabs .tab-btn:nth-child(1) { background: rgba(255, 255, 255, 0.2); }
 
 .tab-btn:hover {
   background: rgba(255, 255, 255, 0.2);
@@ -157,6 +163,7 @@ body {
 .panel-body {
   display: grid;
   gap: 12px;
+  align-content: start;
 }
 
 .profile-card {
@@ -199,14 +206,6 @@ body {
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18);
 }
 
-.profile-card .actions {
-  margin-top: 4px;
-}
-
-.profile-card .actions button {
-  flex: 1 1 auto;
-}
-
 .profile-avatar-wrap {
   display: grid;
   place-items: center;
@@ -247,15 +246,17 @@ body {
   margin: 0;
   text-align: center;
   color: #ffffff;
-  font-weight: 700;
-  font-size: 1rem;
+  font-weight: 800;
+  font-size: 1.18rem;
+  line-height: 1.2;
 }
 
 .profile-role {
   margin: -2px 0 4px;
   text-align: center;
-  color: #dce7ff;
-  font-size: 0.8rem;
+  color: rgba(220, 231, 255, 0.85);
+  font-size: 0.66rem;
+  font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -263,6 +264,7 @@ body {
 .tab-panel {
   display: none;
   gap: 12px;
+  align-content: start;
 }
 
 .tab-panel.is-active {
@@ -275,6 +277,31 @@ body {
   border-radius: 16px;
   padding: 14px;
   box-shadow: 0 8px 20px rgba(45, 68, 140, 0.08);
+}
+
+.card-compact {
+  padding: 10px 12px 18px;
+}
+
+.card-compact h2 {
+  margin-bottom: 8px;
+}
+
+.card-compact .grid {
+  gap: 8px;
+}
+
+.card-compact label {
+  gap: 4px;
+}
+
+.card-compact input,
+.card-compact select {
+  padding: 7px 9px;
+}
+
+.card-compact .actions {
+  margin-top: 6px;
 }
 
 .card h2 {
@@ -343,11 +370,11 @@ label {
   color: var(--muted);
 }
 
-input, select, button {
+input, select, textarea, button {
   font: inherit;
 }
 
-input, select {
+input, select, textarea {
   width: 100%;
   border: 1px solid #d7defc;
   border-radius: 10px;
@@ -356,10 +383,31 @@ input, select {
   padding: 9px 10px;
 }
 
-input:focus, select:focus {
+input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: #7592f8;
   box-shadow: 0 0 0 3px rgba(73, 114, 241, 0.18);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #a8b2c9;
+}
+
+#mFornecedorNome[readonly] {
+  background: #eef1f7;
+  border-color: #cfd7ea;
+  color: #5e6882;
+  cursor: not-allowed;
+}
+
+.obs-field {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.operacao-observacao {
+  grid-column: 1 / -1;
 }
 
 button {
@@ -415,8 +463,40 @@ th, td {
   white-space: nowrap;
 }
 
+#tblDashboardPrincipal th,
+#tblDashboardPrincipal td,
+#tblOperacaoDia th,
+#tblOperacaoDia td {
+  border: 1px solid #d4dcf5;
+  text-align: center;
+}
+
 tr:hover td {
   background: #f6f8ff;
+}
+
+.detail-toggle {
+  min-width: 34px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: linear-gradient(120deg, #4f7cf1, #6d91fa);
+}
+
+.dashboard-detail-row td {
+  background: #f8faff;
+  white-space: normal;
+}
+
+.dashboard-detail-content {
+  display: grid;
+  gap: 4px;
+  color: #465276;
+  font-size: 0.8rem;
+}
+
+.dashboard-detail-content span {
+  color: #2f3e74;
+  font-weight: 600;
 }
 
 #log {
@@ -436,6 +516,31 @@ tr:hover td {
   margin: 0 0 8px;
   color: #da4d33;
   font-size: 0.85rem;
+}
+
+.form-message {
+  min-height: 1.2rem;
+  margin: 8px 0 0;
+  color: #30407f;
+  font-size: 0.84rem;
+}
+
+.btn-entry {
+  min-width: 180px;
+  background: linear-gradient(120deg, #3c8f6f, #56a987);
+}
+
+.btn-entry:hover {
+  background: linear-gradient(120deg, #337a60, #4a9578);
+}
+
+.btn-exit {
+  min-width: 180px;
+  background: linear-gradient(120deg, #b45454, #cb6a6a);
+}
+
+.btn-exit:hover {
+  background: linear-gradient(120deg, #9f4a4a, #b95f5f);
 }
 
 @media (max-width: 1100px) {

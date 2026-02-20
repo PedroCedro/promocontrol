@@ -51,16 +51,18 @@
         <input id="currentRole" type="hidden" />
         <p id="profileUserName" class="profile-name">user</p>
         <p id="profileRoleName" class="profile-role">OPERATOR</p>
-        <div class="actions">
-          <button id="btnLogout">Sair</button>
-        </div>
       </section>
       <nav class="tabs">
-        <button class="tab-btn is-active" data-tab="tab-dashboard">Dashboard</button>
+        <button class="tab-btn is-active" data-tab="tab-dashboard">Painel</button>
+        <button class="tab-btn" data-tab="tab-movimentos">Operação</button>
         <button class="tab-btn" data-tab="tab-fornecedores">Fornecedores</button>
         <button class="tab-btn" data-tab="tab-promotores">Promotores</button>
         <button id="tabUsersBtn" class="tab-btn is-hidden" data-tab="tab-usuarios">Usuarios</button>
+        <button id="tabIntegracaoBtn" class="tab-btn is-hidden" data-tab="tab-integracao">Logs</button>
       </nav>
+      <div class="side-nav-footer">
+        <button id="btnLogout">Sair</button>
+      </div>
     </aside>
 
     <section class="workspace">
@@ -115,8 +117,11 @@
                     <th>Promotor</th>
                     <th>Fornecedor</th>
                     <th>Entrada em</th>
-                    <th>Saiu?</th>
+                    <th>Usuário Entrada</th>
                     <th>Saida em</th>
+                    <th>Usuário Saida</th>
+                    <th>Liberação</th>
+                    <th>Detalhes</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -124,36 +129,60 @@
             </div>
           </article>
 
-          <details class="card card-collapsible">
-            <summary>Cumprimento por Fornecedor (opcional)</summary>
-            <div class="grid three">
-              <label>Data <input id="cumprimentoData" type="date" /></label>
-              <label>% minimo <input id="cumprimentoMinimo" type="number" value="80" min="1" max="100" /></label>
-              <div class="actions"><button id="btnRefreshCumprimento">Atualizar Cumprimento</button></div>
+        </section>
+
+        <section id="tab-movimentos" class="tab-panel">
+          <article class="card">
+            <h2>Operação de Entrada e Saída</h2>
+            <p class="section-note">Operação rápida para registrar movimentação do promotor.</p>
+            <div class="grid two operacao-grid">
+              <label>Promotor (somente ATIVO)
+                <select id="mPromotorId"><option value="">Selecione</option></select>
+              </label>
+              <label>Fornecedor
+                <input id="mFornecedorNome" readonly />
+              </label>
+              <label>Liberado por (obrigatorio na saida)
+                <input id="mLiberadoPor" placeholder="Nome de quem autorizou" />
+              </label>
+              <label class="operacao-observacao">Observacao
+                <input id="mObservacao" placeholder="Observacao opcional" />
+              </label>
             </div>
+            <p id="movMessage" class="form-message"></p>
+            <div class="actions">
+              <button id="btnRegistrarEntrada" class="btn-entry">Entrada</button>
+              <button id="btnRegistrarSaida" class="btn-exit">Saida</button>
+            </div>
+          </article>
+
+          <article class="card">
+            <h2>Acompanhamento do Dia</h2>
             <div class="table-wrap">
-              <table id="tblCumprimento">
+              <table id="tblOperacaoDia">
                 <thead>
                   <tr>
+                    <th>Promotor</th>
                     <th>Fornecedor</th>
-                    <th>Previstas</th>
-                    <th>Realizadas</th>
-                    <th>% Cumprimento</th>
-                    <th>Desvio</th>
-                    <th>Alerta</th>
+                    <th>Entrada em</th>
+                    <th>Usuário Entrada</th>
+                    <th>Saida em</th>
+                    <th>Usuário Saída</th>
+                    <th>Liberação</th>
+                    <th>Detalhes</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
               </table>
             </div>
-          </details>
+          </article>
         </section>
 
         <section id="tab-fornecedores" class="tab-panel">
           <article class="card">
             <h2>Cadastro de Fornecedores</h2>
             <div class="grid three">
-              <label>Nome <input id="fNome" value="Fornecedor Temp" /></label>
+              <label>Nome <input id="fNome" placeholder="Digite o nome do fornecedor" /></label>
               <label>Ativo
                 <select id="fAtivo">
                   <option value="true">Sim</option>
@@ -163,15 +192,29 @@
               <div class="actions"><button id="btnCriarFornecedor">Cadastrar Fornecedor</button></div>
             </div>
           </article>
+
+          <article class="card">
+            <h2>Fornecedores Cadastrados</h2>
+            <div class="table-wrap">
+              <table id="tblFornecedores">
+                <thead>
+                  <tr><th>ID</th><th>Nome</th><th>Ativo</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
         </section>
 
         <section id="tab-promotores" class="tab-panel">
-          <details class="card card-collapsible">
-            <summary>Novo Promotor</summary>
+          <article class="card card-compact">
+            <h2>Novo Promotor</h2>
             <div class="grid four">
-              <label>Nome <input id="pNome" value="Promotor Temp" /></label>
-              <label>Telefone <input id="pTelefone" value="11999999999" /></label>
-              <label>Fornecedor <select id="pFornecedorId"></select></label>
+              <label>Nome <input id="pNome" placeholder="Digite o nome do promotor" /></label>
+              <label>Telefone <input id="pTelefone" placeholder="(11) 99999-9999" /></label>
+              <label>Fornecedor
+                <select id="pFornecedorId"></select>
+              </label>
               <label>Status
                 <select id="pStatus">
                   <option>ATIVO</option>
@@ -181,7 +224,7 @@
               </label>
             </div>
             <div class="actions"><button id="btnCriarPromotor">Cadastrar Promotor</button></div>
-          </details>
+          </article>
 
           <article class="card">
             <h2>Promotores Cadastrados</h2>
@@ -244,10 +287,12 @@
           </article>
         </section>
 
-        <details class="card card-collapsible">
-          <summary>Log de Integracao</summary>
-          <pre id="log"></pre>
-        </details>
+        <section id="tab-integracao" class="tab-panel">
+          <article class="card">
+            <h2>Logs de Integracao</h2>
+            <pre id="log"></pre>
+          </article>
+        </section>
       </section>
     </section>
   </main>

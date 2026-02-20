@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.5.4.0 - 2026-02-20
+
+### Added
+- Aba `Operação` no front-temp para registro direto de `Entrada` e `Saida`.
+- Tabela `Acompanhamento do Dia` na aba Operação com dados de usuario/liberacao e detalhe expansivel (`+`).
+- Detalhe expansivel no `Painel` com observacoes de entrada/saida por linha.
+
+### Changed
+- Navegacao lateral refinada com botao `Sair` no rodape.
+- Ajustes de UX na sidebar e cards de perfil/menu.
+- Painel com novas colunas (`Usuário Entrada`, `Usuário Saída`, `Liberação`) e ordenacao cronologica de leitura.
+- Grade visivel (linhas e colunas) nas tabelas de Painel e Operação.
+- Formulario de Operação reorganizado para fluxo primeiro por promotor ativo e fornecedor somente leitura.
+- Campos de cadastro (Fornecedor/Promotor) ajustados para uso de placeholder em vez de valores fixos.
+- Front-temp passou a ocultar o fornecedor tecnico `Fornecedor nao informado` nas listas/combos.
+
 ## v0.5.3.0 - 2026-02-19
 
 ### Added

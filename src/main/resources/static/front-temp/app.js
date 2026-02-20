@@ -3,7 +3,7 @@ const state = {
   promotores: [],
   usuarios: [],
   dashboard: null,
-  cumprimento: null,
+  dashboardMovimentosMap: new Map(),
   auth: null,
   pendingAuth: null,
   profile: {
@@ -89,9 +89,6 @@ function initDashboardDefaults() {
   if (!el("dashData").value) {
     el("dashData").value = new Date().toISOString().slice(0, 10);
   }
-  if (!el("cumprimentoData").value) {
-    el("cumprimentoData").value = new Date().toISOString().slice(0, 10);
-  }
 }
 
 function loadSavedLogin() {
@@ -102,6 +99,12 @@ function loadSavedLogin() {
 
 function setLoginMessage(message) {
   el("loginMessage").textContent = message || "";
+}
+
+function setMovimentoMessage(message) {
+  const field = el("movMessage");
+  if (!field) return;
+  field.textContent = message || "";
 }
 
 function saveLogin(username) {
@@ -134,6 +137,7 @@ function applySessionToUI() {
   updateProfileInitials(state.auth.username);
   applyProfileToUI();
   el("tabUsersBtn").classList.toggle("is-hidden", !state.auth.isAdmin);
+  el("tabIntegracaoBtn").classList.toggle("is-hidden", !state.auth.isAdmin);
   el("adminUsersCard").classList.toggle("is-hidden", !state.auth.isAdmin);
   el("adminResetCard").classList.toggle("is-hidden", !state.auth.isAdmin);
   el("adminUsersListCard").classList.toggle("is-hidden", !state.auth.isAdmin);
@@ -257,6 +261,21 @@ function renderPromotores(list) {
   });
 }
 
+function renderFornecedores(list) {
+  const table = el("tblFornecedores");
+  if (!table) return;
+  const tbody = table.querySelector("tbody");
+  tbody.innerHTML = "";
+  list.filter((f) => !isFornecedorSistema(f?.nome)).forEach((f) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${f.id ?? ""}</td>
+      <td>${f.nome ?? ""}</td>
+      <td>${f.ativo ? "SIM" : "NAO"}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
 function renderUsuarios(list) {
   const table = el("tblUsuarios");
   if (!table) return;
@@ -280,34 +299,156 @@ function renderDashboard(resumo) {
 
   const tbody = el("tblDashboardPrincipal").querySelector("tbody");
   tbody.innerHTML = "";
-  (resumo.linhas ?? []).forEach((linha) => {
+  (resumo.linhas ?? []).forEach((linha, index) => {
+    const detalhe = resolveLinhaDetalhe(linha);
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${linha.promotorNome ?? ""}</td>
       <td>${linha.fornecedorNome ?? ""}</td>
-      <td>${linha.entradaEm ?? ""}</td>
-      <td>${linha.saiu ? "SIM" : "NAO"}</td>
-      <td>${linha.saidaEm ?? ""}</td>`;
-    tr.style.backgroundColor = linha.saiu ? "#f3f4f6" : "#dcfce7";
+      <td>${formatHoraMinuto(linha.entradaEm)}</td>
+      <td>${linha.usuarioEntrada ?? "-"}</td>
+      <td>${formatHoraMinuto(linha.saidaEm)}</td>
+      <td>${linha.usuarioSaida ?? "-"}</td>
+      <td>${linha.liberadoPor ?? "-"}</td>
+      <td><button class="detail-toggle" data-line-index="${index}" type="button">+</button></td>`;
+    tr.style.backgroundColor = linha.saidaEm ? "#f3f4f6" : "#dcfce7";
     tbody.appendChild(tr);
+
+    const detailTr = document.createElement("tr");
+    detailTr.className = "dashboard-detail-row is-hidden";
+    detailTr.dataset.lineIndex = String(index);
+    detailTr.innerHTML = `
+      <td colspan="8">
+        <div class="dashboard-detail-content">
+          <strong>Detalhes do Movimento</strong>
+          <div><span>Observacao Entrada:</span> ${detalhe.observacaoEntrada || "-"}</div>
+          <div><span>Observacao Saida:</span> ${detalhe.observacaoSaida || "-"}</div>
+          <div><span>Usuário Entrada:</span> ${linha.usuarioEntrada ?? "-"}</div>
+          <div><span>Usuário Saida:</span> ${linha.usuarioSaida ?? "-"}</div>
+          <div><span>Liberação:</span> ${linha.liberadoPor ?? "-"}</div>
+        </div>
+      </td>`;
+    tbody.appendChild(detailTr);
+  });
+
+  tbody.querySelectorAll(".detail-toggle").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const index = btn.dataset.lineIndex;
+      if (!index) return;
+      const detailRow = tbody.querySelector(`.dashboard-detail-row[data-line-index="${index}"]`);
+      if (!detailRow) return;
+      const opened = detailRow.classList.toggle("is-hidden");
+      btn.textContent = opened ? "+" : "-";
+    });
   });
 }
 
-function renderCumprimento(resumo) {
-  const tbody = el("tblCumprimento").querySelector("tbody");
+function renderOperacaoDia(resumo) {
+  const table = el("tblOperacaoDia");
+  if (!table) return;
+  const tbody = table.querySelector("tbody");
   tbody.innerHTML = "";
-  (resumo.itens ?? []).forEach((item) => {
+
+  (resumo?.linhas ?? []).forEach((linha, index) => {
+    const detalhe = resolveLinhaDetalhe(linha);
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${item.fornecedorNome ?? ""}</td>
-      <td>${item.entradasPrevistas ?? 0}</td>
-      <td>${item.entradasRealizadas ?? 0}</td>
-      <td>${item.percentualCumprimento ?? 0}%</td>
-      <td>${item.desvioPercentual ?? 0}%</td>
-      <td>${item.alerta ? "SIM" : "NAO"}</td>`;
-    tr.style.backgroundColor = item.alerta ? "#fee2e2" : "#ecfeff";
+      <td>${linha.promotorNome ?? ""}</td>
+      <td>${linha.fornecedorNome ?? ""}</td>
+      <td>${formatHoraMinuto(linha.entradaEm)}</td>
+      <td>${linha.usuarioEntrada ?? "-"}</td>
+      <td>${formatHoraMinuto(linha.saidaEm)}</td>
+      <td>${linha.usuarioSaida ?? "-"}</td>
+      <td>${linha.liberadoPor ?? "-"}</td>
+      <td><button class="detail-toggle op-detail-toggle" data-line-index="${index}" type="button">+</button></td>`;
+    tr.style.backgroundColor = linha.saidaEm ? "#f3f4f6" : "#dcfce7";
     tbody.appendChild(tr);
+
+    const detailTr = document.createElement("tr");
+    detailTr.className = "dashboard-detail-row is-hidden";
+    detailTr.dataset.lineIndex = String(index);
+    detailTr.innerHTML = `
+      <td colspan="8">
+        <div class="dashboard-detail-content">
+          <strong>Detalhes do Movimento</strong>
+          <div><span>Observacao Entrada:</span> ${detalhe.observacaoEntrada || "-"}</div>
+          <div><span>Observacao Saida:</span> ${detalhe.observacaoSaida || "-"}</div>
+          <div><span>Usuário Entrada:</span> ${linha.usuarioEntrada ?? "-"}</div>
+          <div><span>Usuário Saida:</span> ${linha.usuarioSaida ?? "-"}</div>
+          <div><span>Liberação:</span> ${linha.liberadoPor ?? "-"}</div>
+        </div>
+      </td>`;
+    tbody.appendChild(detailTr);
   });
+
+  tbody.querySelectorAll(".op-detail-toggle").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const lineIndex = btn.dataset.lineIndex;
+      if (!lineIndex) return;
+      const detailRow = tbody.querySelector(`.dashboard-detail-row[data-line-index="${lineIndex}"]`);
+      if (!detailRow) return;
+      const hiddenAfterToggle = detailRow.classList.toggle("is-hidden");
+      btn.textContent = hiddenAfterToggle ? "+" : "-";
+    });
+  });
+}
+
+function normalizeDateTimeKey(value) {
+  if (!value) return "";
+  return String(value).replace(" ", "T").slice(0, 19);
+}
+
+function buildDashboardMovimentosMap(movimentos, dataRef, promotorIds) {
+  const map = new Map();
+  if (!Array.isArray(movimentos) || !dataRef) return map;
+
+  movimentos.forEach((m) => {
+    const promotorKey = String(m.promotorId ?? "");
+    if (!promotorIds.has(promotorKey)) return;
+    if (String(m.dataHora ?? "").slice(0, 10) !== dataRef) return;
+    if (!map.has(promotorKey)) map.set(promotorKey, []);
+    map.get(promotorKey).push(m);
+  });
+
+  map.forEach((list) => {
+    list.sort((a, b) => String(a.dataHora ?? "").localeCompare(String(b.dataHora ?? "")));
+  });
+
+  return map;
+}
+
+function resolveLinhaDetalhe(linha) {
+  const promotorKey = String(linha.promotorId ?? "");
+  const movimentos = state.dashboardMovimentosMap.get(promotorKey) ?? [];
+  const entradaKey = normalizeDateTimeKey(linha.entradaEm);
+  const saidaKey = normalizeDateTimeKey(linha.saidaEm);
+
+  const entrada = movimentos.find((m) =>
+    m.tipo === "ENTRADA" && normalizeDateTimeKey(m.dataHora) === entradaKey);
+  const saida = movimentos.find((m) =>
+    m.tipo === "SAIDA" && normalizeDateTimeKey(m.dataHora) === saidaKey);
+
+  return {
+    observacaoEntrada: entrada?.observacao ?? "",
+    observacaoSaida: saida?.observacao ?? ""
+  };
+}
+
+function formatHoraMinuto(value) {
+  if (!value) return "";
+
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
+  }
+
+  const text = String(value);
+  const hhmm = text.match(/(\d{2}):(\d{2})/);
+  return hhmm ? `${hhmm[1]}:${hhmm[2]}` : text;
 }
 
 function syncFornecedorSelect() {
@@ -315,7 +456,10 @@ function syncFornecedorSelect() {
   const dashSelect = el("dashFornecedorId");
   select.innerHTML = "";
   dashSelect.innerHTML = "<option value=\"\">Todos</option>";
-  state.fornecedores.forEach((f) => {
+
+  state.fornecedores
+    .filter((f) => !isFornecedorSistema(f?.nome))
+    .forEach((f) => {
     const opt = document.createElement("option");
     opt.value = f.id;
     opt.textContent = f.nome;
@@ -326,6 +470,53 @@ function syncFornecedorSelect() {
     optDash.textContent = f.nome;
     dashSelect.appendChild(optDash);
   });
+
+  syncMovimentoPromotorSelect();
+}
+
+function isFornecedorSistema(nome) {
+  const normalized = String(nome ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  return normalized === "fornecedor nao informado";
+}
+
+function syncMovimentoPromotorSelect() {
+  const select = el("mPromotorId");
+  if (!select) return;
+  const filtered = state.promotores.filter((p) => p.status === "ATIVO");
+
+  select.innerHTML = "<option value=\"\">Selecione</option>";
+  filtered.forEach((p) => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = `${p.nome ?? "Sem nome"} - ${p.fornecedorNome ?? "Sem fornecedor"}`;
+    select.appendChild(opt);
+  });
+
+  if (filtered.length === 0) {
+    setMovimentoMessage("Nenhum promotor ATIVO encontrado.");
+  } else {
+    setMovimentoMessage("");
+  }
+
+  updateMovimentoFornecedorFromPromotor();
+}
+
+function updateMovimentoFornecedorFromPromotor() {
+  const fornecedorField = el("mFornecedorNome");
+  const promotorId = el("mPromotorId")?.value;
+  if (!fornecedorField) return;
+
+  if (!promotorId) {
+    fornecedorField.value = "";
+    return;
+  }
+
+  const promotor = state.promotores.find((p) => String(p.id) === String(promotorId));
+  fornecedorField.value = promotor?.fornecedorNome ?? "";
 }
 
 function buildDashboardQuery() {
@@ -340,31 +531,23 @@ function buildDashboardQuery() {
   return query ? `/dashboard/planilha-principal?${query}` : "/dashboard/planilha-principal";
 }
 
-function buildCumprimentoQuery() {
-  const params = new URLSearchParams();
-  const data = el("cumprimentoData").value;
-  const percentualMinimo = el("cumprimentoMinimo").value;
-  if (data) params.set("data", data);
-  if (percentualMinimo) params.set("percentualMinimo", percentualMinimo);
-  const query = params.toString();
-  return query
-    ? `/dashboard/cumprimento-fornecedores?${query}`
-    : "/dashboard/cumprimento-fornecedores";
-}
-
 async function refreshDashboard() {
   state.dashboard = await apiRequest(buildDashboardQuery());
+  const promotorIds = new Set((state.dashboard.linhas ?? []).map((linha) => String(linha.promotorId ?? "")));
+  const movimentos = await apiRequest("/movimentos");
+  state.dashboardMovimentosMap = buildDashboardMovimentosMap(
+    movimentos,
+    String(el("dashData").value || "").slice(0, 10),
+    promotorIds
+  );
   renderDashboard(state.dashboard);
-}
-
-async function refreshCumprimento() {
-  state.cumprimento = await apiRequest(buildCumprimentoQuery());
-  renderCumprimento(state.cumprimento);
+  renderOperacaoDia(state.dashboard);
 }
 
 async function refreshData() {
   state.fornecedores = await apiRequest("/fornecedores");
   state.promotores = await apiRequest("/promotores");
+  renderFornecedores(state.fornecedores);
   renderPromotores(state.promotores);
   syncFornecedorSelect();
   if (state.auth?.isAdmin) {
@@ -374,7 +557,6 @@ async function refreshData() {
     renderUsuarios([]);
   }
   await refreshDashboard();
-  await refreshCumprimento();
 }
 
 function computeMovimentosSignature(list) {
@@ -453,6 +635,48 @@ async function criarPromotor() {
     fotoPath: ""
   };
   await apiRequest("/promotores", "POST", payload);
+  await refreshData();
+}
+
+async function registrarEntrada() {
+  const promotorId = el("mPromotorId").value;
+  if (!promotorId) {
+    throw new Error("Selecione um promotor");
+  }
+
+  const payload = {
+    promotorId,
+    responsavel: state.auth?.username ?? "",
+    observacao: el("mObservacao").value.trim()
+  };
+
+  await apiRequest("/movimentos/entrada", "POST", payload);
+  el("mObservacao").value = "";
+  setMovimentoMessage("Entrada registrada com sucesso.");
+  await refreshData();
+}
+
+async function registrarSaida() {
+  const promotorId = el("mPromotorId").value;
+  if (!promotorId) {
+    throw new Error("Selecione um promotor");
+  }
+
+  const liberadoPor = el("mLiberadoPor").value.trim();
+  if (!liberadoPor) {
+    throw new Error("Informe quem liberou a saida");
+  }
+
+  const payload = {
+    promotorId,
+    responsavel: state.auth?.username ?? "",
+    liberadoPor,
+    observacao: el("mObservacao").value.trim()
+  };
+
+  await apiRequest("/movimentos/saida", "POST", payload);
+  el("mObservacao").value = "";
+  setMovimentoMessage("Saida registrada com sucesso.");
   await refreshData();
 }
 
@@ -572,12 +796,24 @@ function logout() {
 }
 
 function bindActions() {
-  el("btnOpenProfile").addEventListener("click", () => activateTab("tab-perfil"));
-  el("btnLogin").addEventListener("click", () => {
+  const triggerLogin = () => {
     login().catch((e) => {
       setLoginMessage(`Falha no login: ${e.message}`);
       log("Falha no login", { error: e.message });
     });
+  };
+
+  el("btnOpenProfile").addEventListener("click", () => activateTab("tab-perfil"));
+  el("btnLogin").addEventListener("click", triggerLogin);
+  el("loginUsername").addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    triggerLogin();
+  });
+  el("loginPassword").addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    triggerLogin();
   });
   el("btnChangePassword").addEventListener("click", () => {
     alterarSenhaObrigatoria().catch((e) => {
@@ -588,10 +824,22 @@ function bindActions() {
 
   el("btnLogout").addEventListener("click", logout);
   el("btnRefreshDashboard").addEventListener("click", () => refreshDashboard().catch((e) => log("Falha dashboard", { error: e.message })));
-  el("btnRefreshCumprimento").addEventListener("click", () => refreshCumprimento().catch((e) => log("Falha cumprimento", { error: e.message })));
   el("btnRefreshUsuarios").addEventListener("click", () => refreshUsuarios().catch((e) => log("Falha usuarios", { error: e.message })));
   el("btnCriarFornecedor").addEventListener("click", () => criarFornecedor().catch((e) => log("Falha ao criar fornecedor", { error: e.message })));
   el("btnCriarPromotor").addEventListener("click", () => criarPromotor().catch((e) => log("Falha ao criar", { error: e.message })));
+  el("btnRegistrarEntrada").addEventListener("click", () => {
+    registrarEntrada().catch((e) => {
+      setMovimentoMessage(`Falha ao registrar entrada: ${e.message}`);
+      log("Falha ao registrar entrada", { error: e.message });
+    });
+  });
+  el("btnRegistrarSaida").addEventListener("click", () => {
+    registrarSaida().catch((e) => {
+      setMovimentoMessage(`Falha ao registrar saida: ${e.message}`);
+      log("Falha ao registrar saida", { error: e.message });
+    });
+  });
+  el("mPromotorId").addEventListener("change", updateMovimentoFornecedorFromPromotor);
   el("btnCriarUsuario").addEventListener("click", () => criarUsuario().catch((e) => log("Falha ao criar usuario", { error: e.message })));
   el("btnResetSenha").addEventListener("click", () => resetarSenhaUsuario().catch((e) => log("Falha reset de senha", { error: e.message })));
   el("btnSaveProfile").addEventListener("click", saveProfileFromForm);

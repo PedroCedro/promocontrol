@@ -83,6 +83,12 @@ Front temporario para validacao manual:
 http://localhost:8080/front-temp/index.html
 ```
 
+Atualizacoes visuais recentes no front-temp (v0.5.4.0):
+
+* Aba `Operação` para registrar entrada/saida com acompanhamento em tabela.
+* Painel e Operacao com grid visivel, colunas de usuario/liberacao e detalhe expansivel (`+`) com observacoes.
+* Sidebar refinada (botao sair no rodape) e ajustes de layout para fluxo operacional.
+
 Healthcheck e info:
 
 ```
@@ -265,8 +271,9 @@ Retorna cards do dia e linhas da planilha com:
 
 * promotor e fornecedor;
 * entrada (horario e usuario);
-* saida (se saiu, horario, usuario);
-* liberacao da saida (`liberadoPor`).
+* saida (horario, usuario);
+* liberacao da saida (`liberadoPor`);
+* flag de estado (`saiu`) para consumo de regras de exibicao no front.
 
 ---
 
@@ -533,4 +540,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.5.3.0` - Gestao administrativa de usuarios, refinamento visual do front-temp em estilo planilha/ERP, perfil lateral e auto-refresh por deteccao de atualizacoes no backend.
+`v0.5.4.0` - Refinos operacionais do front-temp: aba Operacao de entrada/saida, painel com detalhe expansivel de movimentos, grid visivel e ajustes de usabilidade/layout.
