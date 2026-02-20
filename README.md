@@ -540,4 +540,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.5.5.0` - Codigo numerico sequencial para Fornecedor/Promotor (exibicao operacional em formato 001+), com refinamentos de UX no perfil e visibilidade de Meu Perfil restrita ao ADMIN.
+`v0.5.6.0` - Persistencia de usuarios no banco (fim do armazenamento em memoria para autenticacao), mantendo criacao/reset/troca obrigatoria de senha entre reinicios.

@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.6.0 - 2026-02-20
+
+### Added
+- Migration `V5__add_usuario_table.sql` com tabela de usuarios persistidos no banco.
+- Entidade `Usuario` e `UsuarioRepository` para gestao de autenticacao com persistencia.
+
+### Changed
+- `AuthUserService` migrado de armazenamento em memoria para banco de dados.
+- Usuarios padrao (`viewer`, `user`, `admin`) passam a ser inicializados automaticamente no banco quando ausentes.
+- Operacoes de criar usuario, reset de senha e troca obrigatoria agora persistem entre reinicios da aplicacao.
+
 ## v0.5.5.0 - 2026-02-20
 
 ### Added

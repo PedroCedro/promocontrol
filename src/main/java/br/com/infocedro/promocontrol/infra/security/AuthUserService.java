@@ -2,10 +2,11 @@ package br.com.infocedro.promocontrol.infra.security;
 
 import br.com.infocedro.promocontrol.core.exception.UsuarioNaoEncontradoException;
 import br.com.infocedro.promocontrol.core.exception.UsuarioJaExisteException;
+import br.com.infocedro.promocontrol.core.model.Usuario;
+import br.com.infocedro.promocontrol.core.repository.UsuarioRepository;
 import java.security.SecureRandom;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,18 +14,27 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class AuthUserService implements UserDetailsService {
 
     private static final String TEMP_PASSWORD_CHARS =
             "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 
+    private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecureRandom secureRandom = new SecureRandom();
-    private final Map<String, ManagedUser> users = new ConcurrentHashMap<>();
+    private final String defaultUserUsername;
+    private final String defaultUserPassword;
+    private final String defaultViewerUsername;
+    private final String defaultViewerPassword;
+    private final String defaultAdminUsername;
+    private final String defaultAdminPassword;
 
     public AuthUserService(
+            UsuarioRepository usuarioRepository,
             PasswordEncoder passwordEncoder,
             @Value("${app.security.user.username:user}") String userUsername,
             @Value("${app.security.user.password:user123}") String userPassword,
@@ -32,101 +42,106 @@ public class AuthUserService implements UserDetailsService {
             @Value("${app.security.viewer.password:viewer123}") String viewerPassword,
             @Value("${app.security.admin.username:admin}") String adminUsername,
             @Value("${app.security.admin.password:admin123}") String adminPassword) {
+        this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
-        createUser(viewerUsername, viewerPassword, List.of("VIEWER"));
-        createUser(userUsername, userPassword, List.of("OPERATOR", "VIEWER"));
-        createUser(adminUsername, adminPassword, List.of("ADMIN", "OPERATOR", "VIEWER"));
+        this.defaultUserUsername = userUsername;
+        this.defaultUserPassword = userPassword;
+        this.defaultViewerUsername = viewerUsername;
+        this.defaultViewerPassword = viewerPassword;
+        this.defaultAdminUsername = adminUsername;
+        this.defaultAdminPassword = adminPassword;
+    }
+
+    @PostConstruct
+    @Transactional
+    public void initializeDefaults() {
+        createDefaultUserIfMissing(defaultViewerUsername, defaultViewerPassword, "VIEWER");
+        createDefaultUserIfMissing(defaultUserUsername, defaultUserPassword, "OPERATOR");
+        createDefaultUserIfMissing(defaultAdminUsername, defaultAdminPassword, "ADMIN");
+    }
+
+    private void createDefaultUserIfMissing(String username, String rawPassword, String perfil) {
+        if (username == null || username.isBlank()) return;
+        if (usuarioRepository.existsByUsername(username)) return;
+
+        Usuario user = new Usuario();
+        user.setUsername(username);
+        user.setSenhaHash(passwordEncoder.encode(rawPassword));
+        user.setPerfil(perfil);
+        user.setPrecisaTrocarSenha(false);
+        usuarioRepository.save(user);
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        ManagedUser user = users.get(username);
-        if (user == null) {
-            throw new UsernameNotFoundException("Usuario nao encontrado");
-        }
+        Usuario user = usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario nao encontrado"));
 
-        synchronized (user) {
-            return User.withUsername(user.username)
-                    .password(user.encodedPassword)
-                    .roles(user.roles.toArray(String[]::new))
-                    .build();
-        }
+        return User.withUsername(user.getUsername())
+                .password(user.getSenhaHash())
+                .roles(resolveRoles(user.getPerfil()).toArray(String[]::new))
+                .build();
     }
 
     public boolean isPasswordChangeRequired(String username) {
-        ManagedUser user = users.get(username);
-        return user != null && user.mustChangePassword;
+        return usuarioRepository.findByUsername(username)
+                .map(Usuario::isPrecisaTrocarSenha)
+                .orElse(false);
     }
 
+    @Transactional
     public void changePassword(String username, String newRawPassword) {
-        ManagedUser user = getRequiredUser(username);
-        synchronized (user) {
-            user.encodedPassword = passwordEncoder.encode(newRawPassword);
-            user.mustChangePassword = false;
-        }
+        Usuario user = getRequiredUser(username);
+        user.setSenhaHash(passwordEncoder.encode(newRawPassword));
+        user.setPrecisaTrocarSenha(false);
+        usuarioRepository.save(user);
     }
 
+    @Transactional
     public String resetPasswordAsTemporary(String username) {
-        ManagedUser user = getRequiredUser(username);
+        Usuario user = getRequiredUser(username);
         String temporaryPassword = generateTemporaryPassword(10);
-        synchronized (user) {
-            user.encodedPassword = passwordEncoder.encode(temporaryPassword);
-            user.mustChangePassword = true;
-        }
+        user.setSenhaHash(passwordEncoder.encode(temporaryPassword));
+        user.setPrecisaTrocarSenha(true);
+        usuarioRepository.save(user);
         return temporaryPassword;
     }
 
+    @Transactional
     public CreatedUser createUserByAdmin(String username, String perfil) {
-        if (users.containsKey(username)) {
+        if (usuarioRepository.existsByUsername(username)) {
             throw new UsuarioJaExisteException();
         }
 
         RoleSetup roleSetup = resolveRoleSetup(perfil);
         String temporaryPassword = generateTemporaryPassword(10);
 
-        ManagedUser newUser = new ManagedUser(
-                username,
-                roleSetup.roles(),
-                passwordEncoder.encode(temporaryPassword),
-                true);
-        ManagedUser previous = users.putIfAbsent(username, newUser);
-        if (previous != null) {
-            throw new UsuarioJaExisteException();
-        }
+        Usuario newUser = new Usuario();
+        newUser.setUsername(username);
+        newUser.setPerfil(roleSetup.perfil());
+        newUser.setSenhaHash(passwordEncoder.encode(temporaryPassword));
+        newUser.setPrecisaTrocarSenha(true);
+        usuarioRepository.save(newUser);
 
         return new CreatedUser(username, roleSetup.perfil(), temporaryPassword);
     }
 
     public List<UserSummary> listUsers() {
-        return users.values().stream()
+        return usuarioRepository.findAllByOrderByUsernameAsc().stream()
                 .map(this::toSummary)
-                .sorted((a, b) -> a.username().compareToIgnoreCase(b.username()))
                 .toList();
     }
 
-    private ManagedUser getRequiredUser(String username) {
-        ManagedUser user = users.get(username);
-        if (user == null) {
-            throw new UsuarioNaoEncontradoException();
-        }
-        return user;
+    private Usuario getRequiredUser(String username) {
+        return usuarioRepository.findByUsername(username)
+                .orElseThrow(UsuarioNaoEncontradoException::new);
     }
 
-    private void createUser(String username, String rawPassword, List<String> roles) {
-        users.put(username, new ManagedUser(
-                username,
-                List.copyOf(roles),
-                passwordEncoder.encode(rawPassword),
-                false));
-    }
-
-    private UserSummary toSummary(ManagedUser user) {
-        synchronized (user) {
-            return new UserSummary(
-                    user.username,
-                    resolvePrimaryPerfil(user.roles),
-                    user.mustChangePassword);
-        }
+    private UserSummary toSummary(Usuario user) {
+        return new UserSummary(
+                user.getUsername(),
+                user.getPerfil(),
+                user.isPrecisaTrocarSenha());
     }
 
     private RoleSetup resolveRoleSetup(String perfil) {
@@ -137,14 +152,8 @@ public class AuthUserService implements UserDetailsService {
         };
     }
 
-    private String resolvePrimaryPerfil(List<String> roles) {
-        if (roles.contains("ADMIN")) {
-            return "ADMIN";
-        }
-        if (roles.contains("OPERATOR")) {
-            return "OPERATOR";
-        }
-        return "VIEWER";
+    private List<String> resolveRoles(String perfil) {
+        return resolveRoleSetup(perfil).roles();
     }
 
     private String generateTemporaryPassword(int length) {
@@ -154,24 +163,6 @@ public class AuthUserService implements UserDetailsService {
             builder.append(TEMP_PASSWORD_CHARS.charAt(index));
         }
         return builder.toString();
-    }
-
-    private static final class ManagedUser {
-        private final String username;
-        private final List<String> roles;
-        private String encodedPassword;
-        private boolean mustChangePassword;
-
-        private ManagedUser(
-                String username,
-                List<String> roles,
-                String encodedPassword,
-                boolean mustChangePassword) {
-            this.username = username;
-            this.roles = roles;
-            this.encodedPassword = encodedPassword;
-            this.mustChangePassword = mustChangePassword;
-        }
     }
 
     private record RoleSetup(String perfil, List<String> roles) {
