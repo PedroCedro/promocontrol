@@ -15,6 +15,9 @@ public class Promotor extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(unique = true)
+    private Integer codigo;
+
     @Version
     private Long version;
 

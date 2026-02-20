@@ -242,6 +242,23 @@ body {
   gap: 5px;
 }
 
+.profile-avatar-remove {
+  justify-self: start;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: #6d7aa3;
+  font-style: italic;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.profile-avatar-remove:hover {
+  background: transparent;
+  color: #4e5c88;
+}
+
 .profile-name {
   margin: 0;
   text-align: center;

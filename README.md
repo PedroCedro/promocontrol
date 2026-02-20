@@ -540,4 +540,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.5.4.1` - Ajuste de nomenclatura de perfil na sidebar (VIEWER->Padrão, OPERATOR->Prevenção, ADMIN mantido) sem impacto nas permissoes do backend.
+`v0.5.5.0` - Codigo numerico sequencial para Fornecedor/Promotor (exibicao operacional em formato 001+), com refinamentos de UX no perfil e visibilidade de Meu Perfil restrita ao ADMIN.

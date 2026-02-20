@@ -29,6 +29,12 @@ public class PromotorService {
     public Promotor salvar(Promotor promotor, Integer fornecedorId) {
         Fornecedor fornecedor = fornecedorRepository.findById(fornecedorId)
                 .orElseThrow(FornecedorNaoEncontradoException::new);
+        if (promotor.getCodigo() == null) {
+            Integer ultimoCodigo = repository.findTopByOrderByCodigoDesc()
+                    .map(Promotor::getCodigo)
+                    .orElse(0);
+            promotor.setCodigo(ultimoCodigo + 1);
+        }
         promotor.setFornecedor(fornecedor);
         return repository.save(promotor);
     }

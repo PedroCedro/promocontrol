@@ -19,6 +19,12 @@ public class FornecedorService {
 
     @Transactional
     public Fornecedor salvar(Fornecedor fornecedor) {
+        if (fornecedor.getCodigo() == null) {
+            Integer ultimoCodigo = repository.findTopByOrderByCodigoDesc()
+                    .map(Fornecedor::getCodigo)
+                    .orElse(0);
+            fornecedor.setCodigo(ultimoCodigo + 1);
+        }
         return repository.save(fornecedor);
     }
 

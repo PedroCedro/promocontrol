@@ -141,6 +141,12 @@ function applySessionToUI() {
   el("adminUsersCard").classList.toggle("is-hidden", !state.auth.isAdmin);
   el("adminResetCard").classList.toggle("is-hidden", !state.auth.isAdmin);
   el("adminUsersListCard").classList.toggle("is-hidden", !state.auth.isAdmin);
+  el("btnOpenProfile").classList.toggle("is-hidden", !state.auth.isAdmin);
+  el("tab-perfil").classList.toggle("is-hidden", !state.auth.isAdmin);
+
+  if (!state.auth.isAdmin && el("tab-perfil").classList.contains("is-active")) {
+    activateTab("tab-dashboard");
+  }
 }
 
 function updateProfileInitials(username) {
@@ -191,6 +197,19 @@ function saveProfileFromForm() {
     fullName: state.profile.fullName,
     email: state.profile.email
   });
+}
+
+function removerFotoPerfil() {
+  const confirmar = window.confirm("Deseja realmente remover a foto do perfil?");
+  if (!confirmar) return;
+
+  state.profile.avatarDataUrl = "";
+  saveProfileSettings();
+  applyProfileToUI();
+  if (el("profileAvatarInput")) {
+    el("profileAvatarInput").value = "";
+  }
+  log("Foto de perfil removida localmente.");
 }
 
 async function rawRequest(path, method, auth, body = null) {
@@ -252,9 +271,9 @@ function renderPromotores(list) {
   list.forEach((p) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${p.id}</td>
+      <td>${formatCodigo(p.codigo)}</td>
       <td>${p.nome ?? ""}</td>
-      <td>${p.fornecedorNome ?? ""}</td>
+      <td>${formatCodigo(p.fornecedorCodigo)} - ${p.fornecedorNome ?? ""}</td>
       <td>${p.status ?? ""}</td>
       <td>${p.telefone ?? ""}</td>`;
     tbody.appendChild(tr);
@@ -269,7 +288,7 @@ function renderFornecedores(list) {
   list.filter((f) => !isFornecedorSistema(f?.nome)).forEach((f) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${f.id ?? ""}</td>
+      <td>${formatCodigo(f.codigo)}</td>
       <td>${f.nome ?? ""}</td>
       <td>${f.ativo ? "SIM" : "NAO"}</td>`;
     tbody.appendChild(tr);
@@ -451,6 +470,12 @@ function formatHoraMinuto(value) {
   return hhmm ? `${hhmm[1]}:${hhmm[2]}` : text;
 }
 
+function formatCodigo(value) {
+  const num = Number(value);
+  if (Number.isNaN(num) || num <= 0) return "-";
+  return String(num).padStart(3, "0");
+}
+
 function syncFornecedorSelect() {
   const select = el("pFornecedorId");
   const dashSelect = el("dashFornecedorId");
@@ -462,12 +487,12 @@ function syncFornecedorSelect() {
     .forEach((f) => {
     const opt = document.createElement("option");
     opt.value = f.id;
-    opt.textContent = f.nome;
+    opt.textContent = `${formatCodigo(f.codigo)} - ${f.nome}`;
     select.appendChild(opt);
 
     const optDash = document.createElement("option");
     optDash.value = f.id;
-    optDash.textContent = f.nome;
+    optDash.textContent = `${formatCodigo(f.codigo)} - ${f.nome}`;
     dashSelect.appendChild(optDash);
   });
 
@@ -492,7 +517,7 @@ function syncMovimentoPromotorSelect() {
   filtered.forEach((p) => {
     const opt = document.createElement("option");
     opt.value = p.id;
-    opt.textContent = `${p.nome ?? "Sem nome"} - ${p.fornecedorNome ?? "Sem fornecedor"}`;
+    opt.textContent = `${formatCodigo(p.codigo)} - ${p.nome ?? "Sem nome"} - ${p.fornecedorNome ?? "Sem fornecedor"}`;
     select.appendChild(opt);
   });
 
@@ -849,6 +874,7 @@ function bindActions() {
   el("btnCriarUsuario").addEventListener("click", () => criarUsuario().catch((e) => log("Falha ao criar usuario", { error: e.message })));
   el("btnResetSenha").addEventListener("click", () => resetarSenhaUsuario().catch((e) => log("Falha reset de senha", { error: e.message })));
   el("btnSaveProfile").addEventListener("click", saveProfileFromForm);
+  el("btnRemoveProfileAvatar").addEventListener("click", removerFotoPerfil);
 
   el("btnFiltroPromotor").addEventListener("click", () => {
     const fornecedor = el("filtroFornecedorPromotor").value.trim().toLowerCase();

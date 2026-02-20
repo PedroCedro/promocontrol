@@ -20,4 +20,6 @@ public interface PromotorRepository extends JpaRepository<Promotor, UUID> {
     List<Promotor> findByStatus(StatusPromotor status);
 
     List<Promotor> findByFornecedor_IdAndStatus(Integer fornecedorId, StatusPromotor status);
+
+    Optional<Promotor> findTopByOrderByCodigoDesc();
 }

@@ -26,9 +26,11 @@ public class ApiMapper {
     public PromotorResponse toPromotorResponse(Promotor promotor) {
         return new PromotorResponse(
                 promotor.getId(),
+                promotor.getCodigo(),
                 promotor.getNome(),
                 promotor.getTelefone(),
                 promotor.getFornecedor().getId(),
+                promotor.getFornecedor().getCodigo(),
                 promotor.getFornecedor().getNome(),
                 promotor.getStatus(),
                 promotor.getFotoPath());
@@ -51,6 +53,7 @@ public class ApiMapper {
     public FornecedorResponse toFornecedorResponse(Fornecedor fornecedor) {
         return new FornecedorResponse(
                 fornecedor.getId(),
+                fornecedor.getCodigo(),
                 fornecedor.getNome(),
                 fornecedor.getAtivo());
     }

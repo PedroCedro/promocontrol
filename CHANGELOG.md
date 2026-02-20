@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.5.0 - 2026-02-20
+
+### Added
+- Migration `V4__add_codigo_numerico_fornecedor_promotor.sql` com codigo numerico sequencial para `FORNECEDOR` e `PROMOTOR`.
+- Exposicao de `codigo` nos contratos de resposta de fornecedor/promotor.
+
+### Changed
+- Geracao automatica de codigo sequencial no cadastro de fornecedor/promotor.
+- Front-temp atualizado para exibir codigo numerico (`001`, `002`, ...) no lugar de identificadores tecnicos nas telas operacionais.
+- Ajustes de UX no perfil: acao discreta de remover foto com confirmacao e visibilidade de `Meu Perfil` restrita a `ADMIN`.
+
 ## v0.5.4.1 - 2026-02-20
 
 ### Changed
