@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.4.1 - 2026-02-20
+
+### Changed
+- Ajuste de nomenclatura de perfil na sidebar do front-temp (somente exibicao):
+  - `VIEWER` -> `Padrão`
+  - `OPERATOR` -> `Prevenção`
+  - `ADMIN` mantido como `ADMIN`
+
 ## v0.5.4.0 - 2026-02-20
 
 ### Added

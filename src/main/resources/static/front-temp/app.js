@@ -133,7 +133,7 @@ function applySessionToUI() {
   el("currentUser").value = state.auth.username;
   el("currentRole").value = state.auth.role;
   el("profileUserName").textContent = state.auth.username;
-  el("profileRoleName").textContent = state.auth.role;
+  el("profileRoleName").textContent = getRoleDisplayName(state.auth.role);
   updateProfileInitials(state.auth.username);
   applyProfileToUI();
   el("tabUsersBtn").classList.toggle("is-hidden", !state.auth.isAdmin);
@@ -787,12 +787,18 @@ function logout() {
   el("baseUrl").value = "";
   el("loginPassword").value = "";
   el("profileUserName").textContent = "user";
-  el("profileRoleName").textContent = "OPERATOR";
+  el("profileRoleName").textContent = getRoleDisplayName("OPERATOR");
   el("resetTempPassword").value = "";
   el("uTempPassword").value = "";
   updateProfileInitials("U");
   applyProfileToUI();
   setLoginMessage("");
+}
+
+function getRoleDisplayName(role) {
+  if (role === "VIEWER") return "Padrão";
+  if (role === "OPERATOR") return "Prevenção";
+  return role || "";
 }
 
 function bindActions() {

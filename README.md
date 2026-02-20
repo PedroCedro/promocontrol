@@ -540,4 +540,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.5.4.0` - Refinos operacionais do front-temp: aba Operacao de entrada/saida, painel com detalhe expansivel de movimentos, grid visivel e ajustes de usabilidade/layout.
+`v0.5.4.1` - Ajuste de nomenclatura de perfil na sidebar (VIEWER->Padrão, OPERATOR->Prevenção, ADMIN mantido) sem impacto nas permissoes do backend.
