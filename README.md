@@ -540,4 +540,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.5.6.1` - Ajustes de UX no login do front-temp: placeholders claros, sem preenchimento automatico e validacao explicita para usuario/senha obrigatorios.
+`v0.5.6.2` - Compatibilidade de login ampliada no front-temp com fallback de `X-Correlation-Id` para navegadores sem `crypto.randomUUID()`.

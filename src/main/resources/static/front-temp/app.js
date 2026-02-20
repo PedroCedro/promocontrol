@@ -33,11 +33,20 @@ function authHeader(username, password) {
   return "Basic " + btoa(`${username}:${password}`);
 }
 
+function buildCorrelationId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  const now = Date.now().toString(16);
+  const random = Math.random().toString(16).slice(2);
+  return `cid-${now}-${random}`;
+}
+
 function baseHeaders(username, password) {
   return {
     "Authorization": authHeader(username, password),
     "Content-Type": "application/json",
-    "X-Correlation-Id": crypto.randomUUID()
+    "X-Correlation-Id": buildCorrelationId()
   };
 }
 

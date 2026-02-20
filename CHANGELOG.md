@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.6.2 - 2026-02-20
+
+### Changed
+- Front-temp com fallback para geracao de `X-Correlation-Id` em navegadores sem suporte a `crypto.randomUUID()`.
+- Compatibilidade de login melhorada para navegadores legados.
+
 ## v0.5.6.1 - 2026-02-20
 
 ### Changed
