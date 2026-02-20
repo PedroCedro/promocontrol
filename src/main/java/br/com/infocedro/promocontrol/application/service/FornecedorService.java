@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class FornecedorService {
 
+    private static final String FORNECEDOR_SISTEMA_NOME = "Fornecedor nao informado";
+
     private final FornecedorRepository repository;
 
     public FornecedorService(FornecedorRepository repository) {
@@ -20,7 +22,7 @@ public class FornecedorService {
     @Transactional
     public Fornecedor salvar(Fornecedor fornecedor) {
         if (fornecedor.getCodigo() == null) {
-            Integer ultimoCodigo = repository.findTopByOrderByCodigoDesc()
+            Integer ultimoCodigo = repository.findTopByNomeNotIgnoreCaseOrderByCodigoDesc(FORNECEDOR_SISTEMA_NOME)
                     .map(Fornecedor::getCodigo)
                     .orElse(0);
             fornecedor.setCodigo(ultimoCodigo + 1);

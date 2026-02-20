@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FornecedorRepository extends JpaRepository<Fornecedor, Integer> {
     Optional<Fornecedor> findTopByOrderByCodigoDesc();
+    Optional<Fornecedor> findTopByNomeNotIgnoreCaseOrderByCodigoDesc(String nome);
 }

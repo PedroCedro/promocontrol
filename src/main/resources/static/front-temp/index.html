@@ -138,7 +138,12 @@
             <p class="section-note">Operação rápida para registrar movimentação do promotor.</p>
             <div class="grid two operacao-grid">
               <label>Promotor (somente ATIVO)
-                <select id="mPromotorId"><option value="">Selecione</option></select>
+                <div class="mov-promotor-find">
+                  <input id="mPromotorSearch" list="mPromotoresAtivosList" placeholder="Digite código ou nome do promotor" autocomplete="off" />
+                  <button id="btnFindPromotor" type="button">Find</button>
+                </div>
+                <datalist id="mPromotoresAtivosList"></datalist>
+                <input id="mPromotorId" type="hidden" />
               </label>
               <label>Fornecedor
                 <input id="mFornecedorNome" readonly />
@@ -192,6 +197,7 @@
               </label>
               <div class="actions"><button id="btnCriarFornecedor">Cadastrar Fornecedor</button></div>
             </div>
+            <p id="fMessage" class="form-message"></p>
           </article>
 
           <article class="card">
@@ -214,7 +220,12 @@
               <label>Nome <input id="pNome" placeholder="Digite o nome do promotor" /></label>
               <label>Telefone <input id="pTelefone" placeholder="(11) 99999-9999" /></label>
               <label>Fornecedor
-                <select id="pFornecedorId"></select>
+                <div class="mov-promotor-find">
+                  <input id="pFornecedorSearch" list="pFornecedoresList" placeholder="Digite código ou nome do fornecedor" autocomplete="off" />
+                  <button id="btnFindFornecedor" type="button">Find</button>
+                </div>
+                <datalist id="pFornecedoresList"></datalist>
+                <input id="pFornecedorId" type="hidden" />
               </label>
               <label>Status
                 <select id="pStatus">
@@ -225,6 +236,7 @@
               </label>
             </div>
             <div class="actions"><button id="btnCriarPromotor">Cadastrar Promotor</button></div>
+            <p id="pMessage" class="form-message"></p>
           </article>
 
           <article class="card">
@@ -297,6 +309,27 @@
       </section>
     </section>
   </main>
+
+  <section id="saidaModal" class="modal-backdrop is-hidden" aria-hidden="true">
+    <article class="modal-card">
+      <h3>Registrar Saida</h3>
+      <p id="saidaModalResumo" class="section-note"></p>
+      <input id="saidaModalPromotorId" type="hidden" />
+      <div class="grid one">
+        <label>Liberado por
+          <input id="saidaModalLiberadoPor" placeholder="Nome de quem autorizou" />
+        </label>
+        <label>Observacao
+          <input id="saidaModalObservacao" placeholder="Observacao opcional" />
+        </label>
+      </div>
+      <p id="saidaModalMessage" class="form-message"></p>
+      <div class="actions modal-actions">
+        <button id="btnCancelarSaidaModal" type="button" class="btn-modal-cancel">Cancelar</button>
+        <button id="btnSalvarSaidaModal" type="button" class="btn-modal-save">Salvar</button>
+      </div>
+    </article>
+  </section>
 
   <script src="/front-temp/app.js"></script>
 </body>

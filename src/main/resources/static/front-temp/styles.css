@@ -427,6 +427,17 @@ textarea::placeholder {
   grid-column: 1 / -1;
 }
 
+.mov-promotor-find {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.mov-promotor-find button {
+  min-width: 78px;
+  padding-inline: 14px;
+}
+
 button {
   border: 0;
   border-radius: 10px;
@@ -499,6 +510,20 @@ tr:hover td {
   background: linear-gradient(120deg, #4f7cf1, #6d91fa);
 }
 
+.quick-saida-btn {
+  min-width: 34px;
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: linear-gradient(120deg, #d91717, #f13c3c);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.quick-saida-btn:hover {
+  background: linear-gradient(120deg, #ba1010, #da2b2b);
+}
+
 .dashboard-detail-row td {
   background: #f8faff;
   white-space: normal;
@@ -557,6 +582,54 @@ tr:hover td {
 }
 
 .btn-exit:hover {
+  background: linear-gradient(120deg, #9f4a4a, #b95f5f);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(10, 18, 39, 0.5);
+}
+
+.modal-card {
+  width: min(460px, 100%);
+  background: #fff;
+  border: 1px solid #d7e1fb;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 20px 44px rgba(20, 35, 80, 0.24);
+}
+
+.modal-card h3 {
+  margin: 0 0 8px;
+  color: #27356f;
+}
+
+.modal-card .section-note {
+  margin: 0 0 10px;
+}
+
+.modal-actions {
+  justify-content: flex-end;
+}
+
+.btn-modal-cancel {
+  background: linear-gradient(120deg, #7a839d, #8d97af);
+}
+
+.btn-modal-cancel:hover {
+  background: linear-gradient(120deg, #69728c, #7c859c);
+}
+
+.btn-modal-save {
+  background: linear-gradient(120deg, #b45454, #cb6a6a);
+}
+
+.btn-modal-save:hover {
   background: linear-gradient(120deg, #9f4a4a, #b95f5f);
 }
 

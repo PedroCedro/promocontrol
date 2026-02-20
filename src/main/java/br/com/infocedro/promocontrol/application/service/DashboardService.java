@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class DashboardService {
 
+    private static final String FORNECEDOR_SISTEMA_NOME = "fornecedor nao informado";
+
     private final PromotorRepository promotorRepository;
     private final MovimentoPromotorRepository movimentoRepository;
     private final FornecedorRepository fornecedorRepository;
@@ -106,6 +108,7 @@ public class DashboardService {
         LocalDateTime fimDia = dataRef.plusDays(1).atStartOfDay().minusNanos(1);
 
         List<Fornecedor> fornecedores = fornecedorRepository.findAll().stream()
+                .filter(f -> !isFornecedorSistema(f))
                 .sorted(Comparator.comparing(Fornecedor::getNome))
                 .toList();
 
@@ -212,5 +215,11 @@ public class DashboardService {
 
     private double round(double value) {
         return Math.round(value * 100.0) / 100.0;
+    }
+
+    private boolean isFornecedorSistema(Fornecedor fornecedor) {
+        return fornecedor != null
+                && fornecedor.getNome() != null
+                && fornecedor.getNome().trim().equalsIgnoreCase(FORNECEDOR_SISTEMA_NOME);
     }
 }

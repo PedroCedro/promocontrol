@@ -12,6 +12,9 @@ const state = {
     phone: "",
     avatarDataUrl: ""
   },
+  cadastroFornecedorLookup: new Map(),
+  movimentoPromotorLookup: new Map(),
+  saidaModalContext: null,
   autoSyncIntervalId: null,
   autoSyncSignature: null,
   autoSyncRunning: false
@@ -110,6 +113,18 @@ function setLoginMessage(message) {
 
 function setMovimentoMessage(message) {
   const field = el("movMessage");
+  if (!field) return;
+  field.textContent = message || "";
+}
+
+function setFornecedorMessage(message) {
+  const field = el("fMessage");
+  if (!field) return;
+  field.textContent = message || "";
+}
+
+function setPromotorMessage(message) {
+  const field = el("pMessage");
   if (!field) return;
   field.textContent = message || "";
 }
@@ -325,15 +340,19 @@ function renderDashboard(resumo) {
 
   const tbody = el("tblDashboardPrincipal").querySelector("tbody");
   tbody.innerHTML = "";
-  (resumo.linhas ?? []).forEach((linha, index) => {
+  const linhas = resumo.linhas ?? [];
+  linhas.forEach((linha, index) => {
     const detalhe = resolveLinhaDetalhe(linha);
+    const saidaCell = linha.saidaEm
+      ? formatHoraMinuto(linha.saidaEm)
+      : `<button class="quick-saida-btn dashboard-saida-btn" data-line-index="${index}" type="button" title="Registrar saida">&gt;</button>`;
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${linha.promotorNome ?? ""}</td>
       <td>${linha.fornecedorNome ?? ""}</td>
       <td>${formatHoraMinuto(linha.entradaEm)}</td>
       <td>${linha.usuarioEntrada ?? "-"}</td>
-      <td>${formatHoraMinuto(linha.saidaEm)}</td>
+      <td>${saidaCell}</td>
       <td>${linha.usuarioSaida ?? "-"}</td>
       <td>${linha.liberadoPor ?? "-"}</td>
       <td><button class="detail-toggle" data-line-index="${index}" type="button">+</button></td>`;
@@ -367,6 +386,16 @@ function renderDashboard(resumo) {
       btn.textContent = opened ? "+" : "-";
     });
   });
+
+  tbody.querySelectorAll(".dashboard-saida-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const index = Number(btn.dataset.lineIndex);
+      if (Number.isNaN(index)) return;
+      const linha = linhas[index];
+      if (!linha) return;
+      openSaidaModal(linha);
+    });
+  });
 }
 
 function renderOperacaoDia(resumo) {
@@ -375,15 +404,19 @@ function renderOperacaoDia(resumo) {
   const tbody = table.querySelector("tbody");
   tbody.innerHTML = "";
 
-  (resumo?.linhas ?? []).forEach((linha, index) => {
+  const linhas = resumo?.linhas ?? [];
+  linhas.forEach((linha, index) => {
     const detalhe = resolveLinhaDetalhe(linha);
+    const saidaCell = linha.saidaEm
+      ? formatHoraMinuto(linha.saidaEm)
+      : `<button class="quick-saida-btn operacao-saida-btn" data-line-index="${index}" type="button" title="Registrar saida">&gt;</button>`;
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${linha.promotorNome ?? ""}</td>
       <td>${linha.fornecedorNome ?? ""}</td>
       <td>${formatHoraMinuto(linha.entradaEm)}</td>
       <td>${linha.usuarioEntrada ?? "-"}</td>
-      <td>${formatHoraMinuto(linha.saidaEm)}</td>
+      <td>${saidaCell}</td>
       <td>${linha.usuarioSaida ?? "-"}</td>
       <td>${linha.liberadoPor ?? "-"}</td>
       <td><button class="detail-toggle op-detail-toggle" data-line-index="${index}" type="button">+</button></td>`;
@@ -415,6 +448,16 @@ function renderOperacaoDia(resumo) {
       if (!detailRow) return;
       const hiddenAfterToggle = detailRow.classList.toggle("is-hidden");
       btn.textContent = hiddenAfterToggle ? "+" : "-";
+    });
+  });
+
+  tbody.querySelectorAll(".operacao-saida-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const index = Number(btn.dataset.lineIndex);
+      if (Number.isNaN(index)) return;
+      const linha = linhas[index];
+      if (!linha) return;
+      openSaidaModal(linha);
     });
   });
 }
@@ -483,19 +526,41 @@ function formatCodigo(value) {
   return String(num).padStart(3, "0");
 }
 
+function normalizeText(value) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function buildPromotorSearchLabel(promotor) {
+  return `${formatCodigo(promotor?.codigo)} - ${promotor?.nome ?? "Sem nome"} - ${promotor?.fornecedorNome ?? "Sem fornecedor"}`;
+}
+
+function buildFornecedorSearchLabel(fornecedor) {
+  return `${formatCodigo(fornecedor?.codigo)} - ${fornecedor?.nome ?? "Sem nome"}`;
+}
+
 function syncFornecedorSelect() {
-  const select = el("pFornecedorId");
+  const fornecedorSearch = el("pFornecedorSearch");
+  const fornecedorList = el("pFornecedoresList");
+  const fornecedorHidden = el("pFornecedorId");
   const dashSelect = el("dashFornecedorId");
-  select.innerHTML = "";
+  if (!fornecedorSearch || !fornecedorList || !fornecedorHidden || !dashSelect) return;
+
+  fornecedorList.innerHTML = "";
   dashSelect.innerHTML = "<option value=\"\">Todos</option>";
+  state.cadastroFornecedorLookup = new Map();
 
   state.fornecedores
     .filter((f) => !isFornecedorSistema(f?.nome))
     .forEach((f) => {
-    const opt = document.createElement("option");
-    opt.value = f.id;
-    opt.textContent = `${formatCodigo(f.codigo)} - ${f.nome}`;
-    select.appendChild(opt);
+    const optSearch = document.createElement("option");
+    const label = buildFornecedorSearchLabel(f);
+    optSearch.value = label;
+    fornecedorList.appendChild(optSearch);
+    state.cadastroFornecedorLookup.set(normalizeText(label), String(f.id));
 
     const optDash = document.createElement("option");
     optDash.value = f.id;
@@ -503,35 +568,55 @@ function syncFornecedorSelect() {
     dashSelect.appendChild(optDash);
   });
 
+  const selectedFornecedor = state.fornecedores
+    .filter((f) => !isFornecedorSistema(f?.nome))
+    .find((f) => String(f.id) === String(fornecedorHidden.value));
+
+  if (selectedFornecedor) {
+    fornecedorSearch.value = buildFornecedorSearchLabel(selectedFornecedor);
+  } else {
+    fornecedorHidden.value = "";
+    fornecedorSearch.value = "";
+  }
+
   syncMovimentoPromotorSelect();
 }
 
 function isFornecedorSistema(nome) {
-  const normalized = String(nome ?? "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+  const normalized = normalizeText(nome);
   return normalized === "fornecedor nao informado";
 }
 
 function syncMovimentoPromotorSelect() {
-  const select = el("mPromotorId");
-  if (!select) return;
+  const input = el("mPromotorSearch");
+  const datalist = el("mPromotoresAtivosList");
+  const hiddenPromotorId = el("mPromotorId");
+  if (!input || !datalist || !hiddenPromotorId) return;
   const filtered = state.promotores.filter((p) => p.status === "ATIVO");
 
-  select.innerHTML = "<option value=\"\">Selecione</option>";
+  datalist.innerHTML = "";
+  state.movimentoPromotorLookup = new Map();
+
   filtered.forEach((p) => {
     const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = `${formatCodigo(p.codigo)} - ${p.nome ?? "Sem nome"} - ${p.fornecedorNome ?? "Sem fornecedor"}`;
-    select.appendChild(opt);
+    const label = buildPromotorSearchLabel(p);
+    opt.value = label;
+    datalist.appendChild(opt);
+    state.movimentoPromotorLookup.set(normalizeText(label), String(p.id));
   });
 
   if (filtered.length === 0) {
     setMovimentoMessage("Nenhum promotor ATIVO encontrado.");
   } else {
     setMovimentoMessage("");
+  }
+
+  const selectedPromotor = filtered.find((p) => String(p.id) === String(hiddenPromotorId.value));
+  if (selectedPromotor) {
+    input.value = buildPromotorSearchLabel(selectedPromotor);
+  } else {
+    hiddenPromotorId.value = "";
+    input.value = "";
   }
 
   updateMovimentoFornecedorFromPromotor();
@@ -551,6 +636,90 @@ function updateMovimentoFornecedorFromPromotor() {
   fornecedorField.value = promotor?.fornecedorNome ?? "";
 }
 
+function listMovimentoPromotoresAtivos() {
+  return state.promotores.filter((p) => p.status === "ATIVO");
+}
+
+function findPromotoresByQuery(query) {
+  const normalizedQuery = normalizeText(query);
+  if (!normalizedQuery) return [];
+
+  return listMovimentoPromotoresAtivos().filter((p) => {
+    const codigo = formatCodigo(p.codigo);
+    const nome = normalizeText(p.nome);
+    const fornecedor = normalizeText(p.fornecedorNome);
+    const label = normalizeText(buildPromotorSearchLabel(p));
+    const codigoSemZeros = String(Number(p.codigo ?? 0));
+    const id = String(p.id ?? "");
+
+    return label.includes(normalizedQuery) ||
+      nome.includes(normalizedQuery) ||
+      fornecedor.includes(normalizedQuery) ||
+      normalizeText(codigo).includes(normalizedQuery) ||
+      normalizeText(codigoSemZeros).includes(normalizedQuery) ||
+      normalizeText(id).includes(normalizedQuery);
+  });
+}
+
+function applyMovimentoPromotorSelection(promotor) {
+  const input = el("mPromotorSearch");
+  const hiddenPromotorId = el("mPromotorId");
+  if (!input || !hiddenPromotorId) return;
+
+  if (!promotor) {
+    hiddenPromotorId.value = "";
+    updateMovimentoFornecedorFromPromotor();
+    return;
+  }
+
+  hiddenPromotorId.value = String(promotor.id);
+  input.value = buildPromotorSearchLabel(promotor);
+  updateMovimentoFornecedorFromPromotor();
+}
+
+function resolveMovimentoPromotorFromSearch(strict) {
+  const input = el("mPromotorSearch");
+  const hiddenPromotorId = el("mPromotorId");
+  if (!input || !hiddenPromotorId) return;
+
+  const typed = input.value.trim();
+  if (!typed) {
+    hiddenPromotorId.value = "";
+    updateMovimentoFornecedorFromPromotor();
+    if (strict) {
+      setMovimentoMessage("Digite um promotor para continuar.");
+    }
+    return;
+  }
+
+  const exactByLabelId = state.movimentoPromotorLookup.get(normalizeText(typed));
+  if (exactByLabelId) {
+    const promotor = listMovimentoPromotoresAtivos().find((p) => String(p.id) === String(exactByLabelId));
+    applyMovimentoPromotorSelection(promotor);
+    setMovimentoMessage("");
+    return;
+  }
+
+  const matches = findPromotoresByQuery(typed);
+  if (matches.length === 1) {
+    applyMovimentoPromotorSelection(matches[0]);
+    setMovimentoMessage("");
+    return;
+  }
+
+  hiddenPromotorId.value = "";
+  updateMovimentoFornecedorFromPromotor();
+
+  if (!strict) return;
+
+  if (matches.length === 0) {
+    setMovimentoMessage("Nenhum promotor ATIVO encontrado para o texto informado.");
+    return;
+  }
+
+  setMovimentoMessage(`Foram encontrados ${matches.length} promotores. Refine a busca e use o Find.`);
+}
+
 function buildDashboardQuery() {
   const params = new URLSearchParams();
   const data = el("dashData").value;
@@ -561,6 +730,83 @@ function buildDashboardQuery() {
   if (status) params.set("status", status);
   const query = params.toString();
   return query ? `/dashboard/planilha-principal?${query}` : "/dashboard/planilha-principal";
+}
+
+function listCadastroFornecedores() {
+  return state.fornecedores.filter((f) => !isFornecedorSistema(f?.nome));
+}
+
+function findFornecedoresByQuery(query) {
+  const normalizedQuery = normalizeText(query);
+  if (!normalizedQuery) return [];
+
+  return listCadastroFornecedores().filter((f) => {
+    const codigo = formatCodigo(f.codigo);
+    const nome = normalizeText(f.nome);
+    const label = normalizeText(buildFornecedorSearchLabel(f));
+    const codigoSemZeros = String(Number(f.codigo ?? 0));
+    const id = String(f.id ?? "");
+
+    return label.includes(normalizedQuery) ||
+      nome.includes(normalizedQuery) ||
+      normalizeText(codigo).includes(normalizedQuery) ||
+      normalizeText(codigoSemZeros).includes(normalizedQuery) ||
+      normalizeText(id).includes(normalizedQuery);
+  });
+}
+
+function applyCadastroFornecedorSelection(fornecedor) {
+  const searchField = el("pFornecedorSearch");
+  const hiddenField = el("pFornecedorId");
+  if (!searchField || !hiddenField) return;
+
+  if (!fornecedor) {
+    hiddenField.value = "";
+    return;
+  }
+
+  hiddenField.value = String(fornecedor.id);
+  searchField.value = buildFornecedorSearchLabel(fornecedor);
+}
+
+function resolveCadastroFornecedorFromSearch(strict) {
+  const searchField = el("pFornecedorSearch");
+  const hiddenField = el("pFornecedorId");
+  if (!searchField || !hiddenField) return;
+
+  const typed = searchField.value.trim();
+  if (!typed) {
+    hiddenField.value = "";
+    if (strict) {
+      setMovimentoMessage("Digite um fornecedor valido no cadastro de promotor.");
+    }
+    return;
+  }
+
+  const exactByLabelId = state.cadastroFornecedorLookup.get(normalizeText(typed));
+  if (exactByLabelId) {
+    const fornecedor = listCadastroFornecedores().find((f) => String(f.id) === String(exactByLabelId));
+    applyCadastroFornecedorSelection(fornecedor);
+    setMovimentoMessage("");
+    return;
+  }
+
+  const matches = findFornecedoresByQuery(typed);
+  if (matches.length === 1) {
+    applyCadastroFornecedorSelection(matches[0]);
+    setMovimentoMessage("");
+    return;
+  }
+
+  hiddenField.value = "";
+  if (!strict) return;
+
+  if (matches.length === 0) {
+    setMovimentoMessage("Nenhum fornecedor encontrado para o texto informado.");
+    return;
+  }
+
+  setMovimentoMessage(`Foram encontrados ${matches.length} fornecedores. Refine a busca e use o Find.`);
 }
 
 async function refreshDashboard() {
@@ -650,30 +896,47 @@ async function refreshUsuarios() {
 }
 
 async function criarFornecedor() {
+  setFornecedorMessage("");
   const payload = {
     nome: el("fNome").value.trim(),
     ativo: el("fAtivo").value === "true"
   };
   await apiRequest("/fornecedores", "POST", payload);
   await refreshData();
+  el("fNome").value = "";
+  el("fAtivo").value = "true";
+  setFornecedorMessage("Fornecedor cadastrado com sucesso.");
 }
 
 async function criarPromotor() {
+  setPromotorMessage("");
+  resolveCadastroFornecedorFromSearch(true);
+  const fornecedorId = el("pFornecedorId").value;
+  if (!fornecedorId) {
+    throw new Error("Informe um fornecedor valido no campo de busca");
+  }
+
   const payload = {
     nome: el("pNome").value.trim(),
     telefone: el("pTelefone").value.trim(),
-    fornecedorId: Number(el("pFornecedorId").value),
+    fornecedorId: Number(fornecedorId),
     status: el("pStatus").value,
     fotoPath: ""
   };
   await apiRequest("/promotores", "POST", payload);
   await refreshData();
+  el("pNome").value = "";
+  el("pTelefone").value = "";
+  el("pStatus").value = "ATIVO";
+  el("pFornecedorSearch").value = "";
+  el("pFornecedorId").value = "";
+  setPromotorMessage("Promotor cadastrado com sucesso.");
 }
 
 async function registrarEntrada() {
   const promotorId = el("mPromotorId").value;
   if (!promotorId) {
-    throw new Error("Selecione um promotor");
+    throw new Error("Informe um promotor valido no campo de busca");
   }
 
   const payload = {
@@ -691,7 +954,7 @@ async function registrarEntrada() {
 async function registrarSaida() {
   const promotorId = el("mPromotorId").value;
   if (!promotorId) {
-    throw new Error("Selecione um promotor");
+    throw new Error("Informe um promotor valido no campo de busca");
   }
 
   const liberadoPor = el("mLiberadoPor").value.trim();
@@ -699,17 +962,81 @@ async function registrarSaida() {
     throw new Error("Informe quem liberou a saida");
   }
 
+  await registrarSaidaPorPromotor(promotorId, liberadoPor, el("mObservacao").value.trim());
+  el("mObservacao").value = "";
+  setMovimentoMessage("Saida registrada com sucesso.");
+}
+
+async function registrarSaidaPorPromotor(promotorId, liberadoPor, observacao) {
   const payload = {
     promotorId,
     responsavel: state.auth?.username ?? "",
     liberadoPor,
-    observacao: el("mObservacao").value.trim()
+    observacao: observacao ?? ""
   };
 
   await apiRequest("/movimentos/saida", "POST", payload);
-  el("mObservacao").value = "";
-  setMovimentoMessage("Saida registrada com sucesso.");
   await refreshData();
+}
+
+function setSaidaModalMessage(message) {
+  const field = el("saidaModalMessage");
+  if (!field) return;
+  field.textContent = message || "";
+}
+
+function openSaidaModal(linha) {
+  if (!linha?.promotorId) return;
+
+  state.saidaModalContext = {
+    promotorId: String(linha.promotorId),
+    promotorNome: linha.promotorNome ?? "",
+    fornecedorNome: linha.fornecedorNome ?? ""
+  };
+
+  el("saidaModalPromotorId").value = String(linha.promotorId);
+  el("saidaModalResumo").textContent = `${linha.promotorNome ?? ""} - ${linha.fornecedorNome ?? ""}`;
+  el("saidaModalLiberadoPor").value = "";
+  el("saidaModalObservacao").value = "";
+  setSaidaModalMessage("");
+  el("saidaModal").classList.remove("is-hidden");
+  el("saidaModal").setAttribute("aria-hidden", "false");
+  el("saidaModalLiberadoPor").focus();
+}
+
+function closeSaidaModal() {
+  state.saidaModalContext = null;
+  setSaidaModalMessage("");
+  el("saidaModal").classList.add("is-hidden");
+  el("saidaModal").setAttribute("aria-hidden", "true");
+}
+
+async function salvarSaidaModal() {
+  const ctx = state.saidaModalContext;
+  if (!ctx?.promotorId) {
+    closeSaidaModal();
+    return;
+  }
+
+  const liberadoPor = el("saidaModalLiberadoPor").value.trim();
+  if (!liberadoPor) {
+    setSaidaModalMessage("Informe quem liberou a saida.");
+    return;
+  }
+
+  const observacao = el("saidaModalObservacao").value.trim();
+  const saveBtn = el("btnSalvarSaidaModal");
+  saveBtn.disabled = true;
+  try {
+    await registrarSaidaPorPromotor(ctx.promotorId, liberadoPor, observacao);
+    closeSaidaModal();
+    setMovimentoMessage("Saida registrada com sucesso.");
+  } catch (e) {
+    setSaidaModalMessage(`Falha ao registrar saida: ${e.message}`);
+    log("Falha ao registrar saida pelo modal", { error: e.message });
+  } finally {
+    saveBtn.disabled = false;
+  }
 }
 
 async function login() {
@@ -867,8 +1194,26 @@ function bindActions() {
   el("btnLogout").addEventListener("click", logout);
   el("btnRefreshDashboard").addEventListener("click", () => refreshDashboard().catch((e) => log("Falha dashboard", { error: e.message })));
   el("btnRefreshUsuarios").addEventListener("click", () => refreshUsuarios().catch((e) => log("Falha usuarios", { error: e.message })));
-  el("btnCriarFornecedor").addEventListener("click", () => criarFornecedor().catch((e) => log("Falha ao criar fornecedor", { error: e.message })));
-  el("btnCriarPromotor").addEventListener("click", () => criarPromotor().catch((e) => log("Falha ao criar", { error: e.message })));
+  el("btnCriarFornecedor").addEventListener("click", () => {
+    criarFornecedor().catch((e) => {
+      setFornecedorMessage(`Falha ao cadastrar fornecedor: ${e.message}`);
+      log("Falha ao criar fornecedor", { error: e.message });
+    });
+  });
+  el("btnCriarPromotor").addEventListener("click", () => {
+    criarPromotor().catch((e) => {
+      setPromotorMessage(`Falha ao cadastrar promotor: ${e.message}`);
+      log("Falha ao criar", { error: e.message });
+    });
+  });
+  el("pFornecedorSearch").addEventListener("input", () => resolveCadastroFornecedorFromSearch(false));
+  el("pFornecedorSearch").addEventListener("change", () => resolveCadastroFornecedorFromSearch(true));
+  el("pFornecedorSearch").addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    resolveCadastroFornecedorFromSearch(true);
+  });
+  el("btnFindFornecedor").addEventListener("click", () => resolveCadastroFornecedorFromSearch(true));
   el("btnRegistrarEntrada").addEventListener("click", () => {
     registrarEntrada().catch((e) => {
       setMovimentoMessage(`Falha ao registrar entrada: ${e.message}`);
@@ -881,7 +1226,30 @@ function bindActions() {
       log("Falha ao registrar saida", { error: e.message });
     });
   });
-  el("mPromotorId").addEventListener("change", updateMovimentoFornecedorFromPromotor);
+  el("mPromotorSearch").addEventListener("input", () => resolveMovimentoPromotorFromSearch(false));
+  el("mPromotorSearch").addEventListener("change", () => resolveMovimentoPromotorFromSearch(true));
+  el("mPromotorSearch").addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    resolveMovimentoPromotorFromSearch(true);
+  });
+  el("btnFindPromotor").addEventListener("click", () => resolveMovimentoPromotorFromSearch(true));
+  el("btnCancelarSaidaModal").addEventListener("click", closeSaidaModal);
+  el("btnSalvarSaidaModal").addEventListener("click", () => {
+    salvarSaidaModal().catch((e) => {
+      setSaidaModalMessage(`Falha ao registrar saida: ${e.message}`);
+      log("Falha ao salvar saida pelo modal", { error: e.message });
+    });
+  });
+  el("saidaModal").addEventListener("click", (event) => {
+    if (event.target !== el("saidaModal")) return;
+    closeSaidaModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    if (el("saidaModal").classList.contains("is-hidden")) return;
+    closeSaidaModal();
+  });
   el("btnCriarUsuario").addEventListener("click", () => criarUsuario().catch((e) => log("Falha ao criar usuario", { error: e.message })));
   el("btnResetSenha").addEventListener("click", () => resetarSenhaUsuario().catch((e) => log("Falha reset de senha", { error: e.message })));
   el("btnSaveProfile").addEventListener("click", saveProfileFromForm);
