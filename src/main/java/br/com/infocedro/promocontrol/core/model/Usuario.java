@@ -23,6 +23,9 @@ public class Usuario extends AuditableEntity {
     @Column(nullable = false, unique = true, length = 120)
     private String username;
 
+    @Column(nullable = false, unique = true)
+    private Integer codigo;
+
     @Column(nullable = false, length = 255)
     private String senhaHash;
 
@@ -31,4 +34,7 @@ public class Usuario extends AuditableEntity {
 
     @Column(nullable = false)
     private boolean precisaTrocarSenha;
+
+    @Column(nullable = false)
+    private boolean ativo;
 }

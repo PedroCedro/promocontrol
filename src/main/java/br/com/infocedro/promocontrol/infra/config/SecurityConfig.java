@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -30,6 +31,7 @@ public class SecurityConfig {
     private final ObjectMapper objectMapper;
     private final CorrelationIdFilter correlationIdFilter;
     private final PasswordChangeRequiredFilter passwordChangeRequiredFilter;
+    private final AuthenticationEntryPoint apiAuthenticationEntryPoint;
 
     public SecurityConfig(
             ObjectMapper objectMapper,
@@ -38,6 +40,12 @@ public class SecurityConfig {
         this.objectMapper = objectMapper;
         this.correlationIdFilter = correlationIdFilter;
         this.passwordChangeRequiredFilter = passwordChangeRequiredFilter;
+        this.apiAuthenticationEntryPoint = (request, response, authException) ->
+                writeSecurityError(
+                        response,
+                        HttpStatus.UNAUTHORIZED,
+                        "Autenticacao obrigatoria",
+                        request.getRequestURI());
     }
 
     @Bean
@@ -53,37 +61,37 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/auth/sessao")
-                    .hasAnyRole("VIEWER", "OPERATOR", "ADMIN")
+                    .hasAnyRole("VIEWER", "OPERATOR", "GESTOR", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/auth/alterar-senha")
-                    .hasAnyRole("VIEWER", "OPERATOR", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/auth/admin/resetar-senha").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/auth/admin/usuarios").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/auth/admin/usuarios").hasRole("ADMIN")
+                    .hasAnyRole("VIEWER", "OPERATOR", "GESTOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/auth/admin/resetar-senha").hasAnyRole("GESTOR", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/auth/admin/usuarios").hasAnyRole("GESTOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/auth/admin/usuarios").hasAnyRole("GESTOR", "ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/auth/admin/usuarios/**").hasAnyRole("GESTOR", "ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/movimentos/*/ajuste-horario").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/fornecedores/**", "/promotores/**", "/movimentos/**", "/dashboard/**")
-                    .hasAnyRole("VIEWER", "OPERATOR", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/fornecedores/**", "/promotores/**", "/movimentos/**")
+                    .hasAnyRole("VIEWER", "OPERATOR", "GESTOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/fornecedores/**", "/promotores/**")
+                    .hasAnyRole("OPERATOR", "GESTOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/movimentos/**")
                     .hasAnyRole("OPERATOR", "ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/fornecedores/**")
-                    .hasAnyRole("OPERATOR", "ADMIN")
+                    .hasAnyRole("OPERATOR", "GESTOR", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/promotores/**")
+                    .hasAnyRole("OPERATOR", "GESTOR", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/fornecedores/**")
-                    .hasAnyRole("OPERATOR", "ADMIN")
+                    .hasAnyRole("OPERATOR", "GESTOR", "ADMIN")
                 .anyRequest().denyAll()
             )
             .exceptionHandling(ex -> ex
-                .authenticationEntryPoint((request, response, authException) ->
-                    writeSecurityError(
-                        response,
-                        HttpStatus.UNAUTHORIZED,
-                        "Autenticacao obrigatoria",
-                        request.getRequestURI()))
+                .authenticationEntryPoint(apiAuthenticationEntryPoint)
                 .accessDeniedHandler((request, response, accessDeniedException) ->
                     writeSecurityError(
                         response,
                         HttpStatus.FORBIDDEN,
                         "Acesso negado",
                         request.getRequestURI())))
-            .httpBasic();
+            .httpBasic(basic -> basic.authenticationEntryPoint(apiAuthenticationEntryPoint));
 
         return http.build();
     }

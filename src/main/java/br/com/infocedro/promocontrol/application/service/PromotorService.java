@@ -1,12 +1,14 @@
 package br.com.infocedro.promocontrol.application.service;
 
 import br.com.infocedro.promocontrol.core.exception.FornecedorNaoEncontradoException;
+import br.com.infocedro.promocontrol.core.exception.PromotorNaoEncontradoException;
 import br.com.infocedro.promocontrol.core.model.Fornecedor;
 import br.com.infocedro.promocontrol.core.model.Promotor;
 import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +43,22 @@ public class PromotorService {
 
     public List<Promotor> listar() {
         return repository.findAll();
+    }
+
+    @Transactional
+    public Promotor atualizar(UUID id, Promotor promotorAtualizado, Integer fornecedorId) {
+        Promotor existente = repository.findById(id)
+                .orElseThrow(PromotorNaoEncontradoException::new);
+        Fornecedor fornecedor = fornecedorRepository.findById(fornecedorId)
+                .orElseThrow(FornecedorNaoEncontradoException::new);
+
+        existente.setNome(promotorAtualizado.getNome());
+        existente.setTelefone(promotorAtualizado.getTelefone());
+        existente.setStatus(promotorAtualizado.getStatus());
+        existente.setFotoPath(promotorAtualizado.getFotoPath());
+        existente.setFornecedor(fornecedor);
+
+        return repository.save(existente);
     }
 
 }

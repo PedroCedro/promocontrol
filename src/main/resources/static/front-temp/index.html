@@ -3,25 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PromoControl - Operacao</title>
+  <title>PromoControl - Operação</title>
+  <link rel="icon" type="image/svg+xml" href="/front-temp/favicon.svg">
+  <link rel="shortcut icon" href="/front-temp/favicon.svg">
   <link rel="stylesheet" href="/front-temp/styles.css">
 </head>
 <body>
   <section id="loginView" class="login-view">
     <article class="login-card">
-      <h1>Entrar no PromoControl</h1>
-      <p>Painel operacional para fornecedores e promotores.</p>
+      <img src="/front-temp/promocontrol-icon.svg" alt="Ícone PromoControl" class="login-brand-icon" />
+      <h1>PromoControl</h1>
       <div class="grid one">
-        <label>Usuario <input id="loginUsername" placeholder="Digite seu usuário" autocomplete="off" /></label>
-        <label>Senha <input id="loginPassword" type="password" placeholder="Digite sua senha" autocomplete="off" /></label>
+        <label>Usuário <input id="loginUsername" placeholder="Digite seu usuário" autocomplete="off" /></label>
+        <label class="password-label-row">
+          <span>Senha</span>
+          <button id="btnForgotPassword" class="forgot-password-link" type="button">Esqueceu a senha?</button>
+        </label>
+        <input id="loginPassword" type="password" placeholder="Digite sua senha" autocomplete="off" />
       </div>
       <p id="loginMessage" class="login-message"></p>
       <div class="actions">
         <button id="btnLogin">Entrar</button>
       </div>
       <section id="forceChangeBox" class="force-change-box is-hidden">
-        <h2>Troca Obrigatoria de Senha</h2>
-        <p>Voce entrou com senha temporaria. Defina uma nova senha para continuar.</p>
+        <h2>Troca Obrigatória de Senha</h2>
+        <p>Você entrou com senha temporária. Defina uma nova senha para continuar.</p>
         <div class="grid one">
           <label>Nova senha <input id="newPassword" type="password" /></label>
           <label>Confirmar senha <input id="confirmPassword" type="password" /></label>
@@ -36,28 +42,30 @@
   <main id="appShell" class="app-shell is-hidden">
     <aside class="side-nav">
       <div class="brand-block">
-        <p class="kicker">Homologacao</p>
-        <h1>PromoControl</h1>
-        <p>Operacao de loja com foco em rastreabilidade.</p>
+        <div class="brand-title-row">
+          <img src="/front-temp/promocontrol-icon.svg" alt="Ícone PromoControl" class="brand-icon" />
+          <h1>PromoControl</h1>
+        </div>
+        <p class="kicker">Homologação</p>
       </div>
       <section class="profile-card">
         <h2><button id="btnOpenProfile" class="profile-link" type="button">Meu Perfil</button></h2>
         <div class="profile-avatar-wrap">
-          <img id="profileAvatarPreview" class="profile-avatar is-hidden" alt="Avatar do usuario" />
+          <img id="profileAvatarPreview" class="profile-avatar is-hidden" alt="Avatar do usuário" />
           <div id="profileAvatarFallback" class="profile-avatar-fallback">U</div>
         </div>
         <input id="baseUrl" type="hidden" />
         <input id="currentUser" type="hidden" />
         <input id="currentRole" type="hidden" />
         <p id="profileUserName" class="profile-name">user</p>
-        <p id="profileRoleName" class="profile-role">OPERATOR</p>
+        <p id="profileRoleName" class="profile-role">Prevenção</p>
       </section>
       <nav class="tabs">
         <button class="tab-btn is-active" data-tab="tab-dashboard">Painel</button>
-        <button class="tab-btn" data-tab="tab-movimentos">Operação</button>
+        <button id="tabMovimentosBtn" class="tab-btn" data-tab="tab-movimentos">Operação</button>
         <button class="tab-btn" data-tab="tab-fornecedores">Fornecedores</button>
         <button class="tab-btn" data-tab="tab-promotores">Promotores</button>
-        <button id="tabUsersBtn" class="tab-btn is-hidden" data-tab="tab-usuarios">Usuarios</button>
+        <button id="tabUsersBtn" class="tab-btn is-hidden" data-tab="tab-usuarios">Usuários</button>
         <button id="tabIntegracaoBtn" class="tab-btn is-hidden" data-tab="tab-integracao">Logs</button>
       </nav>
       <div class="side-nav-footer">
@@ -89,7 +97,7 @@
         <section id="tab-dashboard" class="tab-panel is-active">
           <article class="card">
             <h2>Movimento diario</h2>
-            <p class="section-note">Visual em planilha para acompanhamento de entradas e saidas.</p>
+            <p class="section-note">Visual em planilha para acompanhamento de entradas e saídas.</p>
             <div class="grid four">
               <label>Data <input id="dashData" type="date" /></label>
               <label>Fornecedor
@@ -108,7 +116,7 @@
             <div class="stats-row">
               <label class="metric">Em loja agora <input id="dashCardEmLoja" readonly /></label>
               <label class="metric">Entradas hoje <input id="dashCardEntradas" readonly /></label>
-              <label class="metric">Saidas hoje <input id="dashCardSaidas" readonly /></label>
+              <label class="metric">Saídas hoje <input id="dashCardSaidas" readonly /></label>
               <label class="metric">Ajustes hoje <input id="dashCardAjustes" readonly /></label>
             </div>
             <div class="table-wrap">
@@ -119,8 +127,8 @@
                     <th>Fornecedor</th>
                     <th>Entrada em</th>
                     <th>Usuário Entrada</th>
-                    <th>Saida em</th>
-                    <th>Usuário Saida</th>
+                    <th>Saída em</th>
+                    <th>Usuário Saída</th>
                     <th>Liberação</th>
                     <th>Detalhes</th>
                   </tr>
@@ -148,17 +156,17 @@
               <label>Fornecedor
                 <input id="mFornecedorNome" readonly />
               </label>
-              <label>Liberado por (obrigatorio na saida)
+              <label>Liberado por (obrigatório na saída)
                 <input id="mLiberadoPor" placeholder="Nome de quem autorizou" />
               </label>
-              <label class="operacao-observacao">Observacao
-                <input id="mObservacao" placeholder="Observacao opcional" />
+              <label class="operacao-observacao">Observação
+                <input id="mObservacao" placeholder="Observação opcional" />
               </label>
             </div>
             <p id="movMessage" class="form-message"></p>
             <div class="actions">
               <button id="btnRegistrarEntrada" class="btn-entry">Entrada</button>
-              <button id="btnRegistrarSaida" class="btn-exit">Saida</button>
+              <button id="btnRegistrarSaida" class="btn-exit">Saída</button>
             </div>
           </article>
 
@@ -172,7 +180,7 @@
                     <th>Fornecedor</th>
                     <th>Entrada em</th>
                     <th>Usuário Entrada</th>
-                    <th>Saida em</th>
+                    <th>Saída em</th>
                     <th>Usuário Saída</th>
                     <th>Liberação</th>
                     <th>Detalhes</th>
@@ -186,26 +194,37 @@
 
         <section id="tab-fornecedores" class="tab-panel">
           <article class="card">
-            <h2>Cadastro de Fornecedores</h2>
-            <div class="grid three">
-              <label>Nome <input id="fNome" placeholder="Digite o nome do fornecedor" /></label>
-              <label>Ativo
+            <h2 class="user-card-title">Cadastro de Fornecedores <span id="fEditModeBadge" class="edit-mode-badge is-hidden">Modo de Edição</span></h2>
+            <div class="grid three fornecedor-form-grid">
+              <label>Código <input id="fCodigo" readonly disabled tabindex="-1" placeholder="Cod." /></label>
+              <label>Nome <input id="fNome" placeholder="novo.fornecedor" /></label>
+              <label>Status
                 <select id="fAtivo">
-                  <option value="true">Sim</option>
-                  <option value="false">Nao</option>
+                  <option value="true">ATIVO</option>
+                  <option value="false">INATIVO</option>
                 </select>
               </label>
-              <div class="actions"><button id="btnCriarFornecedor">Cadastrar Fornecedor</button></div>
+            </div>
+            <div id="fornecedorFormActions" class="actions user-form-actions fornecedor-form-actions">
+              <button id="btnNovoFornecedor" type="button">Novo</button>
+              <button id="btnCancelarFornecedor" type="button">Cancelar</button>
+              <button id="btnSalvarFornecedor" type="button">Salvar</button>
             </div>
             <p id="fMessage" class="form-message"></p>
           </article>
 
           <article class="card">
             <h2>Fornecedores Cadastrados</h2>
+            <div class="grid two">
+              <label>Buscar fornecedor
+                <input id="fFiltroNome" placeholder="Digite código, nome ou status" />
+              </label>
+              <div class="actions inline"><button id="btnRefreshFornecedores">Atualizar Fornecedores</button></div>
+            </div>
             <div class="table-wrap">
               <table id="tblFornecedores">
                 <thead>
-                  <tr><th>Código</th><th>Nome</th><th>Ativo</th></tr>
+                  <tr><th>Código</th><th>Nome</th><th>Status</th><th>Ações</th></tr>
                 </thead>
                 <tbody></tbody>
               </table>
@@ -215,9 +234,10 @@
 
         <section id="tab-promotores" class="tab-panel">
           <article class="card card-compact">
-            <h2>Novo Promotor</h2>
-            <div class="grid four">
-              <label>Nome <input id="pNome" placeholder="Digite o nome do promotor" /></label>
+            <h2 class="user-card-title">Cadastro de Promotores <span id="pEditModeBadge" class="edit-mode-badge is-hidden">Modo de Edição</span></h2>
+            <div class="grid four promotor-form-grid">
+              <label>Código <input id="pCodigo" readonly disabled tabindex="-1" placeholder="Cod." /></label>
+              <label>Nome <input id="pNome" placeholder="novo.promotor" /></label>
               <label>Telefone <input id="pTelefone" placeholder="(11) 99999-9999" /></label>
               <label>Fornecedor
                 <div class="mov-promotor-find">
@@ -235,20 +255,24 @@
                 </select>
               </label>
             </div>
-            <div class="actions"><button id="btnCriarPromotor">Cadastrar Promotor</button></div>
+            <div id="promotorFormActions" class="actions user-form-actions fornecedor-form-actions">
+              <button id="btnNovoPromotor" type="button">Novo</button>
+              <button id="btnCancelarPromotor" type="button">Cancelar</button>
+              <button id="btnSalvarPromotor" type="button">Salvar</button>
+            </div>
             <p id="pMessage" class="form-message"></p>
           </article>
 
           <article class="card">
             <h2>Promotores Cadastrados</h2>
             <div class="grid two">
-              <label>Filtro por Fornecedor <input id="filtroFornecedorPromotor" placeholder="Digite nome do fornecedor" /></label>
-              <div class="actions inline"><button id="btnFiltroPromotor">Filtrar</button></div>
+              <label>Buscar promotor <input id="pFiltroNome" placeholder="Digite código, nome, fornecedor ou status" /></label>
+              <div class="actions inline"><button id="btnRefreshPromotores">Atualizar Promotores</button></div>
             </div>
             <div class="table-wrap">
               <table id="tblPromotores">
                 <thead>
-                  <tr><th>Código</th><th>Nome</th><th>Fornecedor</th><th>Status</th><th>Telefone</th></tr>
+                  <tr><th>Código</th><th>Nome</th><th>Fornecedor</th><th>Status</th><th>Telefone</th><th>Ações</th></tr>
                 </thead>
                 <tbody></tbody>
               </table>
@@ -257,42 +281,47 @@
         </section>
 
         <section id="tab-usuarios" class="tab-panel">
-          <details id="adminUsersCard" class="card card-collapsible">
-            <summary>Cadastro de Usuarios (Admin)</summary>
-            <div class="grid three">
-              <label>Usuario <input id="uUsername" placeholder="novo.usuario" /></label>
+          <article id="adminUsersCard" class="card">
+            <h2 class="user-card-title">Cadastro de Usuários (Admin/Gestor) <span id="uEditModeBadge" class="edit-mode-badge is-hidden">Modo de Edição</span></h2>
+            <div class="grid four user-form-grid">
+              <label>Código <input id="uCodigo" readonly tabindex="-1" placeholder="Cod." /></label>
+              <label>Usuário <input id="uUsername" placeholder="novo.usuario" /></label>
               <label>Perfil
                 <select id="uPerfil">
-                  <option value="VIEWER">VIEWER</option>
-                  <option value="OPERATOR">OPERATOR</option>
-                  <option value="ADMIN">ADMIN</option>
+                  <option value="VIEWER">Visualizar</option>
+                  <option value="OPERATOR">Prevenção</option>
+                  <option value="GESTOR">Gestor</option>
+                  <option value="ADMIN">Admin</option>
                 </select>
               </label>
-              <div class="actions"><button id="btnCriarUsuario">Cadastrar Usuario</button></div>
-            </div>
-            <label>Senha temporaria gerada (visivel uma vez)
-              <input id="uTempPassword" readonly placeholder="sera exibida ao cadastrar/resetar" />
-            </label>
-          </details>
-
-          <details id="adminResetCard" class="card card-collapsible">
-            <summary>Resetar Senha de Usuario (Admin)</summary>
-            <div class="grid three">
-              <label>Usuario <input id="resetUsername" placeholder="viewer, user ou admin" /></label>
-              <div class="actions"><button id="btnResetSenha">Resetar Senha</button></div>
-              <label>Senha temporaria (visivel uma vez)
-                <input id="resetTempPassword" readonly placeholder="sera exibida somente apos reset" />
+              <label>Status
+                <select id="uStatus">
+                  <option value="ATIVO">ATIVO</option>
+                  <option value="INATIVO">INATIVO</option>
+                </select>
               </label>
             </div>
-          </details>
+            <div class="actions user-form-actions">
+              <button id="btnNovoUsuario" type="button">Novo</button>
+              <button id="btnCancelarUsuario" type="button">Cancelar</button>
+              <button id="btnSalvarUsuario" type="button">Salvar</button>
+              <button id="btnResetSenha" type="button">Resetar Senha</button>
+            </div>
+            <p id="uMessage" class="form-message"></p>
+          </article>
 
           <article id="adminUsersListCard" class="card">
-            <h2>Usuarios Cadastrados</h2>
-            <div class="actions"><button id="btnRefreshUsuarios">Atualizar Usuarios</button></div>
+            <h2>Usuários Cadastrados</h2>
+            <div class="grid two">
+              <label>Buscar usuário
+                <input id="uFiltroNome" placeholder="Digite usuário, perfil ou status" />
+              </label>
+              <div class="actions inline"><button id="btnRefreshUsuarios">Atualizar Usuários</button></div>
+            </div>
             <div class="table-wrap">
               <table id="tblUsuarios">
                 <thead>
-                  <tr><th>Usuario</th><th>Perfil</th><th>Troca Senha Pendente</th></tr>
+                  <tr><th>Código</th><th>Usuário</th><th>Perfil</th><th>Status</th><th>Troca Senha Pendente</th><th>Ações</th></tr>
                 </thead>
                 <tbody></tbody>
               </table>
@@ -302,7 +331,7 @@
 
         <section id="tab-integracao" class="tab-panel">
           <article class="card">
-            <h2>Logs de Integracao</h2>
+            <h2>Logs de Integração</h2>
             <pre id="log"></pre>
           </article>
         </section>
@@ -312,15 +341,15 @@
 
   <section id="saidaModal" class="modal-backdrop is-hidden" aria-hidden="true">
     <article class="modal-card">
-      <h3>Registrar Saida</h3>
+      <h3>Registrar Saída</h3>
       <p id="saidaModalResumo" class="section-note"></p>
       <input id="saidaModalPromotorId" type="hidden" />
       <div class="grid one">
         <label>Liberado por
           <input id="saidaModalLiberadoPor" placeholder="Nome de quem autorizou" />
         </label>
-        <label>Observacao
-          <input id="saidaModalObservacao" placeholder="Observacao opcional" />
+        <label>Observação
+          <input id="saidaModalObservacao" placeholder="Observação opcional" />
         </label>
       </div>
       <p id="saidaModalMessage" class="form-message"></p>
@@ -330,6 +359,23 @@
       </div>
     </article>
   </section>
+
+  <section id="confirmModal" class="modal-backdrop is-hidden" aria-hidden="true">
+    <article class="modal-card confirm-card">
+      <h3 id="confirmModalTitle">Confirmação</h3>
+      <p id="confirmModalMessage" class="section-note"></p>
+      <div id="confirmModalSecretWrap" class="confirm-secret-wrap is-hidden">
+        <input id="confirmModalSecret" class="confirm-secret-input" type="text" readonly />
+      </div>
+      <p id="confirmModalFootnote" class="confirm-footnote is-hidden"></p>
+      <div class="actions modal-actions">
+        <button id="btnConfirmModalCancel" type="button" class="btn-modal-cancel">Cancelar</button>
+        <button id="btnConfirmModalOk" type="button" class="btn-modal-confirm">Confirmar</button>
+      </div>
+    </article>
+  </section>
+
+  <footer class="app-footer">&copy; 2026 InfoCedro. Todos os direitos reservados.</footer>
 
   <script src="/front-temp/app.js"></script>
 </body>

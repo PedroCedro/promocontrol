@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.5.7.0 - 2026-02-21
+
+### Added
+- Perfil `GESTOR` com credenciais padrao por ambiente (`app.security.gestor.*`).
+- Endpoint de edicao de promotor: `PUT /promotores/{id}`.
+- DTO `AtualizarPromotorRequest` para atualizacao de promotor.
+
+### Changed
+- Seguranca ajustada para incluir `GESTOR`:
+  - pode gerenciar usuarios;
+  - pode cadastrar/editar fornecedores e promotores;
+  - nao pode operar entradas/saidas;
+  - nao acessa logs (restrito a `ADMIN`).
+- Front-temp padronizado em `Usuarios`, `Fornecedores` e `Promotores` com:
+  - modos `view/new/edit`;
+  - botoes `Novo/Cancelar/Salvar`;
+  - confirmacoes em modal custom;
+  - validacao de campo obrigatorio com erro em vermelho;
+  - busca/filtro e botao `Editar` nas listas.
+- Campo de codigo travado (nao selecionavel) em formularios administrativos.
+
 ## v0.5.6.2 - 2026-02-20
 
 ### Changed

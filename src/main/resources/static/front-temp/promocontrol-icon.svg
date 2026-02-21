@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">PromoControl Icon</title>
+  <desc id="desc">Escudo com letra P e marca de validacao</desc>
+  <defs>
+    <linearGradient id="pc-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2f6df6" />
+      <stop offset="100%" stop-color="#234fc0" />
+    </linearGradient>
+    <linearGradient id="pc-accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff7a59" />
+      <stop offset="100%" stop-color="#ff9f5a" />
+    </linearGradient>
+  </defs>
+
+  <rect x="6" y="6" width="116" height="116" rx="26" fill="url(#pc-bg)" />
+  <path d="M64 20L96 34V62C96 83 83 101 64 108C45 101 32 83 32 62V34L64 20Z" fill="#ffffff" fill-opacity="0.16" />
+  <path d="M46 83V44H67C77 44 84 50 84 60C84 70 77 76 67 76H56V83H46ZM56 67H66C70 67 73 64 73 60C73 56 70 53 66 53H56V67Z" fill="#ffffff" />
+  <path d="M51 92L61 102L82 81" fill="none" stroke="url(#pc-accent)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

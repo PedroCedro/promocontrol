@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="260" viewBox="0 0 780 260">
+  <rect width="780" height="260" fill="#f8fafc"/>
+  <text x="24" y="34" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#0f172a">
+    Paleta PromoControl (Varejo / Atacado / Controle)
+  </text>
+
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#1e293b">
+    <rect x="24"  y="54" width="92" height="92" rx="10" fill="#1E4ED8"/><text x="24" y="162">#1E4ED8</text>
+    <rect x="136" y="54" width="92" height="92" rx="10" fill="#2563EB"/><text x="136" y="162">#2563EB</text>
+    <rect x="248" y="54" width="92" height="92" rx="10" fill="#16A34A"/><text x="248" y="162">#16A34A</text>
+    <rect x="360" y="54" width="92" height="92" rx="10" fill="#22C55E"/><text x="360" y="162">#22C55E</text>
+    <rect x="472" y="54" width="92" height="92" rx="10" fill="#F97316"/><text x="472" y="162">#F97316</text>
+    <rect x="584" y="54" width="92" height="92" rx="10" fill="#FB923C"/><text x="584" y="162">#FB923C</text>
+  </g>
+
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#1e293b">
+    <rect x="24"  y="176" width="92" height="56" rx="10" fill="#334155"/><text x="24" y="248">#334155</text>
+    <rect x="136" y="176" width="92" height="56" rx="10" fill="#E2E8F0"/><text x="136" y="248">#E2E8F0</text>
+    <rect x="248" y="176" width="92" height="56" rx="10" fill="#DC2626"/><text x="248" y="248">#DC2626</text>
+  </g>
+</svg>

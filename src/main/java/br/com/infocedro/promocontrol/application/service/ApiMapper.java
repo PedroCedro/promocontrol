@@ -3,6 +3,7 @@ package br.com.infocedro.promocontrol.application.service;
 import br.com.infocedro.promocontrol.core.model.MovimentoPromotor;
 import br.com.infocedro.promocontrol.core.model.Fornecedor;
 import br.com.infocedro.promocontrol.core.model.Promotor;
+import br.com.infocedro.promocontrol.infra.controller.dto.AtualizarPromotorRequest;
 import br.com.infocedro.promocontrol.infra.controller.dto.AtualizarFornecedorRequest;
 import br.com.infocedro.promocontrol.infra.controller.dto.CriarFornecedorRequest;
 import br.com.infocedro.promocontrol.infra.controller.dto.CriarPromotorRequest;
@@ -15,6 +16,15 @@ import org.springframework.stereotype.Component;
 public class ApiMapper {
 
     public Promotor toPromotor(CriarPromotorRequest request) {
+        Promotor promotor = new Promotor();
+        promotor.setNome(request.nome());
+        promotor.setTelefone(request.telefone());
+        promotor.setStatus(request.status());
+        promotor.setFotoPath(request.fotoPath());
+        return promotor;
+    }
+
+    public Promotor toPromotor(AtualizarPromotorRequest request) {
         Promotor promotor = new Promotor();
         promotor.setNome(request.nome());
         promotor.setTelefone(request.telefone());

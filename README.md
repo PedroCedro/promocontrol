@@ -107,6 +107,7 @@ Usuários padrão (modo dev):
 ```
 user / user123
 viewer / viewer123
+gestor / gestor123
 admin / admin123
 ```
 
@@ -117,6 +118,8 @@ APP_SECURITY_USER_USERNAME
 APP_SECURITY_USER_PASSWORD
 APP_SECURITY_VIEWER_USERNAME
 APP_SECURITY_VIEWER_PASSWORD
+APP_SECURITY_GESTOR_USERNAME
+APP_SECURITY_GESTOR_PASSWORD
 APP_SECURITY_ADMIN_USERNAME
 APP_SECURITY_ADMIN_PASSWORD
 ```
@@ -141,7 +144,8 @@ Perfis de acesso:
 
 * `VIEWER`: leitura (`GET`) de promotores, fornecedores, movimentos e dashboards.
 * `OPERATOR`: leitura + operacoes de cadastro e movimentos.
-* `ADMIN`: mesmas permissoes de operador + ajuste de horario (`PATCH /movimentos/{id}/ajuste-horario`).
+* `GESTOR`: leitura + cadastro (fornecedores, promotores e usuarios), sem operacao de entrada/saida e sem acesso a logs.
+* `ADMIN`: mesmas permissoes de operador + gestao completa de usuarios + ajuste de horario (`PATCH /movimentos/{id}/ajuste-horario`) + logs.
 
 Fluxo de senha (v0.5.2.0):
 
@@ -179,6 +183,7 @@ Body (POST/PUT):
 
 ```
 POST /promotores
+PUT /promotores/{id}
 ```
 
 Body:
@@ -317,6 +322,7 @@ POST /auth/alterar-senha
 POST /auth/admin/resetar-senha
 GET /auth/admin/usuarios
 POST /auth/admin/usuarios
+PATCH /auth/admin/usuarios/{username}
 ```
 
 Body (`POST /auth/alterar-senha`):
@@ -349,7 +355,8 @@ Body (`POST /auth/admin/usuarios`):
 ```json
 {
   "username": "novo.usuario",
-  "perfil": "OPERATOR"
+  "perfil": "GESTOR",
+  "status": "ATIVO"
 }
 ```
 
@@ -540,4 +547,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.5.6.2` - Compatibilidade de login ampliada no front-temp com fallback de `X-Correlation-Id` para navegadores sem `crypto.randomUUID()`.
+`v0.5.7.0` - Fluxos administrativos padronizados (Usuarios/Fornecedores/Promotores), novo perfil `GESTOR` e endpoint de edicao de promotor.

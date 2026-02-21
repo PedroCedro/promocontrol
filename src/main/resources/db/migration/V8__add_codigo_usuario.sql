@@ -1,0 +1,5 @@
+ALTER TABLE USUARIO
+    ADD COLUMN codigo INTEGER;
+
+ALTER TABLE USUARIO
+    ADD CONSTRAINT uk_usuario_codigo UNIQUE (codigo);

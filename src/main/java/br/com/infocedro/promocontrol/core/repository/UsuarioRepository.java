@@ -12,4 +12,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
     boolean existsByUsername(String username);
 
     List<Usuario> findAllByOrderByUsernameAsc();
+
+    List<Usuario> findAllByOrderByCodigoAsc();
+
+    List<Usuario> findAllByCodigoIsNullOrderByUsernameAsc();
+
+    Optional<Usuario> findTopByOrderByCodigoDesc();
 }

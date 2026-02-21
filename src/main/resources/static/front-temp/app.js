@@ -17,7 +17,17 @@ const state = {
   saidaModalContext: null,
   autoSyncIntervalId: null,
   autoSyncSignature: null,
-  autoSyncRunning: false
+  autoSyncRunning: false,
+  editingUser: null,
+  userFormMode: "view",
+  userFilter: "",
+  confirmResolver: null,
+  editingFornecedorId: null,
+  fornecedorFormMode: "view",
+  fornecedorFilter: "",
+  editingPromotorId: null,
+  promotorFormMode: "view",
+  promotorFilter: ""
 };
 
 const AUTO_SYNC_INTERVAL_MS = 8000;
@@ -117,16 +127,186 @@ function setMovimentoMessage(message) {
   field.textContent = message || "";
 }
 
-function setFornecedorMessage(message) {
+function setFornecedorMessage(message, isError = false) {
   const field = el("fMessage");
   if (!field) return;
   field.textContent = message || "";
+  field.classList.toggle("is-error", Boolean(message) && isError);
 }
 
-function setPromotorMessage(message) {
+function setPromotorMessage(message, isError = false) {
   const field = el("pMessage");
   if (!field) return;
   field.textContent = message || "";
+  field.classList.toggle("is-error", Boolean(message) && isError);
+}
+
+function showConfirmDialog({
+  title = "Confirmação",
+  message = "",
+  confirmText = "Confirmar",
+  cancelText = "Cancelar",
+  showCancel = true,
+  centered = false,
+  secretValue = "",
+  footnote = ""
+} = {}) {
+  return new Promise((resolve) => {
+    state.confirmResolver = resolve;
+    const hasSecret = Boolean(secretValue);
+    const hasFootnote = Boolean(footnote);
+    el("confirmModalTitle").textContent = title;
+    el("confirmModalMessage").textContent = message;
+    el("confirmModalSecretWrap").classList.toggle("is-hidden", !hasSecret);
+    el("confirmModalSecret").value = hasSecret ? String(secretValue) : "";
+    el("confirmModalFootnote").classList.toggle("is-hidden", !hasFootnote);
+    el("confirmModalFootnote").textContent = hasFootnote ? footnote : "";
+    el("confirmModal").querySelector(".confirm-card").classList.toggle("is-centered", centered);
+    el("btnConfirmModalOk").textContent = confirmText;
+    el("btnConfirmModalCancel").textContent = cancelText;
+    el("btnConfirmModalCancel").classList.toggle("is-hidden", !showCancel);
+    el("confirmModal").classList.remove("is-hidden");
+    el("confirmModal").setAttribute("aria-hidden", "false");
+    el("btnConfirmModalOk").focus();
+  });
+}
+
+function resolveConfirmDialog(value) {
+  const resolver = state.confirmResolver;
+  state.confirmResolver = null;
+  el("confirmModalSecret").value = "";
+  el("confirmModal").classList.add("is-hidden");
+  el("confirmModal").setAttribute("aria-hidden", "true");
+  if (resolver) resolver(value);
+}
+
+function setUsuarioMessage(message, isError = false) {
+  const field = el("uMessage");
+  if (!field) return;
+  field.textContent = message || "";
+  field.classList.toggle("is-error", Boolean(message) && isError);
+}
+
+function setUserFieldError(fieldId, hasError) {
+  const field = el(fieldId);
+  if (!field) return;
+  field.classList.toggle("input-error", hasError);
+}
+
+function setFornecedorFieldError(fieldId, hasError) {
+  const field = el(fieldId);
+  if (!field) return;
+  field.classList.toggle("input-error", hasError);
+}
+
+function setPromotorFieldError(fieldId, hasError) {
+  const field = el(fieldId);
+  if (!field) return;
+  field.classList.toggle("input-error", hasError);
+}
+
+function setUserFormMode(mode) {
+  state.userFormMode = mode;
+  const isView = mode === "view";
+  const isEdit = mode === "edit";
+
+  el("uUsername").disabled = isView;
+  el("uPerfil").disabled = isView;
+  el("uStatus").disabled = !isEdit;
+  el("btnNovoUsuario").disabled = !isView;
+  el("btnCancelarUsuario").disabled = isView;
+  el("btnSalvarUsuario").disabled = isView;
+  el("btnResetSenha").disabled = !isEdit;
+  el("btnResetSenha").classList.toggle("is-hidden", !isEdit);
+  el("uEditModeBadge").classList.toggle("is-hidden", !isEdit);
+
+  if (mode === "new") {
+    el("uStatus").value = "ATIVO";
+  }
+}
+
+function clearUserForm() {
+  state.editingUser = null;
+  el("uCodigo").value = "";
+  el("uUsername").value = "";
+  el("uPerfil").value = "VIEWER";
+  el("uStatus").value = "ATIVO";
+  setUserFieldError("uUsername", false);
+}
+
+function fillUserFormForEdit(user) {
+  state.editingUser = user.username;
+  el("uCodigo").value = formatCodigo(user.codigo);
+  el("uUsername").value = user.username ?? "";
+  el("uPerfil").value = user.perfil ?? "VIEWER";
+  el("uStatus").value = user.status ?? "ATIVO";
+}
+
+function setFornecedorFormMode(mode) {
+  state.fornecedorFormMode = mode;
+  const isView = mode === "view";
+  const isEdit = mode === "edit";
+  el("fNome").disabled = isView;
+  el("fAtivo").disabled = isView;
+  el("btnNovoFornecedor").disabled = !isView;
+  el("btnCancelarFornecedor").disabled = isView;
+  el("btnSalvarFornecedor").disabled = isView;
+  el("fEditModeBadge").classList.toggle("is-hidden", !isEdit);
+}
+
+function clearFornecedorForm() {
+  state.editingFornecedorId = null;
+  el("fCodigo").value = "";
+  el("fNome").value = "";
+  el("fAtivo").value = "true";
+  setFornecedorFieldError("fNome", false);
+}
+
+function fillFornecedorFormForEdit(fornecedor) {
+  state.editingFornecedorId = fornecedor.id;
+  el("fCodigo").value = formatCodigo(fornecedor.codigo);
+  el("fNome").value = fornecedor.nome ?? "";
+  el("fAtivo").value = fornecedor.ativo ? "true" : "false";
+}
+
+function setPromotorFormMode(mode) {
+  state.promotorFormMode = mode;
+  const isView = mode === "view";
+  const isEdit = mode === "edit";
+  el("pNome").disabled = isView;
+  el("pTelefone").disabled = isView;
+  el("pFornecedorSearch").disabled = isView;
+  el("btnFindFornecedor").disabled = isView;
+  el("pStatus").disabled = isView;
+  el("btnNovoPromotor").disabled = !isView;
+  el("btnCancelarPromotor").disabled = isView;
+  el("btnSalvarPromotor").disabled = isView;
+  el("pEditModeBadge").classList.toggle("is-hidden", !isEdit);
+}
+
+function clearPromotorForm() {
+  state.editingPromotorId = null;
+  el("pCodigo").value = "";
+  el("pNome").value = "";
+  el("pTelefone").value = "";
+  el("pStatus").value = "ATIVO";
+  el("pFornecedorSearch").value = "";
+  el("pFornecedorId").value = "";
+  setPromotorFieldError("pNome", false);
+  setPromotorFieldError("pFornecedorSearch", false);
+}
+
+function fillPromotorFormForEdit(promotor) {
+  state.editingPromotorId = promotor.id;
+  el("pCodigo").value = formatCodigo(promotor.codigo);
+  el("pNome").value = promotor.nome ?? "";
+  el("pTelefone").value = promotor.telefone ?? "";
+  el("pStatus").value = promotor.status ?? "ATIVO";
+  el("pFornecedorId").value = String(promotor.fornecedorId ?? "");
+  const fornecedor = listCadastroFornecedores().find((f) => String(f.id) === String(promotor.fornecedorId));
+  el("pFornecedorSearch").value = fornecedor
+    ? buildFornecedorSearchLabel(fornecedor)
+    : `${formatCodigo(promotor.fornecedorCodigo)} - ${promotor.fornecedorNome ?? ""}`;
 }
 
 function saveLogin(username) {
@@ -158,15 +338,35 @@ function applySessionToUI() {
   el("profileRoleName").textContent = getRoleDisplayName(state.auth.role);
   updateProfileInitials(state.auth.username);
   applyProfileToUI();
-  el("tabUsersBtn").classList.toggle("is-hidden", !state.auth.isAdmin);
+  el("tabUsersBtn").classList.toggle("is-hidden", !state.auth.canManageUsers);
   el("tabIntegracaoBtn").classList.toggle("is-hidden", !state.auth.isAdmin);
-  el("adminUsersCard").classList.toggle("is-hidden", !state.auth.isAdmin);
-  el("adminResetCard").classList.toggle("is-hidden", !state.auth.isAdmin);
-  el("adminUsersListCard").classList.toggle("is-hidden", !state.auth.isAdmin);
+  el("tabMovimentosBtn").classList.toggle("is-hidden", !state.auth.canOperate);
+  el("adminUsersCard").classList.toggle("is-hidden", !state.auth.canManageUsers);
+  el("adminUsersListCard").classList.toggle("is-hidden", !state.auth.canManageUsers);
   el("btnOpenProfile").classList.toggle("is-hidden", !state.auth.isAdmin);
   el("tab-perfil").classList.toggle("is-hidden", !state.auth.isAdmin);
+  if (!state.auth.canManageCatalog) {
+    clearFornecedorForm();
+    setFornecedorFormMode("view");
+    el("fornecedorFormActions").classList.add("is-hidden");
+    clearPromotorForm();
+    setPromotorFormMode("view");
+    el("promotorFormActions").classList.add("is-hidden");
+  } else {
+    el("fornecedorFormActions").classList.remove("is-hidden");
+    el("promotorFormActions").classList.remove("is-hidden");
+  }
 
   if (!state.auth.isAdmin && el("tab-perfil").classList.contains("is-active")) {
+    activateTab("tab-dashboard");
+  }
+  if (!state.auth.canOperate && el("tab-movimentos").classList.contains("is-active")) {
+    activateTab("tab-dashboard");
+  }
+  if (!state.auth.canManageUsers && el("tab-usuarios").classList.contains("is-active")) {
+    activateTab("tab-dashboard");
+  }
+  if (!state.auth.isAdmin && el("tab-integracao").classList.contains("is-active")) {
     activateTab("tab-dashboard");
   }
 }
@@ -221,8 +421,11 @@ function saveProfileFromForm() {
   });
 }
 
-function removerFotoPerfil() {
-  const confirmar = window.confirm("Deseja realmente remover a foto do perfil?");
+async function removerFotoPerfil() {
+  const confirmar = await showConfirmDialog({
+    title: "Remover foto",
+    message: "Deseja realmente remover a foto do perfil?"
+  });
   if (!confirmar) return;
 
   state.profile.avatarDataUrl = "";
@@ -250,14 +453,17 @@ async function rawRequest(path, method, auth, body = null) {
 async function apiRequest(path, method = "GET", body = null, auth = null) {
   const creds = auth || state.auth;
   if (!creds) {
-    throw new Error("Sessao nao autenticada");
+    throw new Error("Sessão não autenticada");
   }
 
   const { response, data } = await rawRequest(path, method, creds, body);
 
   if (!response.ok) {
     log(`${method} ${path} -> ${response.status}`, data);
-    throw new Error(`${response.status} ${response.statusText}`);
+    const error = new Error(data?.message || `${response.status} ${response.statusText}`);
+    error.status = response.status;
+    error.data = data;
+    throw error;
   }
 
   log(`${method} ${path} -> ${response.status}`, data);
@@ -267,22 +473,35 @@ async function apiRequest(path, method = "GET", body = null, auth = null) {
 async function silentApiRequest(path, method = "GET", body = null, auth = null) {
   const creds = auth || state.auth;
   if (!creds) {
-    throw new Error("Sessao nao autenticada");
+    throw new Error("Sessão não autenticada");
   }
 
   const { response, data } = await rawRequest(path, method, creds, body);
   if (!response.ok) {
-    throw new Error(`${response.status} ${response.statusText}`);
+    const error = new Error(data?.message || `${response.status} ${response.statusText}`);
+    error.status = response.status;
+    error.data = data;
+    throw error;
   }
   return data;
 }
 
 async function loadSession(auth) {
   const sessionData = await apiRequest("/auth/sessao", "GET", null, auth);
+  const role = sessionData.perfil;
+  const isAdmin = role === "ADMIN";
+  const isGestor = role === "GESTOR";
+  const canManageUsers = isAdmin || isGestor;
+  const canOperate = role === "OPERATOR" || isAdmin;
+  const canManageCatalog = canOperate || isGestor;
   return {
     username: sessionData.username,
-    role: sessionData.perfil,
-    isAdmin: sessionData.perfil === "ADMIN",
+    role,
+    isAdmin,
+    isGestor,
+    canManageUsers,
+    canOperate,
+    canManageCatalog,
     mustChangePassword: sessionData.precisaTrocarSenha
   };
 }
@@ -290,15 +509,57 @@ async function loadSession(auth) {
 function renderPromotores(list) {
   const tbody = el("tblPromotores").querySelector("tbody");
   tbody.innerHTML = "";
-  list.forEach((p) => {
+  const termo = normalizeText(state.promotorFilter || "");
+  const filtrados = list.filter((p) => {
+    if (!termo) return true;
+    const codigo = normalizeText(formatCodigo(p.codigo));
+    const nome = normalizeText(p.nome);
+    const fornecedor = normalizeText(p.fornecedorNome);
+    const status = normalizeText(p.status);
+    const telefone = normalizeText(p.telefone);
+    return codigo.includes(termo)
+      || nome.includes(termo)
+      || fornecedor.includes(termo)
+      || status.includes(termo)
+      || telefone.includes(termo);
+  });
+
+  filtrados.forEach((p) => {
+    const status = (p.status ?? "").toUpperCase();
+    const statusClass = status === "ATIVO"
+      ? "status-badge is-active"
+      : "status-badge is-inactive";
+    const actionButton = state.auth?.canManageCatalog
+      ? `<button class="btn-table-small promotor-edit-btn" type="button" data-id="${p.id}">Editar</button>`
+      : "";
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${formatCodigo(p.codigo)}</td>
       <td>${p.nome ?? ""}</td>
       <td>${formatCodigo(p.fornecedorCodigo)} - ${p.fornecedorNome ?? ""}</td>
-      <td>${p.status ?? ""}</td>
-      <td>${p.telefone ?? ""}</td>`;
+      <td><span class="${statusClass}">${status || "-"}</span></td>
+      <td>${p.telefone ?? ""}</td>
+      <td>${actionButton}</td>`;
     tbody.appendChild(tr);
+  });
+
+  if (!state.auth?.canManageCatalog) return;
+
+  tbody.querySelectorAll(".promotor-edit-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = String(btn.dataset.id || "");
+      if (!id) return;
+      const promotor = state.promotores.find((item) => String(item.id) === id);
+      if (!promotor) return;
+      const confirmar = await showConfirmDialog({
+        title: "Editar promotor",
+        message: `Deseja editar o promotor ${promotor.nome}?`
+      });
+      if (!confirmar) return;
+      fillPromotorFormForEdit(promotor);
+      setPromotorFormMode("edit");
+      setPromotorMessage("");
+    });
   });
 }
 
@@ -307,13 +568,49 @@ function renderFornecedores(list) {
   if (!table) return;
   const tbody = table.querySelector("tbody");
   tbody.innerHTML = "";
-  list.filter((f) => !isFornecedorSistema(f?.nome)).forEach((f) => {
+  const termo = normalizeText(state.fornecedorFilter || "");
+  const filtrados = list
+    .filter((f) => !isFornecedorSistema(f?.nome))
+    .filter((f) => {
+      if (!termo) return true;
+      const codigo = normalizeText(formatCodigo(f.codigo));
+      const nome = normalizeText(f.nome);
+      const status = normalizeText(f.ativo ? "ATIVO" : "INATIVO");
+      return codigo.includes(termo) || nome.includes(termo) || status.includes(termo);
+    });
+
+  filtrados.forEach((f) => {
+    const statusText = f.ativo ? "ATIVO" : "INATIVO";
+    const statusClass = f.ativo ? "status-badge is-active" : "status-badge is-inactive";
     const tr = document.createElement("tr");
+    const actionButton = state.auth?.canManageCatalog
+      ? `<button class="btn-table-small fornecedor-edit-btn" type="button" data-id="${f.id}">Editar</button>`
+      : "";
     tr.innerHTML = `
       <td>${formatCodigo(f.codigo)}</td>
       <td>${f.nome ?? ""}</td>
-      <td>${f.ativo ? "SIM" : "NAO"}</td>`;
+      <td><span class="${statusClass}">${statusText}</span></td>
+      <td>${actionButton}</td>`;
     tbody.appendChild(tr);
+  });
+
+  if (!state.auth?.canManageCatalog) return;
+
+  tbody.querySelectorAll(".fornecedor-edit-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = Number(btn.dataset.id);
+      if (Number.isNaN(id)) return;
+      const fornecedor = state.fornecedores.find((item) => item.id === id);
+      if (!fornecedor) return;
+      const confirmar = await showConfirmDialog({
+        title: "Editar fornecedor",
+        message: `Deseja editar o fornecedor ${fornecedor.nome}?`
+      });
+      if (!confirmar) return;
+      fillFornecedorFormForEdit(fornecedor);
+      setFornecedorFormMode("edit");
+      setFornecedorMessage("");
+    });
   });
 }
 
@@ -322,13 +619,52 @@ function renderUsuarios(list) {
   if (!table) return;
   const tbody = table.querySelector("tbody");
   tbody.innerHTML = "";
-  list.forEach((u) => {
+  const termo = normalizeText(state.userFilter || "");
+  const filtrados = termo
+    ? list.filter((u) => {
+      const codigo = normalizeText(formatCodigo(u.codigo));
+      const username = normalizeText(u.username);
+      const perfil = normalizeText(u.perfil);
+      const perfilLabel = normalizeText(getRoleDisplayName(u.perfil));
+      const status = normalizeText(u.status);
+      return codigo.includes(termo)
+        || username.includes(termo)
+        || perfil.includes(termo)
+        || perfilLabel.includes(termo)
+        || status.includes(termo);
+    })
+    : list;
+
+  filtrados.forEach((u) => {
+    const status = (u.status ?? "ATIVO").toUpperCase();
+    const statusClass = status === "INATIVO" ? "status-badge is-inactive" : "status-badge is-active";
     const tr = document.createElement("tr");
     tr.innerHTML = `
+      <td>${formatCodigo(u.codigo)}</td>
       <td>${u.username ?? ""}</td>
-      <td>${u.perfil ?? ""}</td>
-      <td>${u.precisaTrocarSenha ? "SIM" : "NAO"}</td>`;
+      <td>${getRoleDisplayName(u.perfil ?? "")}</td>
+      <td><span class="${statusClass}">${status}</span></td>
+      <td>${u.precisaTrocarSenha ? "SIM" : "NÃO"}</td>
+      <td><button class="btn-table-small user-edit-btn" type="button" data-username="${u.username ?? ""}" data-perfil="${u.perfil ?? ""}">Editar</button></td>`;
     tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll(".user-edit-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const username = String(btn.dataset.username || "").trim();
+      if (!username) return;
+      const confirmar = await showConfirmDialog({
+        title: "Editar usuário",
+        message: `Deseja editar o usuário ${username}?`
+      });
+      if (!confirmar) return;
+
+      const user = state.usuarios.find((u) => String(u.username) === username);
+      if (!user) return;
+      fillUserFormForEdit(user);
+      setUserFormMode("edit");
+      setUsuarioMessage("");
+    });
   });
 }
 
@@ -345,7 +681,7 @@ function renderDashboard(resumo) {
     const detalhe = resolveLinhaDetalhe(linha);
     const saidaCell = linha.saidaEm
       ? formatHoraMinuto(linha.saidaEm)
-      : `<button class="quick-saida-btn dashboard-saida-btn" data-line-index="${index}" type="button" title="Registrar saida">&gt;</button>`;
+      : `<button class="quick-saida-btn dashboard-saida-btn" data-line-index="${index}" type="button" title="Registrar saída">&gt;</button>`;
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${linha.promotorNome ?? ""}</td>
@@ -366,10 +702,10 @@ function renderDashboard(resumo) {
       <td colspan="8">
         <div class="dashboard-detail-content">
           <strong>Detalhes do Movimento</strong>
-          <div><span>Observacao Entrada:</span> ${detalhe.observacaoEntrada || "-"}</div>
-          <div><span>Observacao Saida:</span> ${detalhe.observacaoSaida || "-"}</div>
+          <div><span>Observação Entrada:</span> ${detalhe.observacaoEntrada || "-"}</div>
+          <div><span>Observação Saída:</span> ${detalhe.observacaoSaida || "-"}</div>
           <div><span>Usuário Entrada:</span> ${linha.usuarioEntrada ?? "-"}</div>
-          <div><span>Usuário Saida:</span> ${linha.usuarioSaida ?? "-"}</div>
+          <div><span>Usuário Saída:</span> ${linha.usuarioSaida ?? "-"}</div>
           <div><span>Liberação:</span> ${linha.liberadoPor ?? "-"}</div>
         </div>
       </td>`;
@@ -409,7 +745,7 @@ function renderOperacaoDia(resumo) {
     const detalhe = resolveLinhaDetalhe(linha);
     const saidaCell = linha.saidaEm
       ? formatHoraMinuto(linha.saidaEm)
-      : `<button class="quick-saida-btn operacao-saida-btn" data-line-index="${index}" type="button" title="Registrar saida">&gt;</button>`;
+      : `<button class="quick-saida-btn operacao-saida-btn" data-line-index="${index}" type="button" title="Registrar saída">&gt;</button>`;
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${linha.promotorNome ?? ""}</td>
@@ -430,10 +766,10 @@ function renderOperacaoDia(resumo) {
       <td colspan="8">
         <div class="dashboard-detail-content">
           <strong>Detalhes do Movimento</strong>
-          <div><span>Observacao Entrada:</span> ${detalhe.observacaoEntrada || "-"}</div>
-          <div><span>Observacao Saida:</span> ${detalhe.observacaoSaida || "-"}</div>
+          <div><span>Observação Entrada:</span> ${detalhe.observacaoEntrada || "-"}</div>
+          <div><span>Observação Saída:</span> ${detalhe.observacaoSaida || "-"}</div>
           <div><span>Usuário Entrada:</span> ${linha.usuarioEntrada ?? "-"}</div>
-          <div><span>Usuário Saida:</span> ${linha.usuarioSaida ?? "-"}</div>
+          <div><span>Usuário Saída:</span> ${linha.usuarioSaida ?? "-"}</div>
           <div><span>Liberação:</span> ${linha.liberadoPor ?? "-"}</div>
         </div>
       </td>`;
@@ -584,7 +920,7 @@ function syncFornecedorSelect() {
 
 function isFornecedorSistema(nome) {
   const normalized = normalizeText(nome);
-  return normalized === "fornecedor nao informado";
+  return normalized === "fornecedor não informado";
 }
 
 function syncMovimentoPromotorSelect() {
@@ -778,7 +1114,7 @@ function resolveCadastroFornecedorFromSearch(strict) {
   if (!typed) {
     hiddenField.value = "";
     if (strict) {
-      setMovimentoMessage("Digite um fornecedor valido no cadastro de promotor.");
+      setPromotorMessage("Digite um fornecedor válido no cadastro de promotor.");
     }
     return;
   }
@@ -787,14 +1123,14 @@ function resolveCadastroFornecedorFromSearch(strict) {
   if (exactByLabelId) {
     const fornecedor = listCadastroFornecedores().find((f) => String(f.id) === String(exactByLabelId));
     applyCadastroFornecedorSelection(fornecedor);
-    setMovimentoMessage("");
+    setPromotorMessage("");
     return;
   }
 
   const matches = findFornecedoresByQuery(typed);
   if (matches.length === 1) {
     applyCadastroFornecedorSelection(matches[0]);
-    setMovimentoMessage("");
+    setPromotorMessage("");
     return;
   }
 
@@ -802,11 +1138,11 @@ function resolveCadastroFornecedorFromSearch(strict) {
   if (!strict) return;
 
   if (matches.length === 0) {
-    setMovimentoMessage("Nenhum fornecedor encontrado para o texto informado.");
+    setPromotorMessage("Nenhum fornecedor encontrado para o texto informado.");
     return;
   }
 
-  setMovimentoMessage(`Foram encontrados ${matches.length} fornecedores. Refine a busca e use o Find.`);
+  setPromotorMessage(`Foram encontrados ${matches.length} fornecedores. Refine a busca e use o Find.`);
 }
 
 async function refreshDashboard() {
@@ -828,7 +1164,7 @@ async function refreshData() {
   renderFornecedores(state.fornecedores);
   renderPromotores(state.promotores);
   syncFornecedorSelect();
-  if (state.auth?.isAdmin) {
+  if (state.auth?.canManageUsers) {
     await refreshUsuarios();
   } else {
     state.usuarios = [];
@@ -890,53 +1226,114 @@ function stopAutoSync() {
 }
 
 async function refreshUsuarios() {
-  if (!state.auth?.isAdmin) return;
+  if (!state.auth?.canManageUsers) return;
   state.usuarios = await apiRequest("/auth/admin/usuarios");
   renderUsuarios(state.usuarios);
 }
 
 async function criarFornecedor() {
+  if (!state.auth?.canManageCatalog) {
+    throw new Error("Sem permissão para cadastrar/editar fornecedor");
+  }
+  if (state.fornecedorFormMode === "view") {
+    throw new Error("Clique em Novo ou Editar para habilitar o formulário");
+  }
+
+  const nome = el("fNome").value.trim();
+  const ativo = el("fAtivo").value === "true";
+  if (!nome) {
+    setFornecedorFieldError("fNome", true);
+    throw new Error("Obrigatório informar o Fornecedor");
+  }
+  setFornecedorFieldError("fNome", false);
+
+  const confirmText = state.fornecedorFormMode === "edit"
+    ? `Deseja salvar as alterações do fornecedor ${nome}?`
+    : `Deseja salvar o novo fornecedor ${nome}?`;
+  const confirmar = await showConfirmDialog({
+    title: "Salvar fornecedor",
+    message: confirmText
+  });
+  if (!confirmar) return;
+
+  if (state.fornecedorFormMode === "edit") {
+    if (!state.editingFornecedorId) {
+      throw new Error("Não foi possível identificar o fornecedor em edição");
+    }
+    await apiRequest(`/fornecedores/${state.editingFornecedorId}`, "PUT", { nome, ativo });
+    log("Fornecedor atualizado", { id: state.editingFornecedorId, nome, ativo });
+  } else {
+    await apiRequest("/fornecedores", "POST", { nome, ativo });
+    log("Fornecedor criado", { nome, ativo });
+  }
+
+  clearFornecedorForm();
+  setFornecedorFormMode("view");
   setFornecedorMessage("");
-  const payload = {
-    nome: el("fNome").value.trim(),
-    ativo: el("fAtivo").value === "true"
-  };
-  await apiRequest("/fornecedores", "POST", payload);
   await refreshData();
-  el("fNome").value = "";
-  el("fAtivo").value = "true";
-  setFornecedorMessage("Fornecedor cadastrado com sucesso.");
 }
 
 async function criarPromotor() {
-  setPromotorMessage("");
+  if (!state.auth?.canManageCatalog) {
+    throw new Error("Sem permissão para cadastrar/editar promotor");
+  }
+  if (state.promotorFormMode === "view") {
+    throw new Error("Clique em Novo ou Editar para habilitar o formulário");
+  }
+
+  const nome = el("pNome").value.trim();
+  if (!nome) {
+    setPromotorFieldError("pNome", true);
+    throw new Error("Obrigatório informar o Promotor");
+  }
+  setPromotorFieldError("pNome", false);
+
   resolveCadastroFornecedorFromSearch(true);
   const fornecedorId = el("pFornecedorId").value;
   if (!fornecedorId) {
-    throw new Error("Informe um fornecedor valido no campo de busca");
+    setPromotorFieldError("pFornecedorSearch", true);
+    throw new Error("Informe um fornecedor válido no campo de busca");
   }
+  setPromotorFieldError("pFornecedorSearch", false);
 
   const payload = {
-    nome: el("pNome").value.trim(),
+    nome,
     telefone: el("pTelefone").value.trim(),
     fornecedorId: Number(fornecedorId),
     status: el("pStatus").value,
     fotoPath: ""
   };
-  await apiRequest("/promotores", "POST", payload);
+
+  const confirmText = state.promotorFormMode === "edit"
+    ? `Deseja salvar as alterações do promotor ${nome}?`
+    : `Deseja salvar o novo promotor ${nome}?`;
+  const confirmar = await showConfirmDialog({
+    title: "Salvar promotor",
+    message: confirmText
+  });
+  if (!confirmar) return;
+
+  if (state.promotorFormMode === "edit") {
+    if (!state.editingPromotorId) {
+      throw new Error("Não foi possível identificar o promotor em edição");
+    }
+    await apiRequest(`/promotores/${state.editingPromotorId}`, "PUT", payload);
+    log("Promotor atualizado", { id: state.editingPromotorId, nome, fornecedorId: payload.fornecedorId, status: payload.status });
+  } else {
+    await apiRequest("/promotores", "POST", payload);
+    log("Promotor criado", { nome, fornecedorId: payload.fornecedorId, status: payload.status });
+  }
+
+  clearPromotorForm();
+  setPromotorFormMode("view");
+  setPromotorMessage("");
   await refreshData();
-  el("pNome").value = "";
-  el("pTelefone").value = "";
-  el("pStatus").value = "ATIVO";
-  el("pFornecedorSearch").value = "";
-  el("pFornecedorId").value = "";
-  setPromotorMessage("Promotor cadastrado com sucesso.");
 }
 
 async function registrarEntrada() {
   const promotorId = el("mPromotorId").value;
   if (!promotorId) {
-    throw new Error("Informe um promotor valido no campo de busca");
+    throw new Error("Informe um promotor válido no campo de busca");
   }
 
   const payload = {
@@ -954,17 +1351,17 @@ async function registrarEntrada() {
 async function registrarSaida() {
   const promotorId = el("mPromotorId").value;
   if (!promotorId) {
-    throw new Error("Informe um promotor valido no campo de busca");
+    throw new Error("Informe um promotor válido no campo de busca");
   }
 
   const liberadoPor = el("mLiberadoPor").value.trim();
   if (!liberadoPor) {
-    throw new Error("Informe quem liberou a saida");
+    throw new Error("Informe quem liberou a saída");
   }
 
   await registrarSaidaPorPromotor(promotorId, liberadoPor, el("mObservacao").value.trim());
   el("mObservacao").value = "";
-  setMovimentoMessage("Saida registrada com sucesso.");
+  setMovimentoMessage("Saída registrada com sucesso.");
 }
 
 async function registrarSaidaPorPromotor(promotorId, liberadoPor, observacao) {
@@ -1020,7 +1417,7 @@ async function salvarSaidaModal() {
 
   const liberadoPor = el("saidaModalLiberadoPor").value.trim();
   if (!liberadoPor) {
-    setSaidaModalMessage("Informe quem liberou a saida.");
+    setSaidaModalMessage("Informe quem liberou a saída.");
     return;
   }
 
@@ -1030,10 +1427,10 @@ async function salvarSaidaModal() {
   try {
     await registrarSaidaPorPromotor(ctx.promotorId, liberadoPor, observacao);
     closeSaidaModal();
-    setMovimentoMessage("Saida registrada com sucesso.");
+    setMovimentoMessage("Saída registrada com sucesso.");
   } catch (e) {
-    setSaidaModalMessage(`Falha ao registrar saida: ${e.message}`);
-    log("Falha ao registrar saida pelo modal", { error: e.message });
+    setSaidaModalMessage(`Falha ao registrar saída: ${e.message}`);
+    log("Falha ao registrar saída pelo modal", { error: e.message });
   } finally {
     saveBtn.disabled = false;
   }
@@ -1047,14 +1444,24 @@ async function login() {
     throw new Error("Digite Usuário e Senha");
   }
 
-  const session = { baseUrl, username, password, role: "", isAdmin: false };
+  const session = {
+    baseUrl,
+    username,
+    password,
+    role: "",
+    isAdmin: false,
+    isGestor: false,
+    canManageUsers: false,
+    canOperate: false,
+    canManageCatalog: false
+  };
   setLoginMessage("");
   const sessionInfo = await loadSession(session);
 
   if (sessionInfo.mustChangePassword) {
     state.pendingAuth = { ...session, ...sessionInfo };
     showForceChangeBox();
-    setLoginMessage("Senha temporaria detectada. Troque a senha para continuar.");
+    setLoginMessage("Senha temporária detectada. Troque a senha para continuar.");
     return;
   }
 
@@ -1070,12 +1477,12 @@ async function completeLogin(fullSession) {
   showAppView();
   await refreshData();
   startAutoSync();
-  log("Login efetuado", { usuario: fullSession.username, perfil: fullSession.role });
+  log("Login efetuado", { usuário: fullSession.username, perfil: fullSession.role });
 }
 
 async function alterarSenhaObrigatoria() {
   if (!state.pendingAuth) {
-    throw new Error("Nao existe sessao pendente para troca de senha");
+    throw new Error("Não existe sessão pendente para troca de senha");
   }
 
   const novaSenha = el("newPassword").value;
@@ -1084,61 +1491,127 @@ async function alterarSenhaObrigatoria() {
     throw new Error("Informe e confirme a nova senha");
   }
   if (novaSenha !== confirmarSenha) {
-    throw new Error("As senhas nao conferem");
+    throw new Error("As senhas não conferem");
   }
   if (novaSenha.length < 6) {
-    throw new Error("A nova senha deve ter no minimo 6 caracteres");
+    throw new Error("A nova senha deve ter no mínimo 6 caracteres");
   }
 
   await apiRequest("/auth/alterar-senha", "POST", { novaSenha }, state.pendingAuth);
   const nextAuth = { ...state.pendingAuth, password: novaSenha };
   const updatedSession = await loadSession(nextAuth);
   if (updatedSession.mustChangePassword) {
-    throw new Error("Nao foi possivel concluir a troca obrigatoria de senha");
+    throw new Error("Não foi possível concluir a troca obrigatória de senha");
   }
 
   await completeLogin({ ...nextAuth, ...updatedSession });
 }
 
 async function resetarSenhaUsuario() {
-  if (!state.auth?.isAdmin) {
-    throw new Error("Apenas ADMIN pode resetar senha");
+  if (!state.auth?.canManageUsers) {
+    throw new Error("Apenas Admin/Gestor pode resetar senha");
   }
 
-  const username = el("resetUsername").value.trim();
-  if (!username) {
-    throw new Error("Informe o usuario para reset");
+  if (state.userFormMode !== "edit") {
+    throw new Error("Reset de senha habilitado somente em edição");
   }
+
+  const username = (state.editingUser || "").trim();
+  if (!username) {
+    throw new Error("Informe o usuário para reset");
+  }
+
+  const confirmar = await showConfirmDialog({
+    title: "Resetar senha",
+    message: `Deseja resetar a senha do usuário ${username}?`
+  });
+  if (!confirmar) return;
 
   const response = await apiRequest("/auth/admin/resetar-senha", "POST", { username });
-  el("resetTempPassword").value = response.senhaTemporaria ?? "";
-  el("uTempPassword").value = response.senhaTemporaria ?? "";
-  log("Senha resetada por admin", { username: response.username });
+  setUsuarioMessage("");
+  await showConfirmDialog({
+    title: "Senha temporária",
+    message: "",
+    centered: true,
+    secretValue: response.senhaTemporaria ?? "-",
+    footnote: "Essa senha será exibida somente nesta vez.",
+    confirmText: "OK",
+    showCancel: false
+  });
+  log("Senha resetada por gestor/admin", { username: response.username });
 }
 
 async function criarUsuario() {
-  if (!state.auth?.isAdmin) {
-    throw new Error("Apenas ADMIN pode cadastrar usuario");
+  if (!state.auth?.canManageUsers) {
+    throw new Error("Apenas Admin/Gestor pode cadastrar usuário");
+  }
+
+  if (state.userFormMode === "view") {
+    throw new Error("Clique em Novo ou Editar para habilitar o formulario");
   }
 
   const username = el("uUsername").value.trim();
   const perfil = el("uPerfil").value;
+  const status = state.userFormMode === "edit"
+    ? el("uStatus").value
+    : "ATIVO";
   if (!username) {
-    throw new Error("Informe o username");
+    setUserFieldError("uUsername", true);
+    throw new Error("Obrigatório informar o Usuário");
+  }
+  setUserFieldError("uUsername", false);
+  if (!perfil) {
+    throw new Error("Informe o perfil");
+  }
+  if (!status) {
+    throw new Error("Informe o status");
   }
 
-  const response = await apiRequest("/auth/admin/usuarios", "POST", { username, perfil });
-  el("uTempPassword").value = response.senhaTemporaria ?? "";
-  el("resetTempPassword").value = response.senhaTemporaria ?? "";
-  el("uUsername").value = "";
+  const confirmText = state.userFormMode === "edit"
+    ? `Deseja salvar as alterações do usuário ${username}?`
+    : `Deseja salvar o novo usuário ${username}?`;
+  const confirmar = await showConfirmDialog({
+    title: "Salvar usuário",
+    message: confirmText
+  });
+  if (!confirmar) return;
+
+  if (state.userFormMode === "edit") {
+    if (!state.editingUser) {
+      throw new Error("Não foi possível identificar o usuário em edição");
+    }
+    await apiRequest(
+      `/auth/admin/usuarios/${encodeURIComponent(state.editingUser)}`,
+      "PATCH",
+      { username, perfil, status }
+    );
+    setUsuarioMessage("");
+    log("Usuário atualizado por gestor/admin", { usernameAnterior: state.editingUser, usernameNovo: username, perfil, status });
+  } else {
+    const response = await apiRequest("/auth/admin/usuarios", "POST", { username, perfil, status });
+    setUsuarioMessage("");
+    log("Usuário criado por gestor/admin", { username: response.username, perfil: response.perfil, status: response.status });
+    await showConfirmDialog({
+      title: "Senha temporária",
+      message: "",
+      centered: true,
+      secretValue: response.senhaTemporaria ?? "-",
+      footnote: "Essa senha será exibida somente nesta vez.",
+      confirmText: "OK",
+      showCancel: false
+    });
+  }
+
+  clearUserForm();
+  setUserFormMode("view");
   await refreshUsuarios();
-  log("Usuario criado por admin", { username: response.username, perfil: response.perfil });
 }
 
 function logout() {
   stopAutoSync();
   state.auth = null;
   state.pendingAuth = null;
+  state.userFilter = "";
   showLoginView();
   hideForceChangeBox();
   el("currentUser").value = "";
@@ -1147,16 +1620,28 @@ function logout() {
   el("loginPassword").value = "";
   el("profileUserName").textContent = "user";
   el("profileRoleName").textContent = getRoleDisplayName("OPERATOR");
-  el("resetTempPassword").value = "";
-  el("uTempPassword").value = "";
+  clearUserForm();
+  setUserFormMode("view");
+  if (el("uFiltroNome")) el("uFiltroNome").value = "";
+  setUsuarioMessage("");
+  clearFornecedorForm();
+  setFornecedorFormMode("view");
+  state.fornecedorFilter = "";
+  if (el("fFiltroNome")) el("fFiltroNome").value = "";
+  clearPromotorForm();
+  setPromotorFormMode("view");
+  state.promotorFilter = "";
+  if (el("pFiltroNome")) el("pFiltroNome").value = "";
   updateProfileInitials("U");
   applyProfileToUI();
   setLoginMessage("");
 }
 
 function getRoleDisplayName(role) {
-  if (role === "VIEWER") return "Padrão";
+  if (role === "VIEWER") return "Visualizar";
   if (role === "OPERATOR") return "Prevenção";
+  if (role === "GESTOR") return "Gestor";
+  if (role === "ADMIN") return "Admin";
   return role || "";
 }
 
@@ -1167,6 +1652,16 @@ function bindActions() {
         setLoginMessage(e.message);
         return;
       }
+      if (e.status === 401) {
+        setLoginMessage("Usuário/senha inválido");
+        log("Falha no login", { status: e.status, error: e.message });
+        return;
+      }
+      if (String(e.message || "").toLowerCase().includes("failed to fetch")) {
+        setLoginMessage("Erro no servidor. Verifique se o sistema está online.");
+        log("Falha no login", { error: e.message });
+        return;
+      }
       setLoginMessage(`Falha no login: ${e.message}`);
       log("Falha no login", { error: e.message });
     });
@@ -1174,6 +1669,14 @@ function bindActions() {
 
   el("btnOpenProfile").addEventListener("click", () => activateTab("tab-perfil"));
   el("btnLogin").addEventListener("click", triggerLogin);
+  el("btnForgotPassword").addEventListener("click", async () => {
+    await showConfirmDialog({
+      title: "Recuperação de senha",
+      message: "Contate o administrador do sistema",
+      confirmText: "OK",
+      showCancel: false
+    });
+  });
   el("loginUsername").addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
@@ -1187,24 +1690,72 @@ function bindActions() {
   el("btnChangePassword").addEventListener("click", () => {
     alterarSenhaObrigatoria().catch((e) => {
       setLoginMessage(`Falha ao trocar senha: ${e.message}`);
-      log("Falha troca obrigatoria de senha", { error: e.message });
+      log("Falha troca obrigatória de senha", { error: e.message });
     });
   });
 
   el("btnLogout").addEventListener("click", logout);
   el("btnRefreshDashboard").addEventListener("click", () => refreshDashboard().catch((e) => log("Falha dashboard", { error: e.message })));
-  el("btnRefreshUsuarios").addEventListener("click", () => refreshUsuarios().catch((e) => log("Falha usuarios", { error: e.message })));
-  el("btnCriarFornecedor").addEventListener("click", () => {
+  el("btnRefreshUsuarios").addEventListener("click", () => refreshUsuarios().catch((e) => log("Falha usuários", { error: e.message })));
+  el("btnSalvarFornecedor").addEventListener("click", () => {
     criarFornecedor().catch((e) => {
-      setFornecedorMessage(`Falha ao cadastrar fornecedor: ${e.message}`);
-      log("Falha ao criar fornecedor", { error: e.message });
+      setFornecedorMessage(e.message, true);
+      log("Falha ao salvar fornecedor", { error: e.message });
     });
   });
-  el("btnCriarPromotor").addEventListener("click", () => {
-    criarPromotor().catch((e) => {
-      setPromotorMessage(`Falha ao cadastrar promotor: ${e.message}`);
-      log("Falha ao criar", { error: e.message });
+  el("btnNovoFornecedor").addEventListener("click", () => {
+    clearFornecedorForm();
+    setFornecedorFormMode("new");
+    setFornecedorMessage("Preencha os campos e clique em Salvar.");
+  });
+  el("btnCancelarFornecedor").addEventListener("click", async () => {
+    const confirmar = await showConfirmDialog({
+      title: "Cancelar operação",
+      message: "Deseja cancelar a operação de fornecedor?"
     });
+    if (!confirmar) return;
+    clearFornecedorForm();
+    setFornecedorFormMode("view");
+    setFornecedorMessage("");
+  });
+  el("btnRefreshFornecedores").addEventListener("click", () => {
+    refreshData().catch((e) => log("Falha fornecedores", { error: e.message }));
+  });
+  el("fFiltroNome").addEventListener("input", () => {
+    state.fornecedorFilter = el("fFiltroNome").value || "";
+    renderFornecedores(state.fornecedores);
+  });
+  el("fNome").addEventListener("input", () => {
+    if (el("fNome").value.trim()) {
+      setFornecedorFieldError("fNome", false);
+      if (el("fMessage").classList.contains("is-error")) {
+        setFornecedorMessage("");
+      }
+    }
+  });
+  el("btnSalvarPromotor").addEventListener("click", () => {
+    criarPromotor().catch((e) => {
+      setPromotorMessage(e.message, true);
+      log("Falha ao salvar promotor", { error: e.message });
+    });
+  });
+  el("btnNovoPromotor").addEventListener("click", () => {
+    clearPromotorForm();
+    setPromotorFormMode("new");
+    setPromotorMessage("Preencha os campos e clique em Salvar.");
+  });
+  el("btnCancelarPromotor").addEventListener("click", async () => {
+    const confirmar = await showConfirmDialog({
+      title: "Cancelar operação",
+      message: "Deseja cancelar a operação de promotor?"
+    });
+    if (!confirmar) return;
+    clearPromotorForm();
+    setPromotorFormMode("view");
+    setPromotorMessage("");
+  });
+  el("btnRefreshPromotores").addEventListener("click", () => {
+    refreshData().catch((e) => log("Falha promotores", { error: e.message }));
   });
   el("pFornecedorSearch").addEventListener("input", () => resolveCadastroFornecedorFromSearch(false));
   el("pFornecedorSearch").addEventListener("change", () => resolveCadastroFornecedorFromSearch(true));
@@ -1214,6 +1765,23 @@ function bindActions() {
     resolveCadastroFornecedorFromSearch(true);
   });
   el("btnFindFornecedor").addEventListener("click", () => resolveCadastroFornecedorFromSearch(true));
+  el("pFiltroNome").addEventListener("input", () => {
+    state.promotorFilter = el("pFiltroNome").value || "";
+    renderPromotores(state.promotores);
+  });
+  el("pNome").addEventListener("input", () => {
+    if (el("pNome").value.trim()) {
+      setPromotorFieldError("pNome", false);
+      if (el("pMessage").classList.contains("is-error")) {
+        setPromotorMessage("");
+      }
+    }
+  });
+  el("pFornecedorSearch").addEventListener("input", () => {
+    if (el("pFornecedorSearch").value.trim()) {
+      setPromotorFieldError("pFornecedorSearch", false);
+    }
+  });
   el("btnRegistrarEntrada").addEventListener("click", () => {
     registrarEntrada().catch((e) => {
       setMovimentoMessage(`Falha ao registrar entrada: ${e.message}`);
@@ -1222,8 +1790,8 @@ function bindActions() {
   });
   el("btnRegistrarSaida").addEventListener("click", () => {
     registrarSaida().catch((e) => {
-      setMovimentoMessage(`Falha ao registrar saida: ${e.message}`);
-      log("Falha ao registrar saida", { error: e.message });
+      setMovimentoMessage(`Falha ao registrar saída: ${e.message}`);
+      log("Falha ao registrar saída", { error: e.message });
     });
   });
   el("mPromotorSearch").addEventListener("input", () => resolveMovimentoPromotorFromSearch(false));
@@ -1237,28 +1805,73 @@ function bindActions() {
   el("btnCancelarSaidaModal").addEventListener("click", closeSaidaModal);
   el("btnSalvarSaidaModal").addEventListener("click", () => {
     salvarSaidaModal().catch((e) => {
-      setSaidaModalMessage(`Falha ao registrar saida: ${e.message}`);
-      log("Falha ao salvar saida pelo modal", { error: e.message });
+      setSaidaModalMessage(`Falha ao registrar saída: ${e.message}`);
+      log("Falha ao salvar saída pelo modal", { error: e.message });
     });
   });
   el("saidaModal").addEventListener("click", (event) => {
     if (event.target !== el("saidaModal")) return;
     closeSaidaModal();
   });
+  el("btnConfirmModalCancel").addEventListener("click", () => resolveConfirmDialog(false));
+  el("btnConfirmModalOk").addEventListener("click", () => resolveConfirmDialog(true));
+  el("confirmModalSecret").addEventListener("focus", () => el("confirmModalSecret").select());
+  el("confirmModalSecret").addEventListener("click", () => el("confirmModalSecret").select());
+  el("confirmModal").addEventListener("click", (event) => {
+    if (event.target !== el("confirmModal")) return;
+    resolveConfirmDialog(false);
+  });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
+    if (!el("confirmModal").classList.contains("is-hidden")) {
+      resolveConfirmDialog(false);
+      return;
+    }
     if (el("saidaModal").classList.contains("is-hidden")) return;
     closeSaidaModal();
   });
-  el("btnCriarUsuario").addEventListener("click", () => criarUsuario().catch((e) => log("Falha ao criar usuario", { error: e.message })));
-  el("btnResetSenha").addEventListener("click", () => resetarSenhaUsuario().catch((e) => log("Falha reset de senha", { error: e.message })));
+  el("btnNovoUsuario").addEventListener("click", () => {
+    clearUserForm();
+    setUserFormMode("new");
+    setUsuarioMessage("Preencha os campos e clique em Salvar.");
+  });
+  el("btnCancelarUsuario").addEventListener("click", async () => {
+    const confirmar = await showConfirmDialog({
+      title: "Cancelar operação",
+      message: "Deseja cancelar a operação de usuário?"
+    });
+    if (!confirmar) return;
+    clearUserForm();
+    setUserFormMode("view");
+    setUsuarioMessage("");
+  });
+  el("btnSalvarUsuario").addEventListener("click", () => {
+    criarUsuario().catch((e) => {
+      setUsuarioMessage(e.message, true);
+      log("Falha ao salvar usuário", { error: e.message });
+    });
+  });
+  el("btnResetSenha").addEventListener("click", () => {
+    resetarSenhaUsuario().catch((e) => {
+      setUsuarioMessage(e.message);
+      log("Falha reset de senha", { error: e.message });
+    });
+  });
+  el("uFiltroNome").addEventListener("input", () => {
+    state.userFilter = el("uFiltroNome").value || "";
+    renderUsuarios(state.usuarios);
+  });
+  el("uUsername").addEventListener("input", () => {
+    if (el("uUsername").value.trim()) {
+      setUserFieldError("uUsername", false);
+      if (el("uMessage").classList.contains("is-error")) {
+        setUsuarioMessage("");
+      }
+    }
+  });
   el("btnSaveProfile").addEventListener("click", saveProfileFromForm);
-  el("btnRemoveProfileAvatar").addEventListener("click", removerFotoPerfil);
-
-  el("btnFiltroPromotor").addEventListener("click", () => {
-    const fornecedor = el("filtroFornecedorPromotor").value.trim().toLowerCase();
-    if (!fornecedor) return renderPromotores(state.promotores);
-    renderPromotores(state.promotores.filter((p) => (p.fornecedorNome ?? "").toLowerCase().includes(fornecedor)));
+  el("btnRemoveProfileAvatar").addEventListener("click", () => {
+    removerFotoPerfil().catch((e) => log("Falha ao remover foto de perfil", { error: e.message }));
   });
 
 }
@@ -1267,6 +1880,12 @@ bindActions();
 bindProfileAvatar();
 setupTabs();
 initDashboardDefaults();
+clearUserForm();
+setUserFormMode("view");
+clearFornecedorForm();
+setFornecedorFormMode("view");
+clearPromotorForm();
+setPromotorFormMode("view");
 loadSavedLogin();
 showLoginView();
 
