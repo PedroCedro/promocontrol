@@ -1053,7 +1053,7 @@ function resolveMovimentoPromotorFromSearch(strict) {
     return;
   }
 
-  setMovimentoMessage(`Foram encontrados ${matches.length} promotores. Refine a busca e use o Find.`);
+  setMovimentoMessage(`Foram encontrados ${matches.length} promotores. Refine a busca e use o Localizar.`);
 }
 
 function buildDashboardQuery() {
@@ -1142,7 +1142,7 @@ function resolveCadastroFornecedorFromSearch(strict) {
     return;
   }
 
-  setPromotorMessage(`Foram encontrados ${matches.length} fornecedores. Refine a busca e use o Find.`);
+  setPromotorMessage(`Foram encontrados ${matches.length} fornecedores. Refine a busca e use o Localizar.`);
 }
 
 async function refreshDashboard() {

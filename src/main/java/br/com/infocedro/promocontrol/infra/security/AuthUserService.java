@@ -70,7 +70,7 @@ public class AuthUserService implements UserDetailsService {
 
     private void createDefaultUserIfMissing(String username, String rawPassword, String perfil) {
         if (username == null || username.isBlank()) return;
-        if (usuarioRepository.existsByUsername(username)) return;
+        if (usuarioRepository.existsByUsernameIgnoreCase(username)) return;
 
         Usuario user = new Usuario();
         user.setUsername(username);
@@ -84,7 +84,7 @@ public class AuthUserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Usuario user = usuarioRepository.findByUsername(username)
+        Usuario user = usuarioRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario nao encontrado"));
 
         return User.withUsername(user.getUsername())
@@ -95,7 +95,7 @@ public class AuthUserService implements UserDetailsService {
     }
 
     public boolean isPasswordChangeRequired(String username) {
-        return usuarioRepository.findByUsername(username)
+        return usuarioRepository.findByUsernameIgnoreCase(username)
                 .map(Usuario::isPrecisaTrocarSenha)
                 .orElse(false);
     }
@@ -120,7 +120,7 @@ public class AuthUserService implements UserDetailsService {
 
     @Transactional
     public CreatedUser createUserByAdmin(String username, String perfil, String status) {
-        if (usuarioRepository.existsByUsername(username)) {
+        if (usuarioRepository.existsByUsernameIgnoreCase(username)) {
             throw new UsuarioJaExisteException();
         }
 
@@ -148,7 +148,8 @@ public class AuthUserService implements UserDetailsService {
     public UserSummary updateUserByAdmin(String currentUsername, String newUsername, String perfil, String status) {
         Usuario user = getRequiredUser(currentUsername);
         String normalizedNewUsername = newUsername == null ? "" : newUsername.trim();
-        if (!user.getUsername().equals(normalizedNewUsername) && usuarioRepository.existsByUsername(normalizedNewUsername)) {
+        if (!user.getUsername().equalsIgnoreCase(normalizedNewUsername)
+                && usuarioRepository.existsByUsernameIgnoreCase(normalizedNewUsername)) {
             throw new UsuarioJaExisteException();
         }
         user.setUsername(normalizedNewUsername);
@@ -166,7 +167,7 @@ public class AuthUserService implements UserDetailsService {
     }
 
     private Usuario getRequiredUser(String username) {
-        return usuarioRepository.findByUsername(username)
+        return usuarioRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(UsuarioNaoEncontradoException::new);
     }
 
