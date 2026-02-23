@@ -46,7 +46,7 @@ class SecurityAuthorizationTest {
         movimentoRepository.deleteAll();
         promotorRepository.deleteAll();
         fornecedorRepository.deleteAll();
-        if (!usuarioRepository.existsByUsername("gestor")) {
+        if (!usuarioRepository.existsByUsernameIgnoreCase("gestor")) {
             authUserService.createUserByAdmin("gestor", "GESTOR", "ATIVO");
             authUserService.changePassword("gestor", "gestor123");
         }
