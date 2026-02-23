@@ -77,13 +77,13 @@ Documentacao OpenAPI/Swagger:
 http://localhost:8080/swagger-ui/index.html
 ```
 
-Front temporario para validacao manual:
+Front para validacao manual:
 
 ```
-http://localhost:8080/front-temp/index.html
+http://localhost:8080/promocontrol/index.html
 ```
 
-Atualizacoes visuais recentes no front-temp (v0.5.4.0):
+Atualizacoes visuais recentes no front (v0.5.4.0):
 
 * Aba `Operação` para registrar entrada/saida com acompanhamento em tabela.
 * Painel e Operacao com grid visivel, colunas de usuario/liberacao e detalhe expansivel (`+`) com observacoes.

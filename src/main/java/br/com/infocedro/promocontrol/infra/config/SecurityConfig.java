@@ -56,7 +56,7 @@ public class SecurityConfig {
             .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterAfter(passwordChangeRequiredFilter, BasicAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/front-temp/**").permitAll()
+                .requestMatchers("/promocontrol/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
