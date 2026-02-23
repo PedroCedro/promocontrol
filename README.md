@@ -565,4 +565,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.5.9.0` - Exclusoes administrativas por `ADMIN` (usuarios, promotores, fornecedores e operacoes) com isolamento do banco de testes.
+`v0.5.10.0` - UX de selecao em Promotores/Operacao com botao `+`, lista com rolagem e modal `Localizar` com busca por ID/nome.

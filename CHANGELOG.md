@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.5.10.0 - 2026-02-23
+
+### Added
+- Seletor rapido com botao `+` para:
+  - `Fornecedor` em `Cadastro de Promotores`;
+  - `Promotor` em `Operação`.
+- Modal de busca `Localizar` para ambos os campos com:
+  - filtro por `ID` e nome;
+  - acao `Procurar`;
+  - lista de resultados clicavel;
+  - botoes `Selecionar` e `Cancelar`.
+
+### Changed
+- UX de selecao ajustada para eliminar auto-selecao agressiva durante digitacao (sem "pular" sugestao).
+- Fluxo de escolha passa a ser explicito por clique/selecionar no painel ou modal.
+
 ## v0.5.9.0 - 2026-02-23
 
 ### Added

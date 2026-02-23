@@ -474,13 +474,66 @@ textarea::placeholder {
 
 .mov-promotor-find {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 8px;
 }
 
 .mov-promotor-find button {
-  min-width: 78px;
+  min-width: 42px;
   padding-inline: 14px;
+}
+
+#btnFindPromotor,
+#btnFindFornecedor {
+  min-width: 102px;
+}
+
+.inline-picker {
+  margin-top: 8px;
+  border: 1px solid #d7defc;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.inline-picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.inline-picker-item {
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: #2c3b71;
+}
+
+.inline-picker-item:hover,
+.inline-picker-item.is-active {
+  background: #eef3ff;
+}
+
+.lookup-card {
+  width: min(620px, 100%);
+}
+
+.lookup-grid {
+  margin-top: 6px;
+}
+
+.lookup-search-actions {
+  margin-top: 8px;
+}
+
+.lookup-results-wrap {
+  margin-top: 8px;
+}
+
+.lookup-results-wrap .inline-picker-list {
+  max-height: 230px;
 }
 
 button {
@@ -646,6 +699,10 @@ button:hover {
     grid-template-columns: 1fr;
   }
 
+  .lookup-grid {
+    grid-template-columns: 1fr;
+  }
+
   #uCodigo {
     width: 100%;
     min-width: 0;
@@ -805,6 +862,11 @@ tr:hover td {
 #pMessage.is-error {
   color: #dc2626;
   text-align: center;
+  font-weight: 700;
+}
+
+#lookupModalMessage.is-error {
+  color: #dc2626;
   font-weight: 700;
 }
 

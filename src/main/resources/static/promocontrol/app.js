@@ -27,7 +27,10 @@ const state = {
   fornecedorFilter: "",
   editingPromotorId: null,
   promotorFormMode: "view",
-  promotorFilter: ""
+  promotorFilter: "",
+  lookupModalType: "",
+  lookupModalResults: [],
+  lookupModalSelectedId: ""
 };
 
 const AUTO_SYNC_INTERVAL_MS = 8000;
@@ -139,6 +142,179 @@ function setPromotorMessage(message, isError = false) {
   if (!field) return;
   field.textContent = message || "";
   field.classList.toggle("is-error", Boolean(message) && isError);
+}
+
+function closeInlinePanels() {
+  el("pFornecedorInlinePanel")?.classList.add("is-hidden");
+  el("mPromotorInlinePanel")?.classList.add("is-hidden");
+}
+
+function renderInlineList(listId, items, labelBuilder, onSelect) {
+  const list = el(listId);
+  if (!list) return;
+  list.innerHTML = "";
+
+  if (!items.length) {
+    const empty = document.createElement("li");
+    empty.className = "inline-picker-item";
+    empty.textContent = "Nenhum resultado encontrado.";
+    list.appendChild(empty);
+    return;
+  }
+
+  items.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "inline-picker-item";
+    li.textContent = labelBuilder(item);
+    li.addEventListener("click", () => onSelect(item));
+    list.appendChild(li);
+  });
+}
+
+function openFornecedorInlinePanel() {
+  const panel = el("pFornecedorInlinePanel");
+  if (!panel) return;
+  const typed = el("pFornecedorSearch")?.value?.trim() || "";
+  const items = typed ? findFornecedoresByQuery(typed) : listCadastroFornecedores();
+  renderInlineList(
+    "pFornecedorInlineList",
+    items,
+    (fornecedor) => buildFornecedorSearchLabel(fornecedor),
+    (fornecedor) => {
+      applyCadastroFornecedorSelection(fornecedor);
+      panel.classList.add("is-hidden");
+      setPromotorMessage("");
+    }
+  );
+  panel.classList.remove("is-hidden");
+}
+
+function openPromotorInlinePanel() {
+  const panel = el("mPromotorInlinePanel");
+  if (!panel) return;
+  const typed = el("mPromotorSearch")?.value?.trim() || "";
+  const items = typed ? findPromotoresByQuery(typed) : listMovimentoPromotoresAtivos();
+  renderInlineList(
+    "mPromotorInlineList",
+    items,
+    (promotor) => buildPromotorSearchLabel(promotor),
+    (promotor) => {
+      applyMovimentoPromotorSelection(promotor);
+      panel.classList.add("is-hidden");
+      setMovimentoMessage("");
+    }
+  );
+  panel.classList.remove("is-hidden");
+}
+
+function setLookupModalMessage(message, isError = false) {
+  const field = el("lookupModalMessage");
+  if (!field) return;
+  field.textContent = message || "";
+  field.classList.toggle("is-error", Boolean(message) && isError);
+}
+
+function renderLookupModalResults() {
+  const list = el("lookupResults");
+  if (!list) return;
+  list.innerHTML = "";
+
+  if (!state.lookupModalResults.length) {
+    const li = document.createElement("li");
+    li.className = "inline-picker-item";
+    li.textContent = "Nenhum resultado encontrado.";
+    list.appendChild(li);
+    return;
+  }
+
+  state.lookupModalResults.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "inline-picker-item";
+    const isFornecedor = state.lookupModalType === "fornecedor";
+    li.textContent = isFornecedor
+      ? buildFornecedorSearchLabel(item)
+      : buildPromotorSearchLabel(item);
+    if (String(item.id) === String(state.lookupModalSelectedId)) {
+      li.classList.add("is-active");
+    }
+    li.addEventListener("click", () => {
+      state.lookupModalSelectedId = String(item.id);
+      renderLookupModalResults();
+    });
+    list.appendChild(li);
+  });
+}
+
+function runLookupModalSearch() {
+  const typedId = (el("lookupId")?.value || "").trim();
+  const typedNome = (el("lookupNome")?.value || "").trim();
+  const query = `${typedId} ${typedNome}`.trim();
+
+  state.lookupModalResults = state.lookupModalType === "fornecedor"
+    ? (query ? findFornecedoresByQuery(query) : listCadastroFornecedores())
+    : (query ? findPromotoresByQuery(query) : listMovimentoPromotoresAtivos());
+
+  state.lookupModalSelectedId = state.lookupModalResults.length === 1
+    ? String(state.lookupModalResults[0].id)
+    : "";
+
+  renderLookupModalResults();
+
+  if (!state.lookupModalResults.length) {
+    setLookupModalMessage("Nenhum resultado encontrado para os filtros informados.", true);
+    return;
+  }
+  setLookupModalMessage(`${state.lookupModalResults.length} resultado(s) encontrado(s).`);
+}
+
+function openLookupModal(type) {
+  state.lookupModalType = type;
+  state.lookupModalResults = [];
+  state.lookupModalSelectedId = "";
+
+  const isFornecedor = type === "fornecedor";
+  el("lookupModalTitle").textContent = isFornecedor ? "Localizar Fornecedor" : "Localizar Promotor";
+  el("lookupNameLabelText").textContent = isFornecedor ? "Fornecedor" : "Promotor";
+  el("lookupId").value = "";
+  el("lookupNome").value = "";
+  el("lookupNome").placeholder = isFornecedor ? "Digite o fornecedor" : "Digite o promotor";
+  setLookupModalMessage("");
+  renderLookupModalResults();
+  el("lookupModal").classList.remove("is-hidden");
+  el("lookupModal").setAttribute("aria-hidden", "false");
+  el("lookupNome").focus();
+}
+
+function closeLookupModal() {
+  el("lookupModal").classList.add("is-hidden");
+  el("lookupModal").setAttribute("aria-hidden", "true");
+  state.lookupModalType = "";
+  state.lookupModalResults = [];
+  state.lookupModalSelectedId = "";
+}
+
+function confirmLookupModalSelection() {
+  if (!state.lookupModalSelectedId) {
+    setLookupModalMessage("Selecione um item da lista para continuar.", true);
+    return;
+  }
+
+  if (state.lookupModalType === "fornecedor") {
+    const fornecedor = listCadastroFornecedores()
+      .find((f) => String(f.id) === String(state.lookupModalSelectedId));
+    if (fornecedor) {
+      applyCadastroFornecedorSelection(fornecedor);
+      setPromotorMessage("");
+    }
+  } else if (state.lookupModalType === "promotor") {
+    const promotor = listMovimentoPromotoresAtivos()
+      .find((p) => String(p.id) === String(state.lookupModalSelectedId));
+    if (promotor) {
+      applyMovimentoPromotorSelection(promotor);
+      setMovimentoMessage("");
+    }
+  }
+  closeLookupModal();
 }
 
 function showConfirmDialog({
@@ -276,6 +452,7 @@ function setPromotorFormMode(mode) {
   el("pNome").disabled = isView;
   el("pTelefone").disabled = isView;
   el("pFornecedorSearch").disabled = isView;
+  el("btnQuickListFornecedor").disabled = isView;
   el("btnFindFornecedor").disabled = isView;
   el("pStatus").disabled = isView;
   el("btnNovoPromotor").disabled = !isView;
@@ -294,6 +471,7 @@ function clearPromotorForm() {
   el("pFornecedorId").value = "";
   setPromotorFieldError("pNome", false);
   setPromotorFieldError("pFornecedorSearch", false);
+  closeInlinePanels();
 }
 
 function fillPromotorFormForEdit(promotor) {
@@ -937,22 +1115,17 @@ function buildFornecedorSearchLabel(fornecedor) {
 
 function syncFornecedorSelect() {
   const fornecedorSearch = el("pFornecedorSearch");
-  const fornecedorList = el("pFornecedoresList");
   const fornecedorHidden = el("pFornecedorId");
   const dashSelect = el("dashFornecedorId");
-  if (!fornecedorSearch || !fornecedorList || !fornecedorHidden || !dashSelect) return;
+  if (!fornecedorSearch || !fornecedorHidden || !dashSelect) return;
 
-  fornecedorList.innerHTML = "";
   dashSelect.innerHTML = "<option value=\"\">Todos</option>";
   state.cadastroFornecedorLookup = new Map();
 
   state.fornecedores
     .filter((f) => !isFornecedorSistema(f?.nome))
     .forEach((f) => {
-    const optSearch = document.createElement("option");
     const label = buildFornecedorSearchLabel(f);
-    optSearch.value = label;
-    fornecedorList.appendChild(optSearch);
     state.cadastroFornecedorLookup.set(normalizeText(label), String(f.id));
 
     const optDash = document.createElement("option");
@@ -977,24 +1150,18 @@ function syncFornecedorSelect() {
 
 function isFornecedorSistema(nome) {
   const normalized = normalizeText(nome);
-  return normalized === "fornecedor não informado";
+  return normalized === "fornecedor nao informado";
 }
 
 function syncMovimentoPromotorSelect() {
   const input = el("mPromotorSearch");
-  const datalist = el("mPromotoresAtivosList");
   const hiddenPromotorId = el("mPromotorId");
-  if (!input || !datalist || !hiddenPromotorId) return;
+  if (!input || !hiddenPromotorId) return;
   const filtered = state.promotores.filter((p) => p.status === "ATIVO");
-
-  datalist.innerHTML = "";
   state.movimentoPromotorLookup = new Map();
 
   filtered.forEach((p) => {
-    const opt = document.createElement("option");
     const label = buildPromotorSearchLabel(p);
-    opt.value = label;
-    datalist.appendChild(opt);
     state.movimentoPromotorLookup.set(normalizeText(label), String(p.id));
   });
 
@@ -1721,6 +1888,8 @@ async function criarUsuario() {
 }
 
 function logout() {
+  closeInlinePanels();
+  closeLookupModal();
   stopAutoSync();
   state.auth = null;
   state.pendingAuth = null;
@@ -1870,14 +2039,27 @@ function bindActions() {
   el("btnRefreshPromotores").addEventListener("click", () => {
     refreshData().catch((e) => log("Falha promotores", { error: e.message }));
   });
-  el("pFornecedorSearch").addEventListener("input", () => resolveCadastroFornecedorFromSearch(false));
-  el("pFornecedorSearch").addEventListener("change", () => resolveCadastroFornecedorFromSearch(true));
+  el("pFornecedorSearch").addEventListener("input", () => {
+    el("pFornecedorId").value = "";
+    if (!el("pFornecedorInlinePanel").classList.contains("is-hidden")) {
+      openFornecedorInlinePanel();
+    }
+  });
   el("pFornecedorSearch").addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
     resolveCadastroFornecedorFromSearch(true);
   });
-  el("btnFindFornecedor").addEventListener("click", () => resolveCadastroFornecedorFromSearch(true));
+  el("btnQuickListFornecedor").addEventListener("click", () => {
+    const panel = el("pFornecedorInlinePanel");
+    const willOpen = panel.classList.contains("is-hidden");
+    closeInlinePanels();
+    if (willOpen) openFornecedorInlinePanel();
+  });
+  el("btnFindFornecedor").addEventListener("click", () => {
+    closeInlinePanels();
+    openLookupModal("fornecedor");
+  });
   el("pFiltroNome").addEventListener("input", () => {
     state.promotorFilter = el("pFiltroNome").value || "";
     renderPromotores(state.promotores);
@@ -1907,14 +2089,28 @@ function bindActions() {
       log("Falha ao registrar saída", { error: e.message });
     });
   });
-  el("mPromotorSearch").addEventListener("input", () => resolveMovimentoPromotorFromSearch(false));
-  el("mPromotorSearch").addEventListener("change", () => resolveMovimentoPromotorFromSearch(true));
+  el("mPromotorSearch").addEventListener("input", () => {
+    el("mPromotorId").value = "";
+    updateMovimentoFornecedorFromPromotor();
+    if (!el("mPromotorInlinePanel").classList.contains("is-hidden")) {
+      openPromotorInlinePanel();
+    }
+  });
   el("mPromotorSearch").addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
     resolveMovimentoPromotorFromSearch(true);
   });
-  el("btnFindPromotor").addEventListener("click", () => resolveMovimentoPromotorFromSearch(true));
+  el("btnQuickListPromotor").addEventListener("click", () => {
+    const panel = el("mPromotorInlinePanel");
+    const willOpen = panel.classList.contains("is-hidden");
+    closeInlinePanels();
+    if (willOpen) openPromotorInlinePanel();
+  });
+  el("btnFindPromotor").addEventListener("click", () => {
+    closeInlinePanels();
+    openLookupModal("promotor");
+  });
   el("btnCancelarSaidaModal").addEventListener("click", closeSaidaModal);
   el("btnSalvarSaidaModal").addEventListener("click", () => {
     salvarSaidaModal().catch((e) => {
@@ -1934,10 +2130,44 @@ function bindActions() {
     if (event.target !== el("confirmModal")) return;
     resolveConfirmDialog(false);
   });
+  el("btnLookupSearch").addEventListener("click", runLookupModalSearch);
+  el("btnLookupCancel").addEventListener("click", closeLookupModal);
+  el("btnLookupSelect").addEventListener("click", confirmLookupModalSelection);
+  el("lookupId").addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    runLookupModalSearch();
+  });
+  el("lookupNome").addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    runLookupModalSearch();
+  });
+  el("lookupModal").addEventListener("click", (event) => {
+    if (event.target !== el("lookupModal")) return;
+    closeLookupModal();
+  });
+  document.addEventListener("click", (event) => {
+    const fornecedorBox = el("pFornecedorInlinePanel");
+    const fornecedorRoot = el("pFornecedorSearch")?.closest("label");
+    const promotorBox = el("mPromotorInlinePanel");
+    const promotorRoot = el("mPromotorSearch")?.closest("label");
+    const target = event.target;
+    if (fornecedorBox && fornecedorRoot && !fornecedorRoot.contains(target)) {
+      fornecedorBox.classList.add("is-hidden");
+    }
+    if (promotorBox && promotorRoot && !promotorRoot.contains(target)) {
+      promotorBox.classList.add("is-hidden");
+    }
+  });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
     if (!el("confirmModal").classList.contains("is-hidden")) {
       resolveConfirmDialog(false);
+      return;
+    }
+    if (!el("lookupModal").classList.contains("is-hidden")) {
+      closeLookupModal();
       return;
     }
     if (el("saidaModal").classList.contains("is-hidden")) return;

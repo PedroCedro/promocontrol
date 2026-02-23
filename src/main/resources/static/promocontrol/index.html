@@ -147,10 +147,13 @@
             <div class="grid two operacao-grid">
               <label>Promotor (somente ATIVO)
                 <div class="mov-promotor-find">
-                  <input id="mPromotorSearch" list="mPromotoresAtivosList" placeholder="Digite código ou nome do promotor" autocomplete="off" />
+                  <input id="mPromotorSearch" placeholder="Digite código ou nome do promotor" autocomplete="off" />
+                  <button id="btnQuickListPromotor" type="button" title="Abrir lista de promotores">+</button>
                   <button id="btnFindPromotor" type="button">Localizar</button>
                 </div>
-                <datalist id="mPromotoresAtivosList"></datalist>
+                <div id="mPromotorInlinePanel" class="inline-picker is-hidden">
+                  <ul id="mPromotorInlineList" class="inline-picker-list"></ul>
+                </div>
                 <input id="mPromotorId" type="hidden" />
               </label>
               <label>Fornecedor
@@ -241,10 +244,13 @@
               <label>Telefone <input id="pTelefone" placeholder="(11) 99999-9999" /></label>
               <label>Fornecedor
                 <div class="mov-promotor-find">
-                  <input id="pFornecedorSearch" list="pFornecedoresList" placeholder="Digite código ou nome do fornecedor" autocomplete="off" />
+                  <input id="pFornecedorSearch" placeholder="Digite código ou nome do fornecedor" autocomplete="off" />
+                  <button id="btnQuickListFornecedor" type="button" title="Abrir lista de fornecedores">+</button>
                   <button id="btnFindFornecedor" type="button">Localizar</button>
                 </div>
-                <datalist id="pFornecedoresList"></datalist>
+                <div id="pFornecedorInlinePanel" class="inline-picker is-hidden">
+                  <ul id="pFornecedorInlineList" class="inline-picker-list"></ul>
+                </div>
                 <input id="pFornecedorId" type="hidden" />
               </label>
               <label>Status
@@ -371,6 +377,32 @@
       <div class="actions modal-actions">
         <button id="btnConfirmModalCancel" type="button" class="btn-modal-cancel">Cancelar</button>
         <button id="btnConfirmModalOk" type="button" class="btn-modal-confirm">Confirmar</button>
+      </div>
+    </article>
+  </section>
+
+  <section id="lookupModal" class="modal-backdrop is-hidden" aria-hidden="true">
+    <article class="modal-card lookup-card">
+      <h3 id="lookupModalTitle">Localizar</h3>
+      <div class="grid two lookup-grid">
+        <label>ID
+          <input id="lookupId" placeholder="Digite o ID" />
+        </label>
+        <label>
+          <span id="lookupNameLabelText">Fornecedor</span>
+          <input id="lookupNome" placeholder="Digite para procurar" />
+        </label>
+      </div>
+      <div class="actions lookup-search-actions">
+        <button id="btnLookupSearch" type="button">Procurar</button>
+      </div>
+      <p id="lookupModalMessage" class="form-message"></p>
+      <div class="inline-picker lookup-results-wrap">
+        <ul id="lookupResults" class="inline-picker-list"></ul>
+      </div>
+      <div class="actions modal-actions">
+        <button id="btnLookupCancel" type="button" class="btn-modal-cancel">Cancelar</button>
+        <button id="btnLookupSelect" type="button" class="btn-modal-confirm">Selecionar</button>
       </div>
     </article>
   </section>
