@@ -83,6 +83,13 @@ public class MovimentoPromotorService {
         return repository.save(movimento);
     }
 
+    @Transactional
+    public void excluir(UUID movimentoId) {
+        MovimentoPromotor movimento = repository.findById(movimentoId)
+                .orElseThrow(MovimentoNaoEncontradoException::new);
+        repository.delete(movimento);
+    }
+
     private Promotor validarNovaMovimentacao(UUID promotorId, TipoMovimentoPromotor novoTipo) {
         Promotor promotor = promotorRepository.findWithLockById(promotorId)
                 .orElseThrow(PromotorNaoEncontradoException::new);

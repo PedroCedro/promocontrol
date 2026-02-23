@@ -5,6 +5,7 @@ import br.com.infocedro.promocontrol.core.exception.PromotorNaoEncontradoExcepti
 import br.com.infocedro.promocontrol.core.model.Fornecedor;
 import br.com.infocedro.promocontrol.core.model.Promotor;
 import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
+import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
 
 import java.util.List;
@@ -19,12 +20,15 @@ public class PromotorService {
 
     private final PromotorRepository repository;
     private final FornecedorRepository fornecedorRepository;
+    private final MovimentoPromotorRepository movimentoRepository;
 
     public PromotorService(
             PromotorRepository repository,
-            FornecedorRepository fornecedorRepository) {
+            FornecedorRepository fornecedorRepository,
+            MovimentoPromotorRepository movimentoRepository) {
         this.repository = repository;
         this.fornecedorRepository = fornecedorRepository;
+        this.movimentoRepository = movimentoRepository;
     }
 
     @Transactional
@@ -59,6 +63,14 @@ public class PromotorService {
         existente.setFornecedor(fornecedor);
 
         return repository.save(existente);
+    }
+
+    @Transactional
+    public void excluir(UUID id) {
+        Promotor promotor = repository.findById(id)
+                .orElseThrow(PromotorNaoEncontradoException::new);
+        movimentoRepository.deleteByPromotor_Id(promotor.getId());
+        repository.delete(promotor);
     }
 
 }

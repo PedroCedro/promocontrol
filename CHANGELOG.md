@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.5.9.0 - 2026-02-23
+
+### Added
+- Endpoint `DELETE /auth/admin/usuarios/{username}` para exclusao de usuario por `ADMIN` (com bloqueio de autoexclusao).
+- Endpoint `DELETE /promotores/{id}` para exclusao de promotor com limpeza dos movimentos relacionados.
+- Endpoint `DELETE /movimentos/{movimentoId}` para exclusao de operacao por `ADMIN`.
+- Isolamento do banco de testes em `src/test/resources/application.properties` (`promocontrol-test` em memoria).
+
+### Changed
+- Permissoes de exclusao endurecidas: `DELETE` em `fornecedores`, `promotores`, `movimentos` e `auth/admin/usuarios` restritas ao perfil `ADMIN`.
+- Exclusao de fornecedor agora remove antes os promotores e movimentos vinculados, evitando conflito de chave estrangeira.
+- Front `promocontrol` atualizado com botoes `Excluir` para admin em Usuarios, Promotores, Fornecedores e Operacao.
+
+## v0.5.8.0 - 2026-02-23
+
+### Added
+- Perfil `homolog` com fallback local para credenciais de seguranca e CORS, evitando falha de inicializacao em ambientes sem variaveis exportadas.
+
+### Changed
+- Front estatico renomeado de `front-temp` para `promocontrol` em `src/main/resources/static/promocontrol`.
+- Security atualizada para liberar `"/promocontrol/**"` sem autenticacao.
+- Perfil padrao da aplicacao alterado para `homolog` (`spring.profiles.default=homolog`).
+- `application-homolog.properties` ajustado para H2 em arquivo (`jdbc:h2:file`) com persistencia local.
+- Autenticacao de usuario passou a ignorar maiusculas/minusculas no login e validacoes de existencia.
+- UI atualizada: botao/feedback de busca alterados de `Find` para `Localizar`.
+- Teste de autorizacao ajustado para o novo repositorio `existsByUsernameIgnoreCase`.
+
 ## v0.5.7.0 - 2026-02-21
 
 ### Added

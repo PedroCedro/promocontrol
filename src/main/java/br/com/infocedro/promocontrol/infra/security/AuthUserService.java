@@ -1,6 +1,7 @@
 package br.com.infocedro.promocontrol.infra.security;
 
 import br.com.infocedro.promocontrol.core.exception.UsuarioNaoEncontradoException;
+import br.com.infocedro.promocontrol.core.exception.UsuarioAutoExclusaoNaoPermitidaException;
 import br.com.infocedro.promocontrol.core.exception.UsuarioJaExisteException;
 import br.com.infocedro.promocontrol.core.model.Usuario;
 import br.com.infocedro.promocontrol.core.repository.UsuarioRepository;
@@ -164,6 +165,15 @@ public class AuthUserService implements UserDetailsService {
         return usuarioRepository.findAllByOrderByCodigoAsc().stream()
                 .map(this::toSummary)
                 .toList();
+    }
+
+    @Transactional
+    public void deleteUserByAdmin(String usernameToDelete, String currentUsername) {
+        if (usernameToDelete != null && usernameToDelete.equalsIgnoreCase(currentUsername)) {
+            throw new UsuarioAutoExclusaoNaoPermitidaException();
+        }
+        Usuario user = getRequiredUser(usernameToDelete);
+        usuarioRepository.delete(user);
     }
 
     private Usuario getRequiredUser(String username) {

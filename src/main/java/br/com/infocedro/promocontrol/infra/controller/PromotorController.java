@@ -82,4 +82,19 @@ public class PromotorController {
                 service.atualizar(id, mapper.toPromotor(request), request.fornecedorId()));
     }
 
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Excluir promotor", description = "Exclui um promotor e seus movimentos associados.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Promotor excluido"),
+            @ApiResponse(responseCode = "401", description = "Nao autenticado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Sem permissao",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Promotor nao encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    public void excluir(@PathVariable UUID id) {
+        service.excluir(id);
+    }
+
 }

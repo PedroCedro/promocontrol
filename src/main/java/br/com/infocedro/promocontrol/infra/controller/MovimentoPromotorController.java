@@ -115,4 +115,19 @@ public class MovimentoPromotorController {
                 .map(mapper::toMovimentoResponse)
                 .toList();
     }
+
+    @DeleteMapping("/{movimentoId}")
+    @Operation(summary = "Excluir movimento", description = "Exclui um movimento por id. Requer perfil ADMIN.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Movimento excluido"),
+            @ApiResponse(responseCode = "401", description = "Nao autenticado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Sem permissao",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Movimento nao encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    public void excluir(@PathVariable UUID movimentoId) {
+        service.excluir(movimentoId);
+    }
 }

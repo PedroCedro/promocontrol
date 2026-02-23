@@ -33,7 +33,7 @@ Stack utilizada:
 * Spring Boot
 * Spring Security
 * Spring Data JPA
-* H2 Database (desenvolvimento)
+* H2 Database (desenvolvimento e homologacao local)
 * Maven
 
 ---
@@ -63,6 +63,12 @@ Executar com perfil especifico:
 .\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=dev
 .\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=homolog
 .\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=prod
+```
+
+Perfil padrao atual:
+
+```
+homolog
 ```
 
 Aplicação sobe em:
@@ -184,6 +190,7 @@ Body (POST/PUT):
 ```
 POST /promotores
 PUT /promotores/{id}
+DELETE /promotores/{id}
 ```
 
 Body:
@@ -262,6 +269,7 @@ Regras:
 
 ```
 GET /movimentos
+DELETE /movimentos/{movimentoId}
 ```
 
 ---
@@ -323,6 +331,7 @@ POST /auth/admin/resetar-senha
 GET /auth/admin/usuarios
 POST /auth/admin/usuarios
 PATCH /auth/admin/usuarios/{username}
+DELETE /auth/admin/usuarios/{username}
 ```
 
 Body (`POST /auth/alterar-senha`):
@@ -528,12 +537,21 @@ A aplicacao executa as migracoes automaticamente na inicializacao.
 
 Para bancos legados com o modelo antigo (campo `empresa_id` em `PROMOTOR`), use a migration `V2__fornecedor_e_relacao_promotor.sql` para normalizacao em `FORNECEDOR`.
 
-Para perfis `homolog` e `prod` (PostgreSQL), configure:
+Para perfil `prod` (PostgreSQL), configure:
 
 ```
 APP_DB_URL
 APP_DB_USERNAME
 APP_DB_PASSWORD
+```
+
+Para perfil `homolog` (H2 em arquivo local), configure opcionalmente:
+
+```
+APP_HOMOLOG_DB_URL
+APP_HOMOLOG_DB_USERNAME
+APP_HOMOLOG_DB_PASSWORD
+APP_DB_FILE_PATH
 ```
 
 ---
@@ -547,4 +565,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.5.7.0` - Fluxos administrativos padronizados (Usuarios/Fornecedores/Promotores), novo perfil `GESTOR` e endpoint de edicao de promotor.
+`v0.5.9.0` - Exclusoes administrativas por `ADMIN` (usuarios, promotores, fornecedores e operacoes) com isolamento do banco de testes.

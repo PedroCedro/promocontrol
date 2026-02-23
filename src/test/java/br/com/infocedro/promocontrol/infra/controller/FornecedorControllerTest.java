@@ -95,7 +95,7 @@ class FornecedorControllerTest {
         Fornecedor fornecedor = criarFornecedor("Fornecedor Excluir");
 
         mockMvc.perform(delete("/fornecedores/" + fornecedor.getId())
-                        .with(httpBasic("user", "user123")))
+                        .with(httpBasic("admin", "admin123")))
                 .andExpect(status().isOk());
     }
 

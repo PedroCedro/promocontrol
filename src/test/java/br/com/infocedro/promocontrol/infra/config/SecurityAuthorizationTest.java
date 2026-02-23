@@ -5,6 +5,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
@@ -107,6 +108,22 @@ class SecurityAuthorizationTest {
                                   "observacao": "teste"
                                 }
                                 """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminDeveExcluirUsuario() throws Exception {
+        authUserService.createUserByAdmin("temp.delete.user", "VIEWER", "ATIVO");
+        mockMvc.perform(delete("/auth/admin/usuarios/temp.delete.user")
+                        .with(httpBasic("admin", "admin123")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void gestorNaoDeveExcluirUsuario() throws Exception {
+        authUserService.createUserByAdmin("temp.delete.user.2", "VIEWER", "ATIVO");
+        mockMvc.perform(delete("/auth/admin/usuarios/temp.delete.user.2")
+                        .with(httpBasic("gestor", "gestor123")))
                 .andExpect(status().isForbidden());
     }
 }

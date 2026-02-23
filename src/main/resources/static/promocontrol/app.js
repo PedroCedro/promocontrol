@@ -529,8 +529,8 @@ function renderPromotores(list) {
     const statusClass = status === "ATIVO"
       ? "status-badge is-active"
       : "status-badge is-inactive";
-    const actionButton = state.auth?.canManageCatalog
-      ? `<button class="btn-table-small promotor-edit-btn" type="button" data-id="${p.id}">Editar</button>`
+    const actionButtons = state.auth?.canManageCatalog
+      ? `${state.auth?.isAdmin ? `<button class="btn-table-small promotor-delete-btn" type="button" data-id="${p.id}" data-nome="${p.nome ?? ""}">Excluir</button> ` : ""}<button class="btn-table-small promotor-edit-btn" type="button" data-id="${p.id}">Editar</button>`
       : "";
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -539,7 +539,7 @@ function renderPromotores(list) {
       <td>${formatCodigo(p.fornecedorCodigo)} - ${p.fornecedorNome ?? ""}</td>
       <td><span class="${statusClass}">${status || "-"}</span></td>
       <td>${p.telefone ?? ""}</td>
-      <td>${actionButton}</td>`;
+      <td>${actionButtons}</td>`;
     tbody.appendChild(tr);
   });
 
@@ -559,6 +559,18 @@ function renderPromotores(list) {
       fillPromotorFormForEdit(promotor);
       setPromotorFormMode("edit");
       setPromotorMessage("");
+    });
+  });
+
+  tbody.querySelectorAll(".promotor-delete-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = String(btn.dataset.id || "");
+      if (!id) return;
+      const nome = String(btn.dataset.nome || "");
+      excluirPromotor(id, nome).catch((e) => {
+        setPromotorMessage(e.message, true);
+        log("Falha ao excluir promotor", { error: e.message, id, nome });
+      });
     });
   });
 }
@@ -584,7 +596,7 @@ function renderFornecedores(list) {
     const statusClass = f.ativo ? "status-badge is-active" : "status-badge is-inactive";
     const tr = document.createElement("tr");
     const actionButton = state.auth?.canManageCatalog
-      ? `<button class="btn-table-small fornecedor-edit-btn" type="button" data-id="${f.id}">Editar</button>`
+      ? `${state.auth?.isAdmin ? `<button class="btn-table-small fornecedor-delete-btn" type="button" data-id="${f.id}" data-nome="${f.nome ?? ""}">Excluir</button> ` : ""}<button class="btn-table-small fornecedor-edit-btn" type="button" data-id="${f.id}">Editar</button>`
       : "";
     tr.innerHTML = `
       <td>${formatCodigo(f.codigo)}</td>
@@ -610,6 +622,18 @@ function renderFornecedores(list) {
       fillFornecedorFormForEdit(fornecedor);
       setFornecedorFormMode("edit");
       setFornecedorMessage("");
+    });
+  });
+
+  tbody.querySelectorAll(".fornecedor-delete-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = Number(btn.dataset.id);
+      if (Number.isNaN(id)) return;
+      const nome = String(btn.dataset.nome || "");
+      excluirFornecedor(id, nome).catch((e) => {
+        setFornecedorMessage(e.message, true);
+        log("Falha ao excluir fornecedor", { error: e.message, id, nome });
+      });
     });
   });
 }
@@ -645,7 +669,9 @@ function renderUsuarios(list) {
       <td>${getRoleDisplayName(u.perfil ?? "")}</td>
       <td><span class="${statusClass}">${status}</span></td>
       <td>${u.precisaTrocarSenha ? "SIM" : "NÃO"}</td>
-      <td><button class="btn-table-small user-edit-btn" type="button" data-username="${u.username ?? ""}" data-perfil="${u.perfil ?? ""}">Editar</button></td>`;
+      <td>${state.auth?.isAdmin && String(u.username || "").toLowerCase() !== String(state.auth?.username || "").toLowerCase()
+        ? `<button class="btn-table-small user-delete-btn" type="button" data-username="${u.username ?? ""}">Excluir</button> `
+        : ""}<button class="btn-table-small user-edit-btn" type="button" data-username="${u.username ?? ""}" data-perfil="${u.perfil ?? ""}">Editar</button></td>`;
     tbody.appendChild(tr);
   });
 
@@ -664,6 +690,17 @@ function renderUsuarios(list) {
       fillUserFormForEdit(user);
       setUserFormMode("edit");
       setUsuarioMessage("");
+    });
+  });
+
+  tbody.querySelectorAll(".user-delete-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const username = String(btn.dataset.username || "").trim();
+      if (!username) return;
+      excluirUsuario(username).catch((e) => {
+        setUsuarioMessage(e.message, true);
+        log("Falha ao excluir usuário", { error: e.message, username });
+      });
     });
   });
 }
@@ -771,6 +808,11 @@ function renderOperacaoDia(resumo) {
           <div><span>Usuário Entrada:</span> ${linha.usuarioEntrada ?? "-"}</div>
           <div><span>Usuário Saída:</span> ${linha.usuarioSaida ?? "-"}</div>
           <div><span>Liberação:</span> ${linha.liberadoPor ?? "-"}</div>
+          ${state.auth?.isAdmin ? `
+          <div class="detail-actions">
+            ${detalhe.entradaId ? `<button class="btn-table-small op-delete-mov-btn" type="button" data-movimento-id="${detalhe.entradaId}" data-tipo="ENTRADA" data-promotor="${linha.promotorNome ?? ""}">Excluir Entrada</button>` : ""}
+            ${detalhe.saidaId ? `<button class="btn-table-small op-delete-mov-btn" type="button" data-movimento-id="${detalhe.saidaId}" data-tipo="SAIDA" data-promotor="${linha.promotorNome ?? ""}">Excluir Saída</button>` : ""}
+          </div>` : ""}
         </div>
       </td>`;
     tbody.appendChild(detailTr);
@@ -794,6 +836,19 @@ function renderOperacaoDia(resumo) {
       const linha = linhas[index];
       if (!linha) return;
       openSaidaModal(linha);
+    });
+  });
+
+  tbody.querySelectorAll(".op-delete-mov-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const movimentoId = String(btn.dataset.movimentoId || "");
+      if (!movimentoId) return;
+      const tipo = String(btn.dataset.tipo || "MOVIMENTO");
+      const promotorNome = String(btn.dataset.promotor || "");
+      excluirMovimento(movimentoId, tipo, promotorNome).catch((e) => {
+        setMovimentoMessage(`Falha ao excluir movimento: ${e.message}`);
+        log("Falha ao excluir movimento", { error: e.message, movimentoId, tipo, promotorNome });
+      });
     });
   });
 }
@@ -834,6 +889,8 @@ function resolveLinhaDetalhe(linha) {
     m.tipo === "SAIDA" && normalizeDateTimeKey(m.dataHora) === saidaKey);
 
   return {
+    entradaId: entrada?.id ?? "",
+    saidaId: saida?.id ?? "",
     observacaoEntrada: entrada?.observacao ?? "",
     observacaoSaida: saida?.observacao ?? ""
   };
@@ -1229,6 +1286,62 @@ async function refreshUsuarios() {
   if (!state.auth?.canManageUsers) return;
   state.usuarios = await apiRequest("/auth/admin/usuarios");
   renderUsuarios(state.usuarios);
+}
+
+async function excluirFornecedor(id, nome) {
+  if (!state.auth?.isAdmin) {
+    throw new Error("Somente ADMIN pode excluir fornecedor");
+  }
+  const confirmar = await showConfirmDialog({
+    title: "Excluir fornecedor",
+    message: `Deseja excluir o fornecedor ${nome || id}?`
+  });
+  if (!confirmar) return;
+  await apiRequest(`/fornecedores/${id}`, "DELETE");
+  setFornecedorMessage("Fornecedor excluído com sucesso.");
+  await refreshData();
+}
+
+async function excluirPromotor(id, nome) {
+  if (!state.auth?.isAdmin) {
+    throw new Error("Somente ADMIN pode excluir promotor");
+  }
+  const confirmar = await showConfirmDialog({
+    title: "Excluir promotor",
+    message: `Deseja excluir o promotor ${nome || id}?`
+  });
+  if (!confirmar) return;
+  await apiRequest(`/promotores/${id}`, "DELETE");
+  setPromotorMessage("Promotor excluído com sucesso.");
+  await refreshData();
+}
+
+async function excluirUsuario(username) {
+  if (!state.auth?.isAdmin) {
+    throw new Error("Somente ADMIN pode excluir usuário");
+  }
+  const confirmar = await showConfirmDialog({
+    title: "Excluir usuário",
+    message: `Deseja excluir o usuário ${username}?`
+  });
+  if (!confirmar) return;
+  await apiRequest(`/auth/admin/usuarios/${encodeURIComponent(username)}`, "DELETE");
+  setUsuarioMessage("Usuário excluído com sucesso.");
+  await refreshUsuarios();
+}
+
+async function excluirMovimento(movimentoId, tipo, promotorNome) {
+  if (!state.auth?.isAdmin) {
+    throw new Error("Somente ADMIN pode excluir operação");
+  }
+  const confirmar = await showConfirmDialog({
+    title: "Excluir operação",
+    message: `Deseja excluir ${tipo.toLowerCase()} de ${promotorNome || "promotor"}?`
+  });
+  if (!confirmar) return;
+  await apiRequest(`/movimentos/${movimentoId}`, "DELETE");
+  setMovimentoMessage("Operação excluída com sucesso.");
+  await refreshData();
 }
 
 async function criarFornecedor() {

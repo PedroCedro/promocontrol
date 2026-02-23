@@ -23,4 +23,8 @@ public interface MovimentoPromotorRepository extends JpaRepository<MovimentoProm
             TipoMovimentoPromotor tipo,
             LocalDateTime inicio,
             LocalDateTime fim);
+
+    void deleteByPromotor_Id(UUID promotorId);
+
+    void deleteByPromotor_IdIn(List<UUID> promotorIds);
 }
