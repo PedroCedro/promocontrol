@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.5.11.0 - 2026-02-27
+
+### Added
+- Front `promocontrol`: ajuste de horario na UI para `ADMIN` nas telas de `Painel` e `Operação`, com modal de `novaDataHora` e `motivo`.
+- Acao de ajuste integrada ao endpoint `PATCH /movimentos/{movimentoId}/ajuste-horario`.
+
+### Changed
+- Base de tempo do backend fixada em `America/Sao_Paulo` para registro/consulta de movimentos e auditoria, sem dependencia do fuso da maquina.
+- `Painel`: removido atalho de saida na coluna `Saída em` (modo somente visualizacao).
+- Menu lateral renomeado para maior clareza:
+  - `Operação` -> `Operação Entrada e Saída`
+  - `Fornecedores` -> `Cadastro de Fornecedores`
+  - `Promotores` -> `Cadastro de Promotores`
+- Sidebar ampliada para manter os novos labels em uma linha.
+- Perfil `OPERATOR` (`Prevenção`) sem acesso ao `Painel`, com foco direto em `Operação`.
+
 ## v0.5.10.0 - 2026-02-23
 
 ### Added

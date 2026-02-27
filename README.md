@@ -89,6 +89,14 @@ Front para validacao manual:
 http://localhost:8080/promocontrol/index.html
 ```
 
+Atualizacoes recentes (v0.5.11.0):
+
+* Horario do sistema fixado em `America/Sao_Paulo` no backend (movimentos, dashboard e auditoria).
+* `Painel` sem atalho operacional em `Saída em` (somente visualizacao).
+* `ADMIN` pode ajustar horario diretamente no front (`Painel` e `Operação`).
+* Perfil `OPERATOR` (`Prevenção`) sem acesso ao `Painel`, com foco em `Operação`.
+* Menu lateral com nomenclaturas operacionais e sidebar mais larga para manter labels em uma linha.
+
 Atualizacoes visuais recentes no front (v0.5.4.0):
 
 * Aba `Operação` para registrar entrada/saida com acompanhamento em tabela.
@@ -565,4 +573,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.5.10.0` - UX de selecao em Promotores/Operacao com botao `+`, lista com rolagem e modal `Localizar` com busca por ID/nome.
+`v0.5.11.0` - Timezone fixo em Brasilia, ajuste de horario no front para ADMIN e refinamentos de UX/perfil nas telas operacionais.
