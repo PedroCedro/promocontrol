@@ -62,9 +62,9 @@
       </section>
       <nav class="tabs">
         <button class="tab-btn is-active" data-tab="tab-dashboard">Painel</button>
-        <button id="tabMovimentosBtn" class="tab-btn" data-tab="tab-movimentos">Operação</button>
-        <button class="tab-btn" data-tab="tab-fornecedores">Fornecedores</button>
-        <button class="tab-btn" data-tab="tab-promotores">Promotores</button>
+        <button id="tabMovimentosBtn" class="tab-btn" data-tab="tab-movimentos">Operação Entrada e Saída</button>
+        <button class="tab-btn" data-tab="tab-fornecedores">Cadastro de Fornecedores</button>
+        <button class="tab-btn" data-tab="tab-promotores">Cadastro de Promotores</button>
         <button id="tabUsersBtn" class="tab-btn is-hidden" data-tab="tab-usuarios">Usuários</button>
         <button id="tabIntegracaoBtn" class="tab-btn is-hidden" data-tab="tab-integracao">Logs</button>
       </nav>
@@ -362,6 +362,27 @@
       <div class="actions modal-actions">
         <button id="btnCancelarSaidaModal" type="button" class="btn-modal-cancel">Cancelar</button>
         <button id="btnSalvarSaidaModal" type="button" class="btn-modal-save">Salvar</button>
+      </div>
+    </article>
+  </section>
+
+  <section id="ajusteHorarioModal" class="modal-backdrop is-hidden" aria-hidden="true">
+    <article class="modal-card">
+      <h3>Ajustar Horário</h3>
+      <p id="ajusteHorarioResumo" class="section-note"></p>
+      <input id="ajusteHorarioMovimentoId" type="hidden" />
+      <div class="grid one">
+        <label>Nova data/hora
+          <input id="ajusteHorarioDataHora" type="datetime-local" />
+        </label>
+        <label>Motivo do ajuste
+          <input id="ajusteHorarioMotivo" placeholder="Informe o motivo do ajuste" />
+        </label>
+      </div>
+      <p id="ajusteHorarioMessage" class="form-message"></p>
+      <div class="actions modal-actions">
+        <button id="btnCancelarAjusteHorarioModal" type="button" class="btn-modal-cancel">Cancelar</button>
+        <button id="btnSalvarAjusteHorarioModal" type="button" class="btn-modal-save">Salvar</button>
       </div>
     </article>
   </section>

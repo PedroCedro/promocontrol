@@ -15,6 +15,7 @@ const state = {
   cadastroFornecedorLookup: new Map(),
   movimentoPromotorLookup: new Map(),
   saidaModalContext: null,
+  ajusteHorarioModalContext: null,
   autoSyncIntervalId: null,
   autoSyncSignature: null,
   autoSyncRunning: false,
@@ -509,6 +510,12 @@ function saveProfileSettings() {
 }
 
 function applySessionToUI() {
+  const defaultTabForUser = state.auth?.role === "OPERATOR"
+    ? "tab-movimentos"
+    : "tab-dashboard";
+  const dashboardTabButton = document.querySelector('.tab-btn[data-tab="tab-dashboard"]');
+  const hideDashboardForOperator = state.auth?.role === "OPERATOR";
+
   el("baseUrl").value = state.auth.baseUrl;
   el("currentUser").value = state.auth.username;
   el("currentRole").value = state.auth.role;
@@ -519,6 +526,10 @@ function applySessionToUI() {
   el("tabUsersBtn").classList.toggle("is-hidden", !state.auth.canManageUsers);
   el("tabIntegracaoBtn").classList.toggle("is-hidden", !state.auth.isAdmin);
   el("tabMovimentosBtn").classList.toggle("is-hidden", !state.auth.canOperate);
+  if (dashboardTabButton) {
+    dashboardTabButton.classList.toggle("is-hidden", hideDashboardForOperator);
+  }
+  el("tab-dashboard").classList.toggle("is-hidden", hideDashboardForOperator);
   el("adminUsersCard").classList.toggle("is-hidden", !state.auth.canManageUsers);
   el("adminUsersListCard").classList.toggle("is-hidden", !state.auth.canManageUsers);
   el("btnOpenProfile").classList.toggle("is-hidden", !state.auth.isAdmin);
@@ -536,16 +547,19 @@ function applySessionToUI() {
   }
 
   if (!state.auth.isAdmin && el("tab-perfil").classList.contains("is-active")) {
-    activateTab("tab-dashboard");
+    activateTab(defaultTabForUser);
   }
   if (!state.auth.canOperate && el("tab-movimentos").classList.contains("is-active")) {
-    activateTab("tab-dashboard");
+    activateTab(defaultTabForUser);
   }
   if (!state.auth.canManageUsers && el("tab-usuarios").classList.contains("is-active")) {
-    activateTab("tab-dashboard");
+    activateTab(defaultTabForUser);
   }
   if (!state.auth.isAdmin && el("tab-integracao").classList.contains("is-active")) {
-    activateTab("tab-dashboard");
+    activateTab(defaultTabForUser);
+  }
+  if (hideDashboardForOperator && el("tab-dashboard").classList.contains("is-active")) {
+    activateTab("tab-movimentos");
   }
 }
 
@@ -896,7 +910,7 @@ function renderDashboard(resumo) {
     const detalhe = resolveLinhaDetalhe(linha);
     const saidaCell = linha.saidaEm
       ? formatHoraMinuto(linha.saidaEm)
-      : `<button class="quick-saida-btn dashboard-saida-btn" data-line-index="${index}" type="button" title="Registrar saída">&gt;</button>`;
+      : "-";
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${linha.promotorNome ?? ""}</td>
@@ -922,6 +936,11 @@ function renderDashboard(resumo) {
           <div><span>Usuário Entrada:</span> ${linha.usuarioEntrada ?? "-"}</div>
           <div><span>Usuário Saída:</span> ${linha.usuarioSaida ?? "-"}</div>
           <div><span>Liberação:</span> ${linha.liberadoPor ?? "-"}</div>
+          ${state.auth?.isAdmin ? `
+          <div class="detail-actions">
+            ${detalhe.entradaId ? `<button class="btn-table-small adjust-mov-btn" type="button" data-movimento-id="${detalhe.entradaId}" data-tipo="ENTRADA" data-promotor="${linha.promotorNome ?? ""}" data-data-hora="${linha.entradaEm ?? ""}">Ajustar Entrada</button>` : ""}
+            ${detalhe.saidaId ? `<button class="btn-table-small adjust-mov-btn" type="button" data-movimento-id="${detalhe.saidaId}" data-tipo="SAIDA" data-promotor="${linha.promotorNome ?? ""}" data-data-hora="${linha.saidaEm ?? ""}">Ajustar Saída</button>` : ""}
+          </div>` : ""}
         </div>
       </td>`;
     tbody.appendChild(detailTr);
@@ -938,15 +957,17 @@ function renderDashboard(resumo) {
     });
   });
 
-  tbody.querySelectorAll(".dashboard-saida-btn").forEach((btn) => {
+  tbody.querySelectorAll(".adjust-mov-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const index = Number(btn.dataset.lineIndex);
-      if (Number.isNaN(index)) return;
-      const linha = linhas[index];
-      if (!linha) return;
-      openSaidaModal(linha);
+      const movimentoId = String(btn.dataset.movimentoId || "");
+      if (!movimentoId) return;
+      const tipo = String(btn.dataset.tipo || "MOVIMENTO");
+      const promotorNome = String(btn.dataset.promotor || "");
+      const dataHoraAtual = String(btn.dataset.dataHora || "");
+      openAjusteHorarioModal({ movimentoId, tipo, promotorNome, dataHoraAtual });
     });
   });
+
 }
 
 function renderOperacaoDia(resumo) {
@@ -988,6 +1009,8 @@ function renderOperacaoDia(resumo) {
           <div><span>Liberação:</span> ${linha.liberadoPor ?? "-"}</div>
           ${state.auth?.isAdmin ? `
           <div class="detail-actions">
+            ${detalhe.entradaId ? `<button class="btn-table-small adjust-mov-btn" type="button" data-movimento-id="${detalhe.entradaId}" data-tipo="ENTRADA" data-promotor="${linha.promotorNome ?? ""}" data-data-hora="${linha.entradaEm ?? ""}">Ajustar Entrada</button>` : ""}
+            ${detalhe.saidaId ? `<button class="btn-table-small adjust-mov-btn" type="button" data-movimento-id="${detalhe.saidaId}" data-tipo="SAIDA" data-promotor="${linha.promotorNome ?? ""}" data-data-hora="${linha.saidaEm ?? ""}">Ajustar Saída</button>` : ""}
             ${detalhe.entradaId ? `<button class="btn-table-small op-delete-mov-btn" type="button" data-movimento-id="${detalhe.entradaId}" data-tipo="ENTRADA" data-promotor="${linha.promotorNome ?? ""}">Excluir Entrada</button>` : ""}
             ${detalhe.saidaId ? `<button class="btn-table-small op-delete-mov-btn" type="button" data-movimento-id="${detalhe.saidaId}" data-tipo="SAIDA" data-promotor="${linha.promotorNome ?? ""}">Excluir Saída</button>` : ""}
           </div>` : ""}
@@ -1014,6 +1037,17 @@ function renderOperacaoDia(resumo) {
       const linha = linhas[index];
       if (!linha) return;
       openSaidaModal(linha);
+    });
+  });
+
+  tbody.querySelectorAll(".adjust-mov-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const movimentoId = String(btn.dataset.movimentoId || "");
+      if (!movimentoId) return;
+      const tipo = String(btn.dataset.tipo || "MOVIMENTO");
+      const promotorNome = String(btn.dataset.promotor || "");
+      const dataHoraAtual = String(btn.dataset.dataHora || "");
+      openAjusteHorarioModal({ movimentoId, tipo, promotorNome, dataHoraAtual });
     });
   });
 
@@ -1662,6 +1696,98 @@ function setSaidaModalMessage(message) {
   field.textContent = message || "";
 }
 
+function setAjusteHorarioModalMessage(message) {
+  const field = el("ajusteHorarioMessage");
+  if (!field) return;
+  field.textContent = message || "";
+}
+
+function toDateTimeLocalInputValue(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (!Number.isNaN(date.getTime())) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hour = String(date.getHours()).padStart(2, "0");
+    const minute = String(date.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hour}:${minute}`;
+  }
+  const normalized = String(value).replace(" ", "T");
+  return normalized.length >= 16 ? normalized.slice(0, 16) : "";
+}
+
+function toApiLocalDateTime(value) {
+  if (!value) return "";
+  return value.length === 16 ? `${value}:00` : value;
+}
+
+function openAjusteHorarioModal({ movimentoId, tipo, promotorNome, dataHoraAtual }) {
+  if (!state.auth?.isAdmin || !movimentoId) return;
+  state.ajusteHorarioModalContext = {
+    movimentoId,
+    tipo: tipo || "MOVIMENTO",
+    promotorNome: promotorNome || "",
+    dataHoraAtual: dataHoraAtual || ""
+  };
+
+  el("ajusteHorarioMovimentoId").value = movimentoId;
+  el("ajusteHorarioResumo").textContent = `${tipo} - ${promotorNome || "Promotor"} (${formatHoraMinuto(dataHoraAtual) || "-"})`;
+  el("ajusteHorarioDataHora").value = toDateTimeLocalInputValue(dataHoraAtual);
+  el("ajusteHorarioMotivo").value = "";
+  setAjusteHorarioModalMessage("");
+  el("ajusteHorarioModal").classList.remove("is-hidden");
+  el("ajusteHorarioModal").setAttribute("aria-hidden", "false");
+  el("ajusteHorarioDataHora").focus();
+}
+
+function closeAjusteHorarioModal() {
+  state.ajusteHorarioModalContext = null;
+  setAjusteHorarioModalMessage("");
+  el("ajusteHorarioModal").classList.add("is-hidden");
+  el("ajusteHorarioModal").setAttribute("aria-hidden", "true");
+}
+
+async function salvarAjusteHorarioModal() {
+  if (!state.auth?.isAdmin) {
+    throw new Error("Somente ADMIN pode ajustar horário");
+  }
+
+  const ctx = state.ajusteHorarioModalContext;
+  if (!ctx?.movimentoId) {
+    closeAjusteHorarioModal();
+    return;
+  }
+
+  const novaDataHoraInput = el("ajusteHorarioDataHora").value.trim();
+  const motivo = el("ajusteHorarioMotivo").value.trim();
+  if (!novaDataHoraInput) {
+    setAjusteHorarioModalMessage("Informe a nova data/hora.");
+    return;
+  }
+  if (!motivo) {
+    setAjusteHorarioModalMessage("Informe o motivo do ajuste.");
+    return;
+  }
+
+  const saveBtn = el("btnSalvarAjusteHorarioModal");
+  saveBtn.disabled = true;
+  try {
+    await apiRequest(`/movimentos/${ctx.movimentoId}/ajuste-horario`, "PATCH", {
+      novaDataHora: toApiLocalDateTime(novaDataHoraInput),
+      motivo
+    });
+    closeAjusteHorarioModal();
+    setMovimentoMessage("Horário ajustado com sucesso.");
+    await refreshData();
+  } catch (e) {
+    setAjusteHorarioModalMessage(`Falha ao ajustar horário: ${e.message}`);
+    log("Falha ao ajustar horário", { error: e.message, movimentoId: ctx.movimentoId });
+  } finally {
+    saveBtn.disabled = false;
+  }
+}
+
 function openSaidaModal(linha) {
   if (!linha?.promotorId) return;
 
@@ -2122,6 +2248,17 @@ function bindActions() {
     if (event.target !== el("saidaModal")) return;
     closeSaidaModal();
   });
+  el("btnCancelarAjusteHorarioModal").addEventListener("click", closeAjusteHorarioModal);
+  el("btnSalvarAjusteHorarioModal").addEventListener("click", () => {
+    salvarAjusteHorarioModal().catch((e) => {
+      setAjusteHorarioModalMessage(`Falha ao ajustar horário: ${e.message}`);
+      log("Falha ao salvar ajuste de horário", { error: e.message });
+    });
+  });
+  el("ajusteHorarioModal").addEventListener("click", (event) => {
+    if (event.target !== el("ajusteHorarioModal")) return;
+    closeAjusteHorarioModal();
+  });
   el("btnConfirmModalCancel").addEventListener("click", () => resolveConfirmDialog(false));
   el("btnConfirmModalOk").addEventListener("click", () => resolveConfirmDialog(true));
   el("confirmModalSecret").addEventListener("focus", () => el("confirmModalSecret").select());
@@ -2168,6 +2305,10 @@ function bindActions() {
     }
     if (!el("lookupModal").classList.contains("is-hidden")) {
       closeLookupModal();
+      return;
+    }
+    if (!el("ajusteHorarioModal").classList.contains("is-hidden")) {
+      closeAjusteHorarioModal();
       return;
     }
     if (el("saidaModal").classList.contains("is-hidden")) return;

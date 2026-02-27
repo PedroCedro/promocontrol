@@ -14,6 +14,7 @@ import br.com.infocedro.promocontrol.core.model.StatusPromotor;
 import br.com.infocedro.promocontrol.core.model.TipoMovimentoPromotor;
 import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -26,12 +27,15 @@ public class MovimentoPromotorService {
 
     private final MovimentoPromotorRepository repository;
     private final PromotorRepository promotorRepository;
+    private final Clock appClock;
 
     public MovimentoPromotorService(
             MovimentoPromotorRepository repository,
-            PromotorRepository promotorRepository) {
+            PromotorRepository promotorRepository,
+            Clock appClock) {
         this.repository = repository;
         this.promotorRepository = promotorRepository;
+        this.appClock = appClock;
     }
 
     @Transactional
@@ -78,7 +82,7 @@ public class MovimentoPromotorService {
 
         movimento.setDataHora(novaDataHora);
         movimento.setAjustadoPor(usernameAdmin);
-        movimento.setAjustadoEm(LocalDateTime.now());
+        movimento.setAjustadoEm(LocalDateTime.now(appClock));
         movimento.setAjusteMotivo(motivo.trim());
         return repository.save(movimento);
     }
@@ -123,7 +127,7 @@ public class MovimentoPromotorService {
         MovimentoPromotor movimento = new MovimentoPromotor();
         movimento.setPromotor(promotor);
         movimento.setTipo(tipo);
-        movimento.setDataHora(LocalDateTime.now());
+        movimento.setDataHora(LocalDateTime.now(appClock));
         movimento.setResponsavel(responsavel);
         movimento.setLiberadoPor(liberadoPor);
         movimento.setObservacao(observacao);

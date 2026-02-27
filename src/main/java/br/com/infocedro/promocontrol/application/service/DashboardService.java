@@ -12,6 +12,7 @@ import br.com.infocedro.promocontrol.infra.controller.dto.DashboardCumprimentoFo
 import br.com.infocedro.promocontrol.infra.controller.dto.DashboardCumprimentoResumoResponse;
 import br.com.infocedro.promocontrol.infra.controller.dto.DashboardPlanilhaLinhaResponse;
 import br.com.infocedro.promocontrol.infra.controller.dto.DashboardPlanilhaResumoResponse;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -33,21 +34,24 @@ public class DashboardService {
     private final PromotorRepository promotorRepository;
     private final MovimentoPromotorRepository movimentoRepository;
     private final FornecedorRepository fornecedorRepository;
+    private final Clock appClock;
 
     public DashboardService(
             PromotorRepository promotorRepository,
             MovimentoPromotorRepository movimentoRepository,
-            FornecedorRepository fornecedorRepository) {
+            FornecedorRepository fornecedorRepository,
+            Clock appClock) {
         this.promotorRepository = promotorRepository;
         this.movimentoRepository = movimentoRepository;
         this.fornecedorRepository = fornecedorRepository;
+        this.appClock = appClock;
     }
 
     public DashboardPlanilhaResumoResponse obterPlanilhaPrincipal(
             LocalDate data,
             Integer fornecedorId,
             StatusPromotor status) {
-        LocalDate dataRef = data == null ? LocalDate.now() : data;
+        LocalDate dataRef = data == null ? LocalDate.now(appClock) : data;
         List<Promotor> promotores = buscarPromotoresFiltrados(fornecedorId, status);
         if (promotores.isEmpty()) {
             return new DashboardPlanilhaResumoResponse(dataRef, 0, 0, 0, 0, List.of());
@@ -102,7 +106,7 @@ public class DashboardService {
     public DashboardCumprimentoResumoResponse obterCumprimentoFornecedores(
             LocalDate data,
             double percentualMinimo) {
-        LocalDate dataRef = data == null ? LocalDate.now() : data;
+        LocalDate dataRef = data == null ? LocalDate.now(appClock) : data;
         double percentualMeta = percentualMinimo <= 0 ? 80.0 : percentualMinimo;
         LocalDateTime inicioDia = dataRef.atStartOfDay();
         LocalDateTime fimDia = dataRef.plusDays(1).atStartOfDay().minusNanos(1);

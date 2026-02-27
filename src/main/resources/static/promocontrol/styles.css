@@ -105,7 +105,7 @@ body {
   min-height: calc(100vh - 52px);
   padding: 16px;
   display: grid;
-  grid-template-columns: 270px minmax(0, 1fr);
+  grid-template-columns: 300px minmax(0, 1fr);
   gap: 14px;
 }
 
@@ -817,6 +817,13 @@ tr:hover td {
 .dashboard-detail-content span {
   color: #2f3e74;
   font-weight: 600;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
 }
 
 #log {
