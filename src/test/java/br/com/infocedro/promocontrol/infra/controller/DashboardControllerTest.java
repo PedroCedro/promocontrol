@@ -10,6 +10,7 @@ import br.com.infocedro.promocontrol.core.model.MovimentoPromotor;
 import br.com.infocedro.promocontrol.core.model.Promotor;
 import br.com.infocedro.promocontrol.core.model.StatusPromotor;
 import br.com.infocedro.promocontrol.core.model.TipoMovimentoPromotor;
+import br.com.infocedro.promocontrol.core.repository.ConfiguracaoEmpresaRepository;
 import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
 import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
@@ -38,10 +39,14 @@ class DashboardControllerTest {
     @Autowired
     private MovimentoPromotorRepository movimentoRepository;
 
+    @Autowired
+    private ConfiguracaoEmpresaRepository configuracaoEmpresaRepository;
+
     @BeforeEach
     void setup() {
         movimentoRepository.deleteAll();
         promotorRepository.deleteAll();
+        configuracaoEmpresaRepository.deleteAll();
         fornecedorRepository.deleteAll();
     }
 

@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import br.com.infocedro.promocontrol.core.repository.ConfiguracaoEmpresaRepository;
 import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
 import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
@@ -37,6 +38,9 @@ class SecurityAuthorizationTest {
     private MovimentoPromotorRepository movimentoRepository;
 
     @Autowired
+    private ConfiguracaoEmpresaRepository configuracaoEmpresaRepository;
+
+    @Autowired
     private UsuarioRepository usuarioRepository;
 
     @Autowired
@@ -46,6 +50,7 @@ class SecurityAuthorizationTest {
     void setup() {
         movimentoRepository.deleteAll();
         promotorRepository.deleteAll();
+        configuracaoEmpresaRepository.deleteAll();
         fornecedorRepository.deleteAll();
         if (!usuarioRepository.existsByUsernameIgnoreCase("gestor")) {
             authUserService.createUserByAdmin("gestor", "GESTOR", "ATIVO");
@@ -124,6 +129,21 @@ class SecurityAuthorizationTest {
         authUserService.createUserByAdmin("temp.delete.user.2", "VIEWER", "ATIVO");
         mockMvc.perform(delete("/auth/admin/usuarios/temp.delete.user.2")
                         .with(httpBasic("gestor", "gestor123")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void viewerNaoDeveAtualizarConfiguracaoEmpresa() throws Exception {
+        mockMvc.perform(post("/empresas/1/configuracao")
+                        .with(httpBasic("viewer", "viewer123"))
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "encerramentoAutomaticoHabilitado": false,
+                                  "permitirMultiplasEntradasNoDia": true,
+                                  "exigirFotoNaEntrada": false
+                                }
+                                """))
                 .andExpect(status().isForbidden());
     }
 }

@@ -2,6 +2,7 @@ package br.com.infocedro.promocontrol.core.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
@@ -47,4 +48,20 @@ public class MovimentoPromotor extends AuditableEntity {
     private String ajusteMotivo;
 
     public MovimentoPromotor() {}
+
+    public MovimentoPromotor encerrarAutomaticamente(ConfiguracaoEmpresa config) {
+        Objects.requireNonNull(config, "Configuracao da empresa e obrigatoria");
+        MovimentoPromotor saida = new MovimentoPromotor();
+        LocalDateTime dataHoraEncerramento = config.calcularDataHoraEncerramento(dataHora.toLocalDate());
+        if (dataHoraEncerramento.isBefore(dataHora)) {
+            dataHoraEncerramento = dataHora;
+        }
+        saida.setPromotor(promotor);
+        saida.setTipo(TipoMovimentoPromotor.SAIDA);
+        saida.setDataHora(dataHoraEncerramento);
+        saida.setResponsavel("system");
+        saida.setLiberadoPor("system");
+        saida.setObservacao(config.observacaoEncerramentoAutomatico());
+        return saida;
+    }
 }

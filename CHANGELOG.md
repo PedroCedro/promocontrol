@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.6.0.0 - 2026-03-03
+
+### Added
+- Dominio `ConfiguracaoEmpresa` com vinculo 1:1 por empresa (`Fornecedor`) e migration `V9__add_configuracao_empresa.sql`.
+- Endpoint de configuracao por empresa:
+  - `POST /empresas/{empresaId}/configuracao`
+  - `GET /empresas/{empresaId}/configuracao`
+  - `PUT /empresas/{empresaId}/configuracao`
+  - `DELETE /empresas/{empresaId}/configuracao` (redefine para padrao).
+- Agendamento de encerramento automatico com `@Scheduled` via `EncerramentoAutomaticoMovimentoJob`.
+- Metodo de aggregate `MovimentoPromotor#encerrarAutomaticamente(ConfiguracaoEmpresa config)`.
+- Testes para CRUD de configuracao, regras de entrada por configuracao e encerramento automatico.
+
+### Changed
+- Regras de movimento passaram a depender de `ConfiguracaoEmpresa`:
+  - bloqueio de multiplas entradas no mesmo dia quando configurado;
+  - exigencia de foto na entrada quando configurado;
+  - encerramento automatico de movimentos abertos do dia anterior conforme configuracao da empresa.
+- Criacao de fornecedor agora garante configuracao padrao da empresa.
+- Permissoes de seguranca atualizadas para endpoints de configuracao por empresa.
+- Versao exposta em `actuator/info` alinhada para `v0.6.0.0`.
+
 ## v0.5.11.0 - 2026-02-27
 
 ### Added

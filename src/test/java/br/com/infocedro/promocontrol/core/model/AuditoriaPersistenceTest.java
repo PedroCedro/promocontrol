@@ -2,6 +2,7 @@ package br.com.infocedro.promocontrol.core.model;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import br.com.infocedro.promocontrol.core.repository.ConfiguracaoEmpresaRepository;
 import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
 import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
@@ -23,10 +24,14 @@ class AuditoriaPersistenceTest {
     @Autowired
     private FornecedorRepository fornecedorRepository;
 
+    @Autowired
+    private ConfiguracaoEmpresaRepository configuracaoEmpresaRepository;
+
     @BeforeEach
     void setup() {
         movimentoPromotorRepository.deleteAll();
         promotorRepository.deleteAll();
+        configuracaoEmpresaRepository.deleteAll();
         fornecedorRepository.deleteAll();
     }
 

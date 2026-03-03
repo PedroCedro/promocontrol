@@ -89,13 +89,12 @@ Front para validacao manual:
 http://localhost:8080/promocontrol/index.html
 ```
 
-Atualizacoes recentes (v0.5.11.0):
+Atualizacoes recentes (v0.6.0.0):
 
-* Horario do sistema fixado em `America/Sao_Paulo` no backend (movimentos, dashboard e auditoria).
-* `Painel` sem atalho operacional em `Saída em` (somente visualizacao).
-* `ADMIN` pode ajustar horario diretamente no front (`Painel` e `Operação`).
-* Perfil `OPERATOR` (`Prevenção`) sem acesso ao `Painel`, com foco em `Operação`.
-* Menu lateral com nomenclaturas operacionais e sidebar mais larga para manter labels em uma linha.
+* Parametrizacao por empresa (`ConfiguracaoEmpresa`) para regras de movimento.
+* Encerramento automatico de movimentos abertos do dia anterior com job agendado.
+* Regras por empresa para multiplas entradas no dia e exigencia de foto na entrada.
+* CRUD de configuracao por empresa em `/empresas/{empresaId}/configuracao`.
 
 Atualizacoes visuais recentes no front (v0.5.4.0):
 
@@ -153,6 +152,14 @@ APP_CORRELATION_HEADER
 ```
 
 Padrao: `X-Correlation-Id`.
+
+Cron do job de encerramento automatico:
+
+```
+APP_MOVIMENTO_ENCERRAMENTO_AUTOMATICO_CRON
+```
+
+Padrao: `0 */15 * * * *`.
 
 Perfis de acesso:
 
@@ -243,6 +250,8 @@ Regras:
 
 * A data/hora é gerada no servidor no momento da requisição.
 * Não permite nova entrada se já existir entrada em aberto.
+* Pode bloquear multiplas entradas no mesmo dia conforme configuracao da empresa.
+* Pode exigir foto do promotor para entrada conforme configuracao da empresa.
 * Apenas promotor com status `ATIVO` pode registrar movimento.
 
 ---
@@ -279,6 +288,31 @@ Regras:
 GET /movimentos
 DELETE /movimentos/{movimentoId}
 ```
+
+---
+
+### Configuracao por Empresa
+
+```
+POST /empresas/{empresaId}/configuracao
+GET /empresas/{empresaId}/configuracao
+PUT /empresas/{empresaId}/configuracao
+DELETE /empresas/{empresaId}/configuracao
+```
+
+Body (`POST/PUT`):
+
+```json
+{
+  "encerramentoAutomaticoHabilitado": true,
+  "horarioEncerramentoAutomatico": "21:00:00",
+  "textoObservacaoEncerramentoAutomatico": "Encerramento automatico do dia anterior",
+  "permitirMultiplasEntradasNoDia": false,
+  "exigirFotoNaEntrada": true
+}
+```
+
+`DELETE` redefine a configuracao da empresa para os valores padrao do sistema.
 
 ---
 
@@ -573,4 +607,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.5.11.0` - Timezone fixo em Brasilia, ajuste de horario no front para ADMIN e refinamentos de UX/perfil nas telas operacionais.
+`v0.6.0.0` - Parametrizacao por empresa para movimento de promotores, encerramento automatico agendado e CRUD de configuracao.

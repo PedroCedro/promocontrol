@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import br.com.infocedro.promocontrol.core.model.Fornecedor;
+import br.com.infocedro.promocontrol.core.repository.ConfiguracaoEmpresaRepository;
 import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
 import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
@@ -36,10 +37,14 @@ class FornecedorControllerTest {
     @Autowired
     private MovimentoPromotorRepository movimentoPromotorRepository;
 
+    @Autowired
+    private ConfiguracaoEmpresaRepository configuracaoEmpresaRepository;
+
     @BeforeEach
     void setup() {
         movimentoPromotorRepository.deleteAll();
         promotorRepository.deleteAll();
+        configuracaoEmpresaRepository.deleteAll();
         fornecedorRepository.deleteAll();
     }
 
@@ -58,6 +63,10 @@ class FornecedorControllerTest {
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.nome").value("Fornecedor Teste"))
                 .andExpect(jsonPath("$.ativo").value(true));
+
+        Fornecedor criado = fornecedorRepository.findAll().stream().findFirst().orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(
+                configuracaoEmpresaRepository.existsByEmpresa_Id(criado.getId())).isTrue();
     }
 
     @Test

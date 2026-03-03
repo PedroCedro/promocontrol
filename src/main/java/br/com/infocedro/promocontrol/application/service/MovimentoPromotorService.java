@@ -1,13 +1,16 @@
 package br.com.infocedro.promocontrol.application.service;
 
 import br.com.infocedro.promocontrol.core.exception.EntradaEmAbertoException;
+import br.com.infocedro.promocontrol.core.exception.FotoObrigatoriaNaEntradaException;
 import br.com.infocedro.promocontrol.core.exception.LiberacaoSaidaObrigatoriaException;
 import br.com.infocedro.promocontrol.core.exception.MotivoAjusteObrigatorioException;
 import br.com.infocedro.promocontrol.core.exception.MovimentoNaoEncontradoException;
+import br.com.infocedro.promocontrol.core.exception.MultiplasEntradasNoDiaNaoPermitidasException;
 import br.com.infocedro.promocontrol.core.exception.NovaDataHoraObrigatoriaException;
 import br.com.infocedro.promocontrol.core.exception.PromotorInativoOuBloqueadoException;
 import br.com.infocedro.promocontrol.core.exception.PromotorNaoEncontradoException;
 import br.com.infocedro.promocontrol.core.exception.SemEntradaEmAbertoException;
+import br.com.infocedro.promocontrol.core.model.ConfiguracaoEmpresa;
 import br.com.infocedro.promocontrol.core.model.MovimentoPromotor;
 import br.com.infocedro.promocontrol.core.model.Promotor;
 import br.com.infocedro.promocontrol.core.model.StatusPromotor;
@@ -15,6 +18,7 @@ import br.com.infocedro.promocontrol.core.model.TipoMovimentoPromotor;
 import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -27,14 +31,17 @@ public class MovimentoPromotorService {
 
     private final MovimentoPromotorRepository repository;
     private final PromotorRepository promotorRepository;
+    private final ConfiguracaoEmpresaService configuracaoEmpresaService;
     private final Clock appClock;
 
     public MovimentoPromotorService(
             MovimentoPromotorRepository repository,
             PromotorRepository promotorRepository,
+            ConfiguracaoEmpresaService configuracaoEmpresaService,
             Clock appClock) {
         this.repository = repository;
         this.promotorRepository = promotorRepository;
+        this.configuracaoEmpresaService = configuracaoEmpresaService;
         this.appClock = appClock;
     }
 
@@ -97,6 +104,7 @@ public class MovimentoPromotorService {
     private Promotor validarNovaMovimentacao(UUID promotorId, TipoMovimentoPromotor novoTipo) {
         Promotor promotor = promotorRepository.findWithLockById(promotorId)
                 .orElseThrow(PromotorNaoEncontradoException::new);
+        ConfiguracaoEmpresa configuracao = buscarConfiguracaoEmpresa(promotor);
 
         if (promotor.getStatus() != StatusPromotor.ATIVO) {
             throw new PromotorInativoOuBloqueadoException();
@@ -109,6 +117,14 @@ public class MovimentoPromotorService {
 
         if (novoTipo == TipoMovimentoPromotor.ENTRADA && ultimoTipo == TipoMovimentoPromotor.ENTRADA) {
             throw new EntradaEmAbertoException();
+        }
+
+        if (novoTipo == TipoMovimentoPromotor.ENTRADA && !configuracao.permiteMultiplasEntradasNoDia()) {
+            validarEntradaUnicaNoDia(promotor.getId());
+        }
+
+        if (novoTipo == TipoMovimentoPromotor.ENTRADA && configuracao.exigeFotoNaEntrada()) {
+            validarFotoObrigatoria(promotor);
         }
 
         if (novoTipo == TipoMovimentoPromotor.SAIDA && ultimoTipo != TipoMovimentoPromotor.ENTRADA) {
@@ -132,5 +148,29 @@ public class MovimentoPromotorService {
         movimento.setLiberadoPor(liberadoPor);
         movimento.setObservacao(observacao);
         return repository.save(movimento);
+    }
+
+    private ConfiguracaoEmpresa buscarConfiguracaoEmpresa(Promotor promotor) {
+        return configuracaoEmpresaService.buscarPorEmpresaId(promotor.getFornecedor().getId());
+    }
+
+    private void validarEntradaUnicaNoDia(UUID promotorId) {
+        LocalDate hoje = LocalDate.now(appClock);
+        LocalDateTime inicio = hoje.atStartOfDay();
+        LocalDateTime fim = hoje.plusDays(1).atStartOfDay().minusNanos(1);
+        long entradasHoje = repository.countByPromotor_IdAndTipoAndDataHoraBetween(
+                promotorId,
+                TipoMovimentoPromotor.ENTRADA,
+                inicio,
+                fim);
+        if (entradasHoje > 0) {
+            throw new MultiplasEntradasNoDiaNaoPermitidasException();
+        }
+    }
+
+    private void validarFotoObrigatoria(Promotor promotor) {
+        if (promotor.getFotoPath() == null || promotor.getFotoPath().isBlank()) {
+            throw new FotoObrigatoriaNaEntradaException();
+        }
     }
 }

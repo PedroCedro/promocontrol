@@ -333,6 +333,46 @@ body {
   display: grid;
 }
 
+.config-subtabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.config-subtab-btn {
+  border: 1px solid #d7defc;
+  border-radius: 999px;
+  background: #f5f8ff;
+  color: #3a4a7e;
+  padding: 8px 12px;
+  font-weight: 700;
+}
+
+.config-subtab-btn:hover {
+  background: #e9efff;
+}
+
+.config-subtab-btn.is-active {
+  background: linear-gradient(120deg, var(--brand), #5f85fb);
+  color: #fff;
+  border-color: transparent;
+}
+
+.config-subtab-panel {
+  display: none;
+}
+
+.config-subtab-panel.is-active {
+  display: grid;
+  gap: 10px;
+}
+
+.config-subtab-panel h3 {
+  margin: 0;
+  color: #30407f;
+}
+
 .card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -872,6 +912,11 @@ tr:hover td {
   font-weight: 700;
 }
 
+#cfgMessage.is-error {
+  color: #dc2626;
+  font-weight: 700;
+}
+
 #lookupModalMessage.is-error {
   color: #dc2626;
   font-weight: 700;
@@ -1035,5 +1080,9 @@ tr:hover td {
 
   .tabs {
     grid-template-columns: 1fr;
+  }
+
+  .config-subtabs {
+    flex-direction: column;
   }
 }

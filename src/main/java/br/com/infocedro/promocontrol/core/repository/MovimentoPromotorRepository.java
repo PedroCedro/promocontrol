@@ -13,6 +13,12 @@ public interface MovimentoPromotorRepository extends JpaRepository<MovimentoProm
 
     long countByPromotor_IdAndTipo(UUID promotorId, TipoMovimentoPromotor tipo);
 
+    long countByPromotor_IdAndTipoAndDataHoraBetween(
+            UUID promotorId,
+            TipoMovimentoPromotor tipo,
+            LocalDateTime inicio,
+            LocalDateTime fim);
+
     List<MovimentoPromotor> findByPromotor_IdInAndDataHoraBetween(
             List<UUID> promotorIds,
             LocalDateTime inicio,
@@ -27,4 +33,14 @@ public interface MovimentoPromotorRepository extends JpaRepository<MovimentoProm
     void deleteByPromotor_Id(UUID promotorId);
 
     void deleteByPromotor_IdIn(List<UUID> promotorIds);
+
+    List<MovimentoPromotor> findByTipoAndDataHoraBetween(
+            TipoMovimentoPromotor tipo,
+            LocalDateTime inicio,
+            LocalDateTime fim);
+
+    boolean existsByPromotor_IdAndTipoAndDataHoraGreaterThanEqual(
+            UUID promotorId,
+            TipoMovimentoPromotor tipo,
+            LocalDateTime dataHora);
 }

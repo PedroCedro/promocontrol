@@ -31,7 +31,8 @@ const state = {
   promotorFilter: "",
   lookupModalType: "",
   lookupModalResults: [],
-  lookupModalSelectedId: ""
+  lookupModalSelectedId: "",
+  configuracaoEmpresaAtual: null
 };
 
 const AUTO_SYNC_INTERVAL_MS = 8000;
@@ -96,6 +97,15 @@ function setupTabs() {
   });
 }
 
+function setupConfiguracoesTabs() {
+  const tabs = document.querySelectorAll(".config-subtab-btn");
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      activateConfiguracoesTab(tab.dataset.configTab);
+    });
+  });
+}
+
 function activateTab(tabId) {
   const tabs = document.querySelectorAll(".tab-btn");
   const panels = document.querySelectorAll(".tab-panel");
@@ -103,6 +113,21 @@ function activateTab(tabId) {
   panels.forEach((p) => p.classList.remove("is-active"));
 
   const targetButton = Array.from(tabs).find((t) => t.dataset.tab === tabId);
+  if (targetButton) {
+    targetButton.classList.add("is-active");
+  }
+
+  const panel = document.getElementById(tabId);
+  if (panel) panel.classList.add("is-active");
+}
+
+function activateConfiguracoesTab(tabId) {
+  const tabs = document.querySelectorAll(".config-subtab-btn");
+  const panels = document.querySelectorAll(".config-subtab-panel");
+  tabs.forEach((t) => t.classList.remove("is-active"));
+  panels.forEach((p) => p.classList.remove("is-active"));
+
+  const targetButton = Array.from(tabs).find((t) => t.dataset.configTab === tabId);
   if (targetButton) {
     targetButton.classList.add("is-active");
   }
@@ -140,6 +165,13 @@ function setFornecedorMessage(message, isError = false) {
 
 function setPromotorMessage(message, isError = false) {
   const field = el("pMessage");
+  if (!field) return;
+  field.textContent = message || "";
+  field.classList.toggle("is-error", Boolean(message) && isError);
+}
+
+function setConfiguracaoMessage(message, isError = false) {
+  const field = el("cfgMessage");
   if (!field) return;
   field.textContent = message || "";
   field.classList.toggle("is-error", Boolean(message) && isError);
@@ -524,12 +556,14 @@ function applySessionToUI() {
   updateProfileInitials(state.auth.username);
   applyProfileToUI();
   el("tabUsersBtn").classList.toggle("is-hidden", !state.auth.canManageUsers);
-  el("tabIntegracaoBtn").classList.toggle("is-hidden", !state.auth.isAdmin);
+  el("tabConfiguracoesBtn").classList.toggle("is-hidden", !state.auth.canManageCatalog);
   el("tabMovimentosBtn").classList.toggle("is-hidden", !state.auth.canOperate);
+  el("cfgSubtabLogsBtn").classList.toggle("is-hidden", !state.auth.isAdmin);
   if (dashboardTabButton) {
     dashboardTabButton.classList.toggle("is-hidden", hideDashboardForOperator);
   }
   el("tab-dashboard").classList.toggle("is-hidden", hideDashboardForOperator);
+  el("tab-configuracoes").classList.toggle("is-hidden", !state.auth.canManageCatalog);
   el("adminUsersCard").classList.toggle("is-hidden", !state.auth.canManageUsers);
   el("adminUsersListCard").classList.toggle("is-hidden", !state.auth.canManageUsers);
   el("btnOpenProfile").classList.toggle("is-hidden", !state.auth.isAdmin);
@@ -555,11 +589,14 @@ function applySessionToUI() {
   if (!state.auth.canManageUsers && el("tab-usuarios").classList.contains("is-active")) {
     activateTab(defaultTabForUser);
   }
-  if (!state.auth.isAdmin && el("tab-integracao").classList.contains("is-active")) {
+  if (!state.auth.canManageCatalog && el("tab-configuracoes").classList.contains("is-active")) {
     activateTab(defaultTabForUser);
   }
   if (hideDashboardForOperator && el("tab-dashboard").classList.contains("is-active")) {
     activateTab("tab-movimentos");
+  }
+  if (!state.auth.isAdmin && el("config-tab-logs").classList.contains("is-active")) {
+    activateConfiguracoesTab("config-tab-gerais");
   }
 }
 
@@ -1180,6 +1217,131 @@ function syncFornecedorSelect() {
   }
 
   syncMovimentoPromotorSelect();
+  syncConfiguracaoEmpresaSelect();
+}
+
+function syncConfiguracaoEmpresaSelect() {
+  const select = el("cfgEmpresaId");
+  if (!select) return;
+  const previous = String(select.value || "");
+  select.innerHTML = "<option value=\"\">Selecione</option>";
+
+  listCadastroFornecedores().forEach((f) => {
+    const option = document.createElement("option");
+    option.value = String(f.id);
+    option.textContent = buildFornecedorSearchLabel(f);
+    select.appendChild(option);
+  });
+
+  if (previous && Array.from(select.options).some((opt) => opt.value === previous)) {
+    select.value = previous;
+  }
+}
+
+function setConfiguracaoFormEnabled(enabled) {
+  const ids = [
+    "cfgEncerramentoAuto",
+    "cfgHorarioEncerramento",
+    "cfgTextoObservacao",
+    "cfgPermitirMultiplas",
+    "cfgExigirFoto",
+    "btnSalvarConfigEmpresa",
+    "btnResetConfigEmpresa"
+  ];
+  ids.forEach((id) => {
+    if (el(id)) el(id).disabled = !enabled;
+  });
+}
+
+function limparConfiguracaoForm() {
+  state.configuracaoEmpresaAtual = null;
+  if (el("cfgEncerramentoAuto")) el("cfgEncerramentoAuto").value = "false";
+  if (el("cfgHorarioEncerramento")) el("cfgHorarioEncerramento").value = "";
+  if (el("cfgTextoObservacao")) el("cfgTextoObservacao").value = "";
+  if (el("cfgPermitirMultiplas")) el("cfgPermitirMultiplas").value = "true";
+  if (el("cfgExigirFoto")) el("cfgExigirFoto").value = "false";
+  atualizarRegrasCamposConfiguracao();
+}
+
+function preencherConfiguracaoForm(config) {
+  state.configuracaoEmpresaAtual = config || null;
+  if (!config) {
+    limparConfiguracaoForm();
+    return;
+  }
+  el("cfgEncerramentoAuto").value = String(Boolean(config.encerramentoAutomaticoHabilitado));
+  el("cfgHorarioEncerramento").value = formatHoraMinuto(config.horarioEncerramentoAutomatico || "");
+  el("cfgTextoObservacao").value = config.textoObservacaoEncerramentoAutomatico || "";
+  el("cfgPermitirMultiplas").value = String(Boolean(config.permitirMultiplasEntradasNoDia));
+  el("cfgExigirFoto").value = String(Boolean(config.exigirFotoNaEntrada));
+  atualizarRegrasCamposConfiguracao();
+}
+
+function atualizarRegrasCamposConfiguracao() {
+  const encerramentoHabilitado = el("cfgEncerramentoAuto")?.value === "true";
+  const horarioField = el("cfgHorarioEncerramento");
+  if (!horarioField) return;
+  horarioField.disabled = !encerramentoHabilitado;
+  horarioField.required = encerramentoHabilitado;
+}
+
+async function carregarConfiguracaoEmpresaSelecionada() {
+  const empresaId = String(el("cfgEmpresaId")?.value || "").trim();
+  if (!empresaId) {
+    setConfiguracaoMessage("Selecione uma empresa para carregar a configuração.", true);
+    setConfiguracaoFormEnabled(false);
+    limparConfiguracaoForm();
+    return;
+  }
+
+  const config = await apiRequest(`/empresas/${encodeURIComponent(empresaId)}/configuracao`);
+  preencherConfiguracaoForm(config);
+  setConfiguracaoFormEnabled(true);
+  setConfiguracaoMessage("Configuração carregada.");
+}
+
+async function salvarConfiguracaoEmpresaSelecionada() {
+  const empresaId = String(el("cfgEmpresaId")?.value || "").trim();
+  if (!empresaId) {
+    throw new Error("Selecione uma empresa para salvar a configuração.");
+  }
+
+  const encerramentoAutomaticoHabilitado = el("cfgEncerramentoAuto").value === "true";
+  const horarioEncerramentoAutomatico = (el("cfgHorarioEncerramento").value || "").trim();
+  if (encerramentoAutomaticoHabilitado && !horarioEncerramentoAutomatico) {
+    throw new Error("Informe o horário quando o encerramento automático estiver habilitado.");
+  }
+
+  const payload = {
+    encerramentoAutomaticoHabilitado,
+    horarioEncerramentoAutomatico: horarioEncerramentoAutomatico || null,
+    textoObservacaoEncerramentoAutomatico: (el("cfgTextoObservacao").value || "").trim(),
+    permitirMultiplasEntradasNoDia: el("cfgPermitirMultiplas").value === "true",
+    exigirFotoNaEntrada: el("cfgExigirFoto").value === "true"
+  };
+
+  const config = await apiRequest(`/empresas/${encodeURIComponent(empresaId)}/configuracao`, "PUT", payload);
+  preencherConfiguracaoForm(config);
+  setConfiguracaoMessage("Configuração salva com sucesso.");
+  log("Configuração da empresa atualizada", { empresaId, payload });
+}
+
+async function restaurarConfiguracaoPadraoEmpresaSelecionada() {
+  const empresaId = String(el("cfgEmpresaId")?.value || "").trim();
+  if (!empresaId) {
+    throw new Error("Selecione uma empresa para restaurar a configuração.");
+  }
+
+  const confirmar = await showConfirmDialog({
+    title: "Restaurar padrão",
+    message: "Deseja restaurar a configuração padrão desta empresa?"
+  });
+  if (!confirmar) return;
+
+  const config = await apiRequest(`/empresas/${encodeURIComponent(empresaId)}/configuracao`, "DELETE");
+  preencherConfiguracaoForm(config);
+  setConfiguracaoMessage("Configuração padrão restaurada.");
+  log("Configuração da empresa restaurada para padrão", { empresaId });
 }
 
 function isFornecedorSistema(nome) {
@@ -1422,6 +1584,18 @@ async function refreshData() {
   renderFornecedores(state.fornecedores);
   renderPromotores(state.promotores);
   syncFornecedorSelect();
+  const empresaSelecionada = String(el("cfgEmpresaId")?.value || "").trim();
+  if (empresaSelecionada) {
+    try {
+      await carregarConfiguracaoEmpresaSelecionada();
+    } catch (e) {
+      setConfiguracaoMessage(`Falha ao carregar configuração: ${e.message}`, true);
+      setConfiguracaoFormEnabled(false);
+    }
+  } else {
+    setConfiguracaoFormEnabled(false);
+    limparConfiguracaoForm();
+  }
   if (state.auth?.canManageUsers) {
     await refreshUsuarios();
   } else {
@@ -2040,6 +2214,11 @@ function logout() {
   setPromotorFormMode("view");
   state.promotorFilter = "";
   if (el("pFiltroNome")) el("pFiltroNome").value = "";
+  if (el("cfgEmpresaId")) el("cfgEmpresaId").value = "";
+  setConfiguracaoFormEnabled(false);
+  limparConfiguracaoForm();
+  setConfiguracaoMessage("");
+  activateConfiguracoesTab("config-tab-gerais");
   updateProfileInitials("U");
   applyProfileToUI();
   setLoginMessage("");
@@ -2076,6 +2255,21 @@ function bindActions() {
   };
 
   el("btnOpenProfile").addEventListener("click", () => activateTab("tab-perfil"));
+  el("tabConfiguracoesBtn").addEventListener("click", () => {
+    if (!el("cfgEmpresaId").value && listCadastroFornecedores().length) {
+      el("cfgEmpresaId").value = String(listCadastroFornecedores()[0].id);
+    }
+    if (el("cfgEmpresaId").value) {
+      carregarConfiguracaoEmpresaSelecionada().catch((e) => {
+        setConfiguracaoMessage(`Falha ao carregar configuração: ${e.message}`, true);
+        log("Falha ao carregar configuração", { error: e.message });
+      });
+    } else {
+      setConfiguracaoFormEnabled(false);
+      limparConfiguracaoForm();
+      setConfiguracaoMessage("Cadastre uma empresa para configurar regras.");
+    }
+  });
   el("btnLogin").addEventListener("click", triggerLogin);
   el("btnForgotPassword").addEventListener("click", async () => {
     await showConfirmDialog({
@@ -2104,6 +2298,33 @@ function bindActions() {
 
   el("btnLogout").addEventListener("click", logout);
   el("btnRefreshDashboard").addEventListener("click", () => refreshDashboard().catch((e) => log("Falha dashboard", { error: e.message })));
+  el("cfgEncerramentoAuto").addEventListener("change", atualizarRegrasCamposConfiguracao);
+  el("cfgEmpresaId").addEventListener("change", () => {
+    carregarConfiguracaoEmpresaSelecionada().catch((e) => {
+      setConfiguracaoMessage(`Falha ao carregar configuração: ${e.message}`, true);
+      setConfiguracaoFormEnabled(false);
+      log("Falha ao trocar empresa de configuração", { error: e.message });
+    });
+  });
+  el("btnLoadEmpresaConfig").addEventListener("click", () => {
+    carregarConfiguracaoEmpresaSelecionada().catch((e) => {
+      setConfiguracaoMessage(`Falha ao carregar configuração: ${e.message}`, true);
+      setConfiguracaoFormEnabled(false);
+      log("Falha ao carregar configuração", { error: e.message });
+    });
+  });
+  el("btnSalvarConfigEmpresa").addEventListener("click", () => {
+    salvarConfiguracaoEmpresaSelecionada().catch((e) => {
+      setConfiguracaoMessage(`Falha ao salvar configuração: ${e.message}`, true);
+      log("Falha ao salvar configuração da empresa", { error: e.message });
+    });
+  });
+  el("btnResetConfigEmpresa").addEventListener("click", () => {
+    restaurarConfiguracaoPadraoEmpresaSelecionada().catch((e) => {
+      setConfiguracaoMessage(`Falha ao restaurar configuração: ${e.message}`, true);
+      log("Falha ao restaurar configuração da empresa", { error: e.message });
+    });
+  });
   el("btnRefreshUsuarios").addEventListener("click", () => refreshUsuarios().catch((e) => log("Falha usuários", { error: e.message })));
   el("btnSalvarFornecedor").addEventListener("click", () => {
     criarFornecedor().catch((e) => {
@@ -2363,6 +2584,7 @@ function bindActions() {
 bindActions();
 bindProfileAvatar();
 setupTabs();
+setupConfiguracoesTabs();
 initDashboardDefaults();
 clearUserForm();
 setUserFormMode("view");
@@ -2370,6 +2592,9 @@ clearFornecedorForm();
 setFornecedorFormMode("view");
 clearPromotorForm();
 setPromotorFormMode("view");
+setConfiguracaoFormEnabled(false);
+limparConfiguracaoForm();
+activateConfiguracoesTab("config-tab-gerais");
 loadSavedLogin();
 showLoginView();
 

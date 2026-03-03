@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import br.com.infocedro.promocontrol.core.model.Promotor;
 import br.com.infocedro.promocontrol.core.model.StatusPromotor;
 import br.com.infocedro.promocontrol.core.model.TipoMovimentoPromotor;
+import br.com.infocedro.promocontrol.core.model.ConfiguracaoEmpresa;
 import br.com.infocedro.promocontrol.core.model.Fornecedor;
+import br.com.infocedro.promocontrol.core.repository.ConfiguracaoEmpresaRepository;
 import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
 import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
@@ -45,10 +47,14 @@ class MovimentoPromotorConcorrenciaTest {
     @Autowired
     private FornecedorRepository fornecedorRepository;
 
+    @Autowired
+    private ConfiguracaoEmpresaRepository configuracaoEmpresaRepository;
+
     @BeforeEach
     void setup() {
         movimentoPromotorRepository.deleteAll();
         promotorRepository.deleteAll();
+        configuracaoEmpresaRepository.deleteAll();
         fornecedorRepository.deleteAll();
     }
 
@@ -56,6 +62,7 @@ class MovimentoPromotorConcorrenciaTest {
     void cleanup() {
         movimentoPromotorRepository.deleteAll();
         promotorRepository.deleteAll();
+        configuracaoEmpresaRepository.deleteAll();
         fornecedorRepository.deleteAll();
     }
 
@@ -126,6 +133,8 @@ class MovimentoPromotorConcorrenciaTest {
         Fornecedor fornecedor = new Fornecedor();
         fornecedor.setNome("Fornecedor Concorrencia");
         fornecedor.setAtivo(true);
-        return fornecedorRepository.save(fornecedor);
+        Fornecedor salvo = fornecedorRepository.save(fornecedor);
+        configuracaoEmpresaRepository.save(ConfiguracaoEmpresa.padrao(salvo));
+        return salvo;
     }
 }

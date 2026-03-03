@@ -1,15 +1,18 @@
 package br.com.infocedro.promocontrol.application.service;
 
 import br.com.infocedro.promocontrol.core.model.MovimentoPromotor;
+import br.com.infocedro.promocontrol.core.model.ConfiguracaoEmpresa;
 import br.com.infocedro.promocontrol.core.model.Fornecedor;
 import br.com.infocedro.promocontrol.core.model.Promotor;
 import br.com.infocedro.promocontrol.infra.controller.dto.AtualizarPromotorRequest;
 import br.com.infocedro.promocontrol.infra.controller.dto.AtualizarFornecedorRequest;
+import br.com.infocedro.promocontrol.infra.controller.dto.ConfiguracaoEmpresaResponse;
 import br.com.infocedro.promocontrol.infra.controller.dto.CriarFornecedorRequest;
 import br.com.infocedro.promocontrol.infra.controller.dto.CriarPromotorRequest;
 import br.com.infocedro.promocontrol.infra.controller.dto.FornecedorResponse;
 import br.com.infocedro.promocontrol.infra.controller.dto.MovimentoPromotorResponse;
 import br.com.infocedro.promocontrol.infra.controller.dto.PromotorResponse;
+import br.com.infocedro.promocontrol.infra.controller.dto.SalvarConfiguracaoEmpresaRequest;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -81,5 +84,27 @@ public class ApiMapper {
                 movimento.getAjustadoPor(),
                 movimento.getAjustadoEm(),
                 movimento.getAjusteMotivo());
+    }
+
+    public ConfiguracaoEmpresa toConfiguracaoEmpresa(SalvarConfiguracaoEmpresaRequest request) {
+        ConfiguracaoEmpresa configuracaoEmpresa = new ConfiguracaoEmpresa();
+        configuracaoEmpresa.aplicarParametros(
+                request.encerramentoAutomaticoHabilitado(),
+                request.horarioEncerramentoAutomatico(),
+                request.textoObservacaoEncerramentoAutomatico(),
+                request.permitirMultiplasEntradasNoDia(),
+                request.exigirFotoNaEntrada());
+        return configuracaoEmpresa;
+    }
+
+    public ConfiguracaoEmpresaResponse toConfiguracaoEmpresaResponse(ConfiguracaoEmpresa configuracaoEmpresa) {
+        return new ConfiguracaoEmpresaResponse(
+                configuracaoEmpresa.getId(),
+                configuracaoEmpresa.getEmpresa().getId(),
+                configuracaoEmpresa.getEncerramentoAutomaticoHabilitado(),
+                configuracaoEmpresa.getHorarioEncerramentoAutomatico(),
+                configuracaoEmpresa.getTextoObservacaoEncerramentoAutomatico(),
+                configuracaoEmpresa.getPermitirMultiplasEntradasNoDia(),
+                configuracaoEmpresa.getExigirFotoNaEntrada());
     }
 }

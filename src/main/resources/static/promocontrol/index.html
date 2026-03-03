@@ -66,7 +66,7 @@
         <button class="tab-btn" data-tab="tab-fornecedores">Cadastro de Fornecedores</button>
         <button class="tab-btn" data-tab="tab-promotores">Cadastro de Promotores</button>
         <button id="tabUsersBtn" class="tab-btn is-hidden" data-tab="tab-usuarios">Usuários</button>
-        <button id="tabIntegracaoBtn" class="tab-btn is-hidden" data-tab="tab-integracao">Logs</button>
+        <button id="tabConfiguracoesBtn" class="tab-btn is-hidden" data-tab="tab-configuracoes">Configurações</button>
       </nav>
       <div class="side-nav-footer">
         <button id="btnLogout">Sair</button>
@@ -335,10 +335,95 @@
           </article>
         </section>
 
-        <section id="tab-integracao" class="tab-panel">
+        <section id="tab-configuracoes" class="tab-panel">
           <article class="card">
-            <h2>Logs de Integração</h2>
-            <pre id="log"></pre>
+            <h2>Configurações</h2>
+            <div class="config-subtabs">
+              <button id="cfgSubtabGeraisBtn" class="config-subtab-btn is-active" type="button" data-config-tab="config-tab-gerais">Configurações gerais</button>
+              <button id="cfgSubtabLogsBtn" class="config-subtab-btn" type="button" data-config-tab="config-tab-logs">Logs</button>
+              <button id="cfgSubtabSobreBtn" class="config-subtab-btn" type="button" data-config-tab="config-tab-sobre">Sobre</button>
+            </div>
+
+            <section id="config-tab-gerais" class="config-subtab-panel is-active">
+              <p class="section-note">Parametrização por empresa para regras operacionais de movimento.</p>
+              <div class="grid two">
+                <label>Empresa
+                  <select id="cfgEmpresaId">
+                    <option value="">Selecione</option>
+                  </select>
+                </label>
+                <div class="actions inline">
+                  <button id="btnLoadEmpresaConfig" type="button">Carregar configuração</button>
+                </div>
+              </div>
+              <div class="grid two">
+                <label>
+                  Encerramento automático habilitado
+                  <select id="cfgEncerramentoAuto">
+                    <option value="false">Não</option>
+                    <option value="true">Sim</option>
+                  </select>
+                </label>
+                <label>
+                  Horário de encerramento automático
+                  <input id="cfgHorarioEncerramento" type="time" />
+                </label>
+                <label class="operacao-observacao">
+                  Observação do encerramento automático
+                  <input id="cfgTextoObservacao" maxlength="255" placeholder="Texto exibido no fechamento automático" />
+                </label>
+                <label>
+                  Permitir múltiplas entradas no dia
+                  <select id="cfgPermitirMultiplas">
+                    <option value="true">Sim</option>
+                    <option value="false">Não</option>
+                  </select>
+                </label>
+                <label>
+                  Exigir foto na entrada
+                  <select id="cfgExigirFoto">
+                    <option value="false">Não</option>
+                    <option value="true">Sim</option>
+                  </select>
+                </label>
+              </div>
+              <p id="cfgMessage" class="form-message"></p>
+              <div class="actions">
+                <button id="btnSalvarConfigEmpresa" type="button">Salvar configuração</button>
+                <button id="btnResetConfigEmpresa" type="button">Restaurar padrão</button>
+              </div>
+            </section>
+
+            <section id="config-tab-logs" class="config-subtab-panel">
+              <h3>Logs de Integração</h3>
+              <pre id="log"></pre>
+            </section>
+
+            <section id="config-tab-sobre" class="config-subtab-panel">
+              <h3>Sobre</h3>
+              <p class="section-note">Informações institucionais e técnicas do sistema.</p>
+              <div class="grid two">
+                <label>Empresa desenvolvedora
+                  <input value="InfoCedro Software" readonly />
+                </label>
+                <label>Produto
+                  <input value="PromoControl" readonly />
+                </label>
+                <label>Versão
+                  <input value="1.0.0" readonly />
+                </label>
+                <label>Licença
+                  <input value="Licença proprietária (uso interno contratado)" readonly />
+                </label>
+                <label>Canal de suporte
+                  <input value="suporte@infocedro.com.br" readonly />
+                </label>
+                <label>Última atualização
+                  <input value="03/03/2026" readonly />
+                </label>
+              </div>
+              <p class="section-note">Este software e seus componentes são protegidos por direitos autorais. Uso restrito aos termos contratuais vigentes.</p>
+            </section>
           </article>
         </section>
       </section>

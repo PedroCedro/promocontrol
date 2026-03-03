@@ -12,7 +12,9 @@ import br.com.infocedro.promocontrol.core.model.MovimentoPromotor;
 import br.com.infocedro.promocontrol.core.model.Promotor;
 import br.com.infocedro.promocontrol.core.model.StatusPromotor;
 import br.com.infocedro.promocontrol.core.model.TipoMovimentoPromotor;
+import br.com.infocedro.promocontrol.core.model.ConfiguracaoEmpresa;
 import br.com.infocedro.promocontrol.core.model.Fornecedor;
+import br.com.infocedro.promocontrol.core.repository.ConfiguracaoEmpresaRepository;
 import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
 import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
@@ -41,10 +43,14 @@ class MovimentoPromotorControllerTest {
     @Autowired
     private FornecedorRepository fornecedorRepository;
 
+    @Autowired
+    private ConfiguracaoEmpresaRepository configuracaoEmpresaRepository;
+
     @BeforeEach
     void setup() {
         movimentoPromotorRepository.deleteAll();
         promotorRepository.deleteAll();
+        configuracaoEmpresaRepository.deleteAll();
         fornecedorRepository.deleteAll();
     }
 
@@ -156,6 +162,46 @@ class MovimentoPromotorControllerTest {
     }
 
     @Test
+    void deveRetornar400QuandoConfiguracaoExigeFotoNaEntrada() throws Exception {
+        Promotor promotor = criarPromotor();
+        criarConfiguracao(promotor.getFornecedor(), true, true);
+
+        mockMvc.perform(post("/movimentos/entrada")
+                        .with(httpBasic("user", "user123"))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"promotorId\":\"" + promotor.getId() + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Configuracao da empresa exige foto para registrar entrada"));
+    }
+
+    @Test
+    void deveRetornar400QuandoConfiguracaoNaoPermiteMultiplasEntradasNoDia() throws Exception {
+        Promotor promotor = criarPromotor();
+        promotor.setFotoPath("/img/foto.jpg");
+        promotorRepository.save(promotor);
+        criarConfiguracao(promotor.getFornecedor(), false, false);
+
+        mockMvc.perform(post("/movimentos/entrada")
+                        .with(httpBasic("user", "user123"))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"promotorId\":\"" + promotor.getId() + "\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/movimentos/saida")
+                        .with(httpBasic("user", "user123"))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"promotorId\":\"" + promotor.getId() + "\",\"liberadoPor\":\"Gerente\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/movimentos/entrada")
+                        .with(httpBasic("user", "user123"))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"promotorId\":\"" + promotor.getId() + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Configuracao da empresa nao permite multiplas entradas no mesmo dia"));
+    }
+
+    @Test
     void deveRetornar401QuandoSemAutenticacao() throws Exception {
         Promotor promotor = criarPromotor();
 
@@ -264,7 +310,9 @@ class MovimentoPromotorControllerTest {
         Fornecedor fornecedor = new Fornecedor();
         fornecedor.setNome("Fornecedor Teste");
         fornecedor.setAtivo(true);
-        return fornecedorRepository.save(fornecedor);
+        Fornecedor salvo = fornecedorRepository.save(fornecedor);
+        configuracaoEmpresaRepository.save(ConfiguracaoEmpresa.padrao(salvo));
+        return salvo;
     }
 
     private MovimentoPromotor criarMovimento() {
@@ -274,5 +322,13 @@ class MovimentoPromotorControllerTest {
         movimento.setTipo(TipoMovimentoPromotor.ENTRADA);
         movimento.setDataHora(LocalDateTime.now());
         return movimentoPromotorRepository.save(movimento);
+    }
+
+    private void criarConfiguracao(Fornecedor fornecedor, boolean exigirFoto, boolean permitirMultiplasEntradasNoDia) {
+        ConfiguracaoEmpresa configuracao = configuracaoEmpresaRepository.findByEmpresa_Id(fornecedor.getId())
+                .orElseGet(() -> ConfiguracaoEmpresa.padrao(fornecedor));
+        configuracao.setExigirFotoNaEntrada(exigirFoto);
+        configuracao.setPermitirMultiplasEntradasNoDia(permitirMultiplasEntradasNoDia);
+        configuracaoEmpresaRepository.save(configuracao);
     }
 }

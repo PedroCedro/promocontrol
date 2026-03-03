@@ -1,6 +1,8 @@
 package br.com.infocedro.promocontrol.application.service;
 
 import br.com.infocedro.promocontrol.core.exception.FornecedorNaoEncontradoException;
+import br.com.infocedro.promocontrol.core.model.ConfiguracaoEmpresa;
+import br.com.infocedro.promocontrol.core.repository.ConfiguracaoEmpresaRepository;
 import br.com.infocedro.promocontrol.core.model.Fornecedor;
 import br.com.infocedro.promocontrol.core.model.Promotor;
 import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
@@ -20,14 +22,17 @@ public class FornecedorService {
     private final FornecedorRepository repository;
     private final PromotorRepository promotorRepository;
     private final MovimentoPromotorRepository movimentoRepository;
+    private final ConfiguracaoEmpresaRepository configuracaoEmpresaRepository;
 
     public FornecedorService(
             FornecedorRepository repository,
             PromotorRepository promotorRepository,
-            MovimentoPromotorRepository movimentoRepository) {
+            MovimentoPromotorRepository movimentoRepository,
+            ConfiguracaoEmpresaRepository configuracaoEmpresaRepository) {
         this.repository = repository;
         this.promotorRepository = promotorRepository;
         this.movimentoRepository = movimentoRepository;
+        this.configuracaoEmpresaRepository = configuracaoEmpresaRepository;
     }
 
     @Transactional
@@ -38,7 +43,11 @@ public class FornecedorService {
                     .orElse(0);
             fornecedor.setCodigo(ultimoCodigo + 1);
         }
-        return repository.save(fornecedor);
+        Fornecedor salvo = repository.save(fornecedor);
+        configuracaoEmpresaRepository.findByEmpresa_Id(salvo.getId())
+                .orElseGet(() -> configuracaoEmpresaRepository.save(
+                        ConfiguracaoEmpresa.padrao(salvo)));
+        return salvo;
     }
 
     public List<Fornecedor> listar() {
@@ -67,6 +76,7 @@ public class FornecedorService {
             movimentoRepository.deleteByPromotor_IdIn(promotorIds);
             promotorRepository.deleteByFornecedor_Id(id);
         }
+        configuracaoEmpresaRepository.deleteByEmpresa_Id(id);
         repository.delete(fornecedor);
     }
 }
