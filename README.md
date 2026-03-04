@@ -89,18 +89,14 @@ Front para validacao manual:
 http://localhost:8080/promocontrol/index.html
 ```
 
-Atualizacoes recentes (v0.6.0.0):
+Atualizacoes recentes (v1.0.0.0):
 
-* Parametrizacao por empresa (`ConfiguracaoEmpresa`) para regras de movimento.
-* Encerramento automatico de movimentos abertos do dia anterior com job agendado.
+* Cadastro de empresa contratante em tabela propria (`EMPRESA_CONTRATANTE`) com CRUD em `/empresas-cadastro`.
+* Parametrizacao operacional por empresa via `ConfiguracaoEmpresa` em `/empresas/{empresaId}/configuracao`.
+* Encerramento automatico de movimentos abertos do dia anterior com job agendado e regra por empresa.
 * Regras por empresa para multiplas entradas no dia e exigencia de foto na entrada.
-* CRUD de configuracao por empresa em `/empresas/{empresaId}/configuracao`.
-
-Atualizacoes visuais recentes no front (v0.5.4.0):
-
-* Aba `Operação` para registrar entrada/saida com acompanhamento em tabela.
-* Painel e Operacao com grid visivel, colunas de usuario/liberacao e detalhe expansivel (`+`) com observacoes.
-* Sidebar refinada (botao sair no rodape) e ajustes de layout para fluxo operacional.
+* Cadastro de usuarios com flags de acesso `acessaWeb` e `acessaMobile`.
+* Tela de `Configuracoes` com abas (`Configuracoes gerais`, `Logs`, `Sobre`) e UX refinada nas telas administrativas.
 
 Healthcheck e info:
 
@@ -314,6 +310,49 @@ Body (`POST/PUT`):
 
 `DELETE` redefine a configuracao da empresa para os valores padrao do sistema.
 
+Observacao:
+
+* O `empresaId` deste endpoint representa a empresa/base operacional usada no movimento (id vinculado ao fornecedor).
+
+---
+
+### Cadastro de Empresa Contratante
+
+```
+POST /empresas-cadastro
+GET /empresas-cadastro
+GET /empresas-cadastro/{id}
+PUT /empresas-cadastro/{id}
+DELETE /empresas-cadastro/{id}
+```
+
+Body (`POST`):
+
+```json
+{
+  "nome": "Bon Atacarejo",
+  "cnpj": "00000000000191",
+  "email": "contato@empresa.com.br",
+  "telefone": "(11) 99999-9999",
+  "uf": "SP",
+  "ativo": true,
+  "fornecedorId": 1
+}
+```
+
+Body (`PUT`):
+
+```json
+{
+  "nome": "Bon Atacarejo",
+  "cnpj": "00000000000191",
+  "email": "contato@empresa.com.br",
+  "telefone": "(11) 99999-9999",
+  "uf": "SP",
+  "ativo": true
+}
+```
+
 ---
 
 ### Dashboard Principal (Planilha)
@@ -407,7 +446,21 @@ Body (`POST /auth/admin/usuarios`):
 {
   "username": "novo.usuario",
   "perfil": "GESTOR",
-  "status": "ATIVO"
+  "status": "ATIVO",
+  "acessaWeb": true,
+  "acessaMobile": false
+}
+```
+
+Body (`PATCH /auth/admin/usuarios/{username}`):
+
+```json
+{
+  "username": "novo.usuario",
+  "perfil": "GESTOR",
+  "status": "ATIVO",
+  "acessaWeb": true,
+  "acessaMobile": true
 }
 ```
 
@@ -416,7 +469,11 @@ Resposta (`POST /auth/admin/usuarios`):
 ```json
 {
   "username": "novo.usuario",
+  "codigo": 7,
   "perfil": "OPERATOR",
+  "status": "ATIVO",
+  "acessaWeb": true,
+  "acessaMobile": false,
   "senhaTemporaria": "AbC93kLm2Q"
 }
 ```
@@ -607,4 +664,4 @@ InfoCedro Software
 
 ## Versão
 
-`v0.6.0.0` - Parametrizacao por empresa para movimento de promotores, encerramento automatico agendado e CRUD de configuracao.
+`v1.0.0.0` - Cadastro de empresa contratante dedicado, configuracao operacional por empresa, flags WEB/MOBILE em usuarios e refinamentos de UX no front promocontrol.

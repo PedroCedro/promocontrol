@@ -1,5 +1,37 @@
 # Changelog
 
+## v1.0.0.0 - 2026-03-04
+
+### Added
+- Cadastro de empresa contratante com dominio dedicado:
+  - entidade `EmpresaContratante`;
+  - service/repository/controller;
+  - endpoints REST em `/empresas-cadastro`;
+  - migration `V11__add_empresa_contratante_table.sql`.
+- Flags de acesso por usuario:
+  - `acessaWeb`;
+  - `acessaMobile`;
+  - migration `V10__add_access_flags_usuario.sql`.
+- Novos contratos de usuario (create/update/list) passando a expor e persistir as flags WEB/MOBILE.
+
+### Changed
+- Front `promocontrol` em `Configuracoes`:
+  - fluxo da empresa contratante conectado ao backend em `/empresas-cadastro`;
+  - selecao de empresa contratante separada da lista de fornecedores;
+  - feedback explicito de sucesso/erro no salvamento da empresa contratante.
+- Tela de `Usuarios` reorganizada:
+  - formulario movido para modal;
+  - botoes de acao distribuídos entre lista e modal;
+  - edicao sem prompt redundante.
+- Padronizacao de UX nas listas:
+  - botoes de refresh por icone;
+  - botoes `Excluir` com destaque vermelho discreto;
+  - ajuste de ordem/acoes (`Editar` antes de `Excluir`).
+- Fluxos de busca operacional/cadastro:
+  - remocao dos botoes `+` em `Operação` e `Cadastro de Promotores`;
+  - ajuste de layout dos campos e modal de localizacao (ID menor e campo principal maior).
+- Seguranca atualizada para incluir autorizacao dos endpoints de `empresas-cadastro`.
+
 ## v0.6.0.0 - 2026-03-03
 
 ### Added
