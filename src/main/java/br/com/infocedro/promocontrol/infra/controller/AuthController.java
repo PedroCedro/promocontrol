@@ -65,19 +65,28 @@ public class AuthController {
                         u.codigo(),
                         u.perfil(),
                         u.status(),
-                        u.mustChangePassword()))
+                        u.mustChangePassword(),
+                        u.acessaWeb(),
+                        u.acessaMobile()))
                 .toList();
     }
 
     @PostMapping("/admin/usuarios")
     public CriarUsuarioResponse criarUsuario(@Valid @RequestBody CriarUsuarioRequest request) {
         AuthUserService.CreatedUser created =
-                authUserService.createUserByAdmin(request.username(), request.perfil(), request.status());
+                authUserService.createUserByAdmin(
+                        request.username(),
+                        request.perfil(),
+                        request.status(),
+                        request.acessaWeb(),
+                        request.acessaMobile());
         return new CriarUsuarioResponse(
                 created.username(),
                 created.codigo(),
                 created.perfil(),
                 created.status(),
+                created.acessaWeb(),
+                created.acessaMobile(),
                 created.temporaryPassword());
     }
 
@@ -90,13 +99,17 @@ public class AuthController {
                         username,
                         request.username(),
                         request.perfil(),
-                        request.status());
+                        request.status(),
+                        request.acessaWeb(),
+                        request.acessaMobile());
         return new UsuarioAdminResponse(
                 updated.username(),
                 updated.codigo(),
                 updated.perfil(),
                 updated.status(),
-                updated.mustChangePassword());
+                updated.mustChangePassword(),
+                updated.acessaWeb(),
+                updated.acessaMobile());
     }
 
     @DeleteMapping("/admin/usuarios/{username}")

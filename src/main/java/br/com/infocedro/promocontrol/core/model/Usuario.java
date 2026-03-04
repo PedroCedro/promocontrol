@@ -37,4 +37,10 @@ public class Usuario extends AuditableEntity {
 
     @Column(nullable = false)
     private boolean ativo;
+
+    @Column(nullable = false)
+    private boolean acessaWeb;
+
+    @Column(nullable = false)
+    private boolean acessaMobile;
 }

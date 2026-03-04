@@ -10,5 +10,7 @@ public record CriarUsuarioRequest(
         String perfil,
         @NotBlank
         @Pattern(regexp = "ATIVO|INATIVO", message = "status deve ser ATIVO ou INATIVO")
-        String status) {
+        String status,
+        Boolean acessaWeb,
+        Boolean acessaMobile) {
 }

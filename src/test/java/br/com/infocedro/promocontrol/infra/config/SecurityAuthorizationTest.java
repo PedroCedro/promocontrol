@@ -53,7 +53,7 @@ class SecurityAuthorizationTest {
         configuracaoEmpresaRepository.deleteAll();
         fornecedorRepository.deleteAll();
         if (!usuarioRepository.existsByUsernameIgnoreCase("gestor")) {
-            authUserService.createUserByAdmin("gestor", "GESTOR", "ATIVO");
+            authUserService.createUserByAdmin("gestor", "GESTOR", "ATIVO", true, false);
             authUserService.changePassword("gestor", "gestor123");
         }
     }
@@ -118,7 +118,7 @@ class SecurityAuthorizationTest {
 
     @Test
     void adminDeveExcluirUsuario() throws Exception {
-        authUserService.createUserByAdmin("temp.delete.user", "VIEWER", "ATIVO");
+        authUserService.createUserByAdmin("temp.delete.user", "VIEWER", "ATIVO", true, false);
         mockMvc.perform(delete("/auth/admin/usuarios/temp.delete.user")
                         .with(httpBasic("admin", "admin123")))
                 .andExpect(status().isOk());
@@ -126,7 +126,7 @@ class SecurityAuthorizationTest {
 
     @Test
     void gestorNaoDeveExcluirUsuario() throws Exception {
-        authUserService.createUserByAdmin("temp.delete.user.2", "VIEWER", "ATIVO");
+        authUserService.createUserByAdmin("temp.delete.user.2", "VIEWER", "ATIVO", true, false);
         mockMvc.perform(delete("/auth/admin/usuarios/temp.delete.user.2")
                         .with(httpBasic("gestor", "gestor123")))
                 .andExpect(status().isForbidden());

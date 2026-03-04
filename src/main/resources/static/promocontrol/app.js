@@ -32,7 +32,9 @@ const state = {
   lookupModalType: "",
   lookupModalResults: [],
   lookupModalSelectedId: "",
-  configuracaoEmpresaAtual: null
+  configuracaoEmpresaAtual: null,
+  operacaoMovimentosMap: new Map(),
+  empresasCadastro: []
 };
 
 const AUTO_SYNC_INTERVAL_MS = 8000;
@@ -137,9 +139,46 @@ function activateConfiguracoesTab(tabId) {
 }
 
 function initDashboardDefaults() {
+  const today = currentLocalDateISO();
   if (!el("dashData").value) {
-    el("dashData").value = new Date().toISOString().slice(0, 10);
+    el("dashData").value = today;
   }
+  if (el("mDataOperacao")) {
+    el("mDataOperacao").value = today;
+  }
+  atualizarIndicadorModoOperacao();
+}
+
+function currentLocalDateISO() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function operacaoDataSelecionadaISO() {
+  const value = String(el("mDataOperacao")?.value || "").slice(0, 10);
+  return value || currentLocalDateISO();
+}
+
+function podeMovimentarNaDataSelecionada() {
+  return operacaoDataSelecionadaISO() === currentLocalDateISO();
+}
+
+function validarMovimentacaoNaDataSelecionada() {
+  if (podeMovimentarNaDataSelecionada()) return;
+  throw new Error("Movimentação permitida somente na data atual. Ajuste a data da operação para hoje.");
+}
+
+function atualizarIndicadorModoOperacao() {
+  const badge = el("mModoOperacaoBadge");
+  if (!badge) return;
+  const historico = !podeMovimentarNaDataSelecionada();
+  badge.classList.toggle("is-historico", historico);
+  badge.textContent = historico
+    ? "Modo consulta histórica (somente leitura)"
+    : "Modo operacional de hoje";
 }
 
 function loadSavedLogin() {
@@ -172,6 +211,13 @@ function setPromotorMessage(message, isError = false) {
 
 function setConfiguracaoMessage(message, isError = false) {
   const field = el("cfgMessage");
+  if (!field) return;
+  field.textContent = message || "";
+  field.classList.toggle("is-error", Boolean(message) && isError);
+}
+
+function setEmpresaContratanteModalMessage(message, isError = false) {
+  const field = el("empresaContratanteModalMessage");
   if (!field) return;
   field.textContent = message || "";
   field.classList.toggle("is-error", Boolean(message) && isError);
@@ -389,6 +435,120 @@ function resolveConfirmDialog(value) {
   if (resolver) resolver(value);
 }
 
+function normalizeCnpj(cnpj) {
+  return String(cnpj ?? "").replace(/\D/g, "");
+}
+
+function openEmpresaContratanteModal() {
+  if (!state.auth?.canManageCatalog) return;
+  el("ecCnpj").value = "";
+  el("ecRazaoSocial").value = "";
+  el("ecNomeFantasia").value = "";
+  el("ecEmail").value = "";
+  el("ecTelefone").value = "";
+  el("ecUf").value = "";
+  setEmpresaContratanteModalMessage("");
+  el("empresaContratanteModal").classList.remove("is-hidden");
+  el("empresaContratanteModal").setAttribute("aria-hidden", "false");
+  el("ecCnpj").focus();
+}
+
+function closeEmpresaContratanteModal() {
+  setEmpresaContratanteModalMessage("");
+  el("empresaContratanteModal").classList.add("is-hidden");
+  el("empresaContratanteModal").setAttribute("aria-hidden", "true");
+}
+
+async function consultarCnpjEmpresaContratante() {
+  const cnpj = normalizeCnpj(el("ecCnpj").value);
+  if (!cnpj || cnpj.length !== 14) {
+    setEmpresaContratanteModalMessage("Informe um CNPJ válido com 14 dígitos.", true);
+    return;
+  }
+
+  setEmpresaContratanteModalMessage("Consultando CNPJ...");
+  const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
+  if (!response.ok) {
+    throw new Error("Não foi possível consultar esse CNPJ agora.");
+  }
+  const data = await response.json();
+  el("ecRazaoSocial").value = data.razao_social || "";
+  el("ecNomeFantasia").value = data.nome_fantasia || "";
+  el("ecEmail").value = data.email || "";
+  el("ecTelefone").value = data.ddd_telefone_1 || "";
+  el("ecUf").value = data.uf || "";
+  setEmpresaContratanteModalMessage("Dados preenchidos pela base nacional.");
+}
+
+function abrirConsultaCnpjExterna() {
+  const cnpj = normalizeCnpj(el("ecCnpj").value);
+  const url = cnpj
+    ? `https://brasilapi.com.br/api/cnpj/v1/${cnpj}`
+    : "https://brasilapi.com.br/docs#tag/CNPJ";
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+async function salvarEmpresaContratanteModal() {
+  if (!state.auth?.canManageCatalog) {
+    throw new Error("Sem permissão para cadastrar empresa contratante.");
+  }
+
+  const cnpj = normalizeCnpj(el("ecCnpj").value);
+  const razaoSocial = String(el("ecRazaoSocial").value || "").trim();
+  const nomeFantasia = String(el("ecNomeFantasia").value || "").trim();
+  const email = String(el("ecEmail").value || "").trim();
+  const telefone = String(el("ecTelefone").value || "").trim();
+  const uf = String(el("ecUf").value || "").trim().toUpperCase();
+  const nomeEmpresa = nomeFantasia || razaoSocial;
+
+  if (!nomeEmpresa) {
+    setEmpresaContratanteModalMessage("Informe Razão Social ou Nome Fantasia.", true);
+    return;
+  }
+
+  const created = await apiRequest("/fornecedores", "POST", {
+    nome: nomeEmpresa,
+    ativo: true
+  });
+  const createdEmpresa = await apiRequest("/empresas-cadastro", "POST", {
+    nome: nomeEmpresa,
+    cnpj: cnpj || null,
+    email: email || null,
+    telefone: telefone || null,
+    uf: uf || null,
+    ativo: true,
+    fornecedorId: created.id
+  });
+
+  log("Empresa contratante cadastrada", {
+    id: createdEmpresa?.id ?? null,
+    nome: nomeEmpresa,
+    fornecedorId: created?.id ?? null,
+    cnpj,
+    razaoSocial,
+    nomeFantasia,
+    email,
+    telefone,
+    uf
+  });
+
+  await refreshData();
+  if (createdEmpresa?.id != null && el("cfgEmpresaId")) {
+    el("cfgEmpresaId").value = String(createdEmpresa.id);
+    await carregarConfiguracaoEmpresaSelecionada();
+  }
+
+  setEmpresaContratanteModalMessage("Salvo com sucesso.");
+  await showConfirmDialog({
+    title: "Cadastro de Empresa",
+    message: "Empresa contratante salva com sucesso.",
+    confirmText: "OK",
+    showCancel: false
+  });
+  closeEmpresaContratanteModal();
+  setConfiguracaoMessage("Empresa contratante cadastrada e selecionada.");
+}
+
 function setUsuarioMessage(message, isError = false) {
   const field = el("uMessage");
   if (!field) return;
@@ -414,6 +574,25 @@ function setPromotorFieldError(fieldId, hasError) {
   field.classList.toggle("input-error", hasError);
 }
 
+function openUserModal() {
+  if (!state.auth?.canManageUsers) return;
+  el("adminUsersCard").classList.remove("is-hidden");
+  el("adminUsersCard").setAttribute("aria-hidden", "false");
+  el("uUsername").focus();
+}
+
+function closeUserModal() {
+  el("adminUsersCard").classList.add("is-hidden");
+  el("adminUsersCard").setAttribute("aria-hidden", "true");
+}
+
+function cancelUserEdition() {
+  clearUserForm();
+  setUserFormMode("view");
+  setUsuarioMessage("");
+  closeUserModal();
+}
+
 function setUserFormMode(mode) {
   state.userFormMode = mode;
   const isView = mode === "view";
@@ -422,6 +601,8 @@ function setUserFormMode(mode) {
   el("uUsername").disabled = isView;
   el("uPerfil").disabled = isView;
   el("uStatus").disabled = !isEdit;
+  el("uAcessaWeb").disabled = isView;
+  el("uAcessaMobile").disabled = isView;
   el("btnNovoUsuario").disabled = !isView;
   el("btnCancelarUsuario").disabled = isView;
   el("btnSalvarUsuario").disabled = isView;
@@ -431,6 +612,8 @@ function setUserFormMode(mode) {
 
   if (mode === "new") {
     el("uStatus").value = "ATIVO";
+    el("uAcessaWeb").value = "true";
+    el("uAcessaMobile").value = "false";
   }
 }
 
@@ -440,6 +623,8 @@ function clearUserForm() {
   el("uUsername").value = "";
   el("uPerfil").value = "VIEWER";
   el("uStatus").value = "ATIVO";
+  el("uAcessaWeb").value = "true";
+  el("uAcessaMobile").value = "false";
   setUserFieldError("uUsername", false);
 }
 
@@ -449,6 +634,8 @@ function fillUserFormForEdit(user) {
   el("uUsername").value = user.username ?? "";
   el("uPerfil").value = user.perfil ?? "VIEWER";
   el("uStatus").value = user.status ?? "ATIVO";
+  el("uAcessaWeb").value = String(user.acessaWeb !== false);
+  el("uAcessaMobile").value = String(Boolean(user.acessaMobile));
 }
 
 function setFornecedorFormMode(mode) {
@@ -485,7 +672,6 @@ function setPromotorFormMode(mode) {
   el("pNome").disabled = isView;
   el("pTelefone").disabled = isView;
   el("pFornecedorSearch").disabled = isView;
-  el("btnQuickListFornecedor").disabled = isView;
   el("btnFindFornecedor").disabled = isView;
   el("pStatus").disabled = isView;
   el("btnNovoPromotor").disabled = !isView;
@@ -564,7 +750,7 @@ function applySessionToUI() {
   }
   el("tab-dashboard").classList.toggle("is-hidden", hideDashboardForOperator);
   el("tab-configuracoes").classList.toggle("is-hidden", !state.auth.canManageCatalog);
-  el("adminUsersCard").classList.toggle("is-hidden", !state.auth.canManageUsers);
+  closeUserModal();
   el("adminUsersListCard").classList.toggle("is-hidden", !state.auth.canManageUsers);
   el("btnOpenProfile").classList.toggle("is-hidden", !state.auth.isAdmin);
   el("tab-perfil").classList.toggle("is-hidden", !state.auth.isAdmin);
@@ -759,7 +945,7 @@ function renderPromotores(list) {
       ? "status-badge is-active"
       : "status-badge is-inactive";
     const actionButtons = state.auth?.canManageCatalog
-      ? `${state.auth?.isAdmin ? `<button class="btn-table-small promotor-delete-btn" type="button" data-id="${p.id}" data-nome="${p.nome ?? ""}">Excluir</button> ` : ""}<button class="btn-table-small promotor-edit-btn" type="button" data-id="${p.id}">Editar</button>`
+      ? `<button class="btn-table-small promotor-edit-btn" type="button" data-id="${p.id}">Editar</button>${state.auth?.isAdmin ? ` <button class="btn-table-small btn-table-delete promotor-delete-btn" type="button" data-id="${p.id}" data-nome="${p.nome ?? ""}">Excluir</button>` : ""}`
       : "";
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -810,8 +996,12 @@ function renderFornecedores(list) {
   const tbody = table.querySelector("tbody");
   tbody.innerHTML = "";
   const termo = normalizeText(state.fornecedorFilter || "");
+  const fornecedorEmpresasIds = new Set(
+    (state.empresasCadastro ?? []).map((e) => String(e.fornecedorId))
+  );
   const filtrados = list
     .filter((f) => !isFornecedorSistema(f?.nome))
+    .filter((f) => !fornecedorEmpresasIds.has(String(f.id)))
     .filter((f) => {
       if (!termo) return true;
       const codigo = normalizeText(formatCodigo(f.codigo));
@@ -825,7 +1015,7 @@ function renderFornecedores(list) {
     const statusClass = f.ativo ? "status-badge is-active" : "status-badge is-inactive";
     const tr = document.createElement("tr");
     const actionButton = state.auth?.canManageCatalog
-      ? `${state.auth?.isAdmin ? `<button class="btn-table-small fornecedor-delete-btn" type="button" data-id="${f.id}" data-nome="${f.nome ?? ""}">Excluir</button> ` : ""}<button class="btn-table-small fornecedor-edit-btn" type="button" data-id="${f.id}">Editar</button>`
+      ? `<button class="btn-table-small fornecedor-edit-btn" type="button" data-id="${f.id}">Editar</button>${state.auth?.isAdmin ? ` <button class="btn-table-small btn-table-delete fornecedor-delete-btn" type="button" data-id="${f.id}" data-nome="${f.nome ?? ""}">Excluir</button>` : ""}`
       : "";
     tr.innerHTML = `
       <td>${formatCodigo(f.codigo)}</td>
@@ -880,11 +1070,15 @@ function renderUsuarios(list) {
       const perfil = normalizeText(u.perfil);
       const perfilLabel = normalizeText(getRoleDisplayName(u.perfil));
       const status = normalizeText(u.status);
+      const acessaWeb = normalizeText(u.acessaWeb ? "WEB" : "");
+      const acessaMobile = normalizeText(u.acessaMobile ? "MOBILE" : "");
       return codigo.includes(termo)
         || username.includes(termo)
         || perfil.includes(termo)
         || perfilLabel.includes(termo)
-        || status.includes(termo);
+        || status.includes(termo)
+        || acessaWeb.includes(termo)
+        || acessaMobile.includes(termo);
     })
     : list;
 
@@ -897,10 +1091,12 @@ function renderUsuarios(list) {
       <td>${u.username ?? ""}</td>
       <td>${getRoleDisplayName(u.perfil ?? "")}</td>
       <td><span class="${statusClass}">${status}</span></td>
+      <td>${u.acessaWeb ? "SIM" : "NÃO"}</td>
+      <td>${u.acessaMobile ? "SIM" : "NÃO"}</td>
       <td>${u.precisaTrocarSenha ? "SIM" : "NÃO"}</td>
-      <td>${state.auth?.isAdmin && String(u.username || "").toLowerCase() !== String(state.auth?.username || "").toLowerCase()
-        ? `<button class="btn-table-small user-delete-btn" type="button" data-username="${u.username ?? ""}">Excluir</button> `
-        : ""}<button class="btn-table-small user-edit-btn" type="button" data-username="${u.username ?? ""}" data-perfil="${u.perfil ?? ""}">Editar</button></td>`;
+      <td><button class="btn-table-small user-edit-btn" type="button" data-username="${u.username ?? ""}" data-perfil="${u.perfil ?? ""}">Editar</button>${state.auth?.isAdmin && String(u.username || "").toLowerCase() !== String(state.auth?.username || "").toLowerCase()
+        ? ` <button class="btn-table-small btn-table-delete user-delete-btn" type="button" data-username="${u.username ?? ""}">Excluir</button>`
+        : ""}</td>`;
     tbody.appendChild(tr);
   });
 
@@ -908,17 +1104,12 @@ function renderUsuarios(list) {
     btn.addEventListener("click", async () => {
       const username = String(btn.dataset.username || "").trim();
       if (!username) return;
-      const confirmar = await showConfirmDialog({
-        title: "Editar usuário",
-        message: `Deseja editar o usuário ${username}?`
-      });
-      if (!confirmar) return;
-
       const user = state.usuarios.find((u) => String(u.username) === username);
       if (!user) return;
       fillUserFormForEdit(user);
       setUserFormMode("edit");
       setUsuarioMessage("");
+      openUserModal();
     });
   });
 
@@ -944,7 +1135,7 @@ function renderDashboard(resumo) {
   tbody.innerHTML = "";
   const linhas = resumo.linhas ?? [];
   linhas.forEach((linha, index) => {
-    const detalhe = resolveLinhaDetalhe(linha);
+    const detalhe = resolveLinhaDetalhe(linha, state.dashboardMovimentosMap);
     const saidaCell = linha.saidaEm
       ? formatHoraMinuto(linha.saidaEm)
       : "-";
@@ -1012,13 +1203,16 @@ function renderOperacaoDia(resumo) {
   if (!table) return;
   const tbody = table.querySelector("tbody");
   tbody.innerHTML = "";
+  const podeMovimentar = podeMovimentarNaDataSelecionada();
 
   const linhas = resumo?.linhas ?? [];
   linhas.forEach((linha, index) => {
-    const detalhe = resolveLinhaDetalhe(linha);
+    const detalhe = resolveLinhaDetalhe(linha, state.operacaoMovimentosMap);
     const saidaCell = linha.saidaEm
       ? formatHoraMinuto(linha.saidaEm)
-      : `<button class="quick-saida-btn operacao-saida-btn" data-line-index="${index}" type="button" title="Registrar saída">&gt;</button>`;
+      : (podeMovimentar
+        ? `<button class="quick-saida-btn operacao-saida-btn" data-line-index="${index}" type="button" title="Registrar saída">&gt;</button>`
+        : "-");
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${linha.promotorNome ?? ""}</td>
@@ -1044,12 +1238,12 @@ function renderOperacaoDia(resumo) {
           <div><span>Usuário Entrada:</span> ${linha.usuarioEntrada ?? "-"}</div>
           <div><span>Usuário Saída:</span> ${linha.usuarioSaida ?? "-"}</div>
           <div><span>Liberação:</span> ${linha.liberadoPor ?? "-"}</div>
-          ${state.auth?.isAdmin ? `
+          ${state.auth?.isAdmin && podeMovimentar ? `
           <div class="detail-actions">
             ${detalhe.entradaId ? `<button class="btn-table-small adjust-mov-btn" type="button" data-movimento-id="${detalhe.entradaId}" data-tipo="ENTRADA" data-promotor="${linha.promotorNome ?? ""}" data-data-hora="${linha.entradaEm ?? ""}">Ajustar Entrada</button>` : ""}
             ${detalhe.saidaId ? `<button class="btn-table-small adjust-mov-btn" type="button" data-movimento-id="${detalhe.saidaId}" data-tipo="SAIDA" data-promotor="${linha.promotorNome ?? ""}" data-data-hora="${linha.saidaEm ?? ""}">Ajustar Saída</button>` : ""}
-            ${detalhe.entradaId ? `<button class="btn-table-small op-delete-mov-btn" type="button" data-movimento-id="${detalhe.entradaId}" data-tipo="ENTRADA" data-promotor="${linha.promotorNome ?? ""}">Excluir Entrada</button>` : ""}
-            ${detalhe.saidaId ? `<button class="btn-table-small op-delete-mov-btn" type="button" data-movimento-id="${detalhe.saidaId}" data-tipo="SAIDA" data-promotor="${linha.promotorNome ?? ""}">Excluir Saída</button>` : ""}
+            ${detalhe.entradaId ? `<button class="btn-table-small btn-table-delete op-delete-mov-btn" type="button" data-movimento-id="${detalhe.entradaId}" data-tipo="ENTRADA" data-promotor="${linha.promotorNome ?? ""}">Excluir Entrada</button>` : ""}
+            ${detalhe.saidaId ? `<button class="btn-table-small btn-table-delete op-delete-mov-btn" type="button" data-movimento-id="${detalhe.saidaId}" data-tipo="SAIDA" data-promotor="${linha.promotorNome ?? ""}">Excluir Saída</button>` : ""}
           </div>` : ""}
         </div>
       </td>`;
@@ -1126,9 +1320,9 @@ function buildDashboardMovimentosMap(movimentos, dataRef, promotorIds) {
   return map;
 }
 
-function resolveLinhaDetalhe(linha) {
+function resolveLinhaDetalhe(linha, movimentosMap = state.dashboardMovimentosMap) {
   const promotorKey = String(linha.promotorId ?? "");
-  const movimentos = state.dashboardMovimentosMap.get(promotorKey) ?? [];
+  const movimentos = movimentosMap.get(promotorKey) ?? [];
   const entradaKey = normalizeDateTimeKey(linha.entradaEm);
   const saidaKey = normalizeDateTimeKey(linha.saidaEm);
 
@@ -1195,6 +1389,7 @@ function syncFornecedorSelect() {
 
   state.fornecedores
     .filter((f) => !isFornecedorSistema(f?.nome))
+    .filter((f) => !new Set((state.empresasCadastro ?? []).map((e) => String(e.fornecedorId))).has(String(f.id)))
     .forEach((f) => {
     const label = buildFornecedorSearchLabel(f);
     state.cadastroFornecedorLookup.set(normalizeText(label), String(f.id));
@@ -1207,6 +1402,7 @@ function syncFornecedorSelect() {
 
   const selectedFornecedor = state.fornecedores
     .filter((f) => !isFornecedorSistema(f?.nome))
+    .filter((f) => !new Set((state.empresasCadastro ?? []).map((e) => String(e.fornecedorId))).has(String(f.id)))
     .find((f) => String(f.id) === String(fornecedorHidden.value));
 
   if (selectedFornecedor) {
@@ -1226,15 +1422,21 @@ function syncConfiguracaoEmpresaSelect() {
   const previous = String(select.value || "");
   select.innerHTML = "<option value=\"\">Selecione</option>";
 
-  listCadastroFornecedores().forEach((f) => {
+  const empresasContratantes = listEmpresasContratantes();
+  empresasContratantes.forEach((empresa) => {
     const option = document.createElement("option");
-    option.value = String(f.id);
-    option.textContent = buildFornecedorSearchLabel(f);
+    option.value = String(empresa.id);
+    option.dataset.fornecedorId = String(empresa.fornecedorId);
+    option.textContent = `${formatCodigo(empresa.codigo)} - ${empresa.nome ?? "Sem nome"}`;
     select.appendChild(option);
   });
 
   if (previous && Array.from(select.options).some((opt) => opt.value === previous)) {
     select.value = previous;
+    return;
+  }
+  if (empresasContratantes.length) {
+    select.value = String(empresasContratantes[0].id);
   }
 }
 
@@ -1286,24 +1488,24 @@ function atualizarRegrasCamposConfiguracao() {
 }
 
 async function carregarConfiguracaoEmpresaSelecionada() {
-  const empresaId = String(el("cfgEmpresaId")?.value || "").trim();
-  if (!empresaId) {
-    setConfiguracaoMessage("Selecione uma empresa para carregar a configuração.", true);
+  const fornecedorId = getFornecedorIdDaEmpresaSelecionada();
+  if (!fornecedorId) {
+    setConfiguracaoMessage("Selecione a empresa contratante para carregar a configuração.", true);
     setConfiguracaoFormEnabled(false);
     limparConfiguracaoForm();
     return;
   }
 
-  const config = await apiRequest(`/empresas/${encodeURIComponent(empresaId)}/configuracao`);
+  const config = await apiRequest(`/empresas/${encodeURIComponent(fornecedorId)}/configuracao`);
   preencherConfiguracaoForm(config);
   setConfiguracaoFormEnabled(true);
   setConfiguracaoMessage("Configuração carregada.");
 }
 
 async function salvarConfiguracaoEmpresaSelecionada() {
-  const empresaId = String(el("cfgEmpresaId")?.value || "").trim();
-  if (!empresaId) {
-    throw new Error("Selecione uma empresa para salvar a configuração.");
+  const fornecedorId = getFornecedorIdDaEmpresaSelecionada();
+  if (!fornecedorId) {
+    throw new Error("Selecione a empresa contratante para salvar a configuração.");
   }
 
   const encerramentoAutomaticoHabilitado = el("cfgEncerramentoAuto").value === "true";
@@ -1320,16 +1522,16 @@ async function salvarConfiguracaoEmpresaSelecionada() {
     exigirFotoNaEntrada: el("cfgExigirFoto").value === "true"
   };
 
-  const config = await apiRequest(`/empresas/${encodeURIComponent(empresaId)}/configuracao`, "PUT", payload);
+  const config = await apiRequest(`/empresas/${encodeURIComponent(fornecedorId)}/configuracao`, "PUT", payload);
   preencherConfiguracaoForm(config);
   setConfiguracaoMessage("Configuração salva com sucesso.");
-  log("Configuração da empresa atualizada", { empresaId, payload });
+  log("Configuração da empresa atualizada", { fornecedorId, payload });
 }
 
 async function restaurarConfiguracaoPadraoEmpresaSelecionada() {
-  const empresaId = String(el("cfgEmpresaId")?.value || "").trim();
-  if (!empresaId) {
-    throw new Error("Selecione uma empresa para restaurar a configuração.");
+  const fornecedorId = getFornecedorIdDaEmpresaSelecionada();
+  if (!fornecedorId) {
+    throw new Error("Selecione a empresa contratante para restaurar a configuração.");
   }
 
   const confirmar = await showConfirmDialog({
@@ -1338,10 +1540,10 @@ async function restaurarConfiguracaoPadraoEmpresaSelecionada() {
   });
   if (!confirmar) return;
 
-  const config = await apiRequest(`/empresas/${encodeURIComponent(empresaId)}/configuracao`, "DELETE");
+  const config = await apiRequest(`/empresas/${encodeURIComponent(fornecedorId)}/configuracao`, "DELETE");
   preencherConfiguracaoForm(config);
   setConfiguracaoMessage("Configuração padrão restaurada.");
-  log("Configuração da empresa restaurada para padrão", { empresaId });
+  log("Configuração da empresa restaurada para padrão", { fornecedorId });
 }
 
 function isFornecedorSistema(nome) {
@@ -1488,8 +1690,32 @@ function buildDashboardQuery() {
   return query ? `/dashboard/planilha-principal?${query}` : "/dashboard/planilha-principal";
 }
 
+function buildOperacaoDiaQuery() {
+  const params = new URLSearchParams();
+  const data = operacaoDataSelecionadaISO();
+  if (data) params.set("data", data);
+  const query = params.toString();
+  return query ? `/dashboard/planilha-principal?${query}` : "/dashboard/planilha-principal";
+}
+
 function listCadastroFornecedores() {
-  return state.fornecedores.filter((f) => !isFornecedorSistema(f?.nome));
+  const fornecedorEmpresasIds = new Set(
+    (state.empresasCadastro ?? []).map((e) => String(e.fornecedorId))
+  );
+  return state.fornecedores
+    .filter((f) => !isFornecedorSistema(f?.nome))
+    .filter((f) => !fornecedorEmpresasIds.has(String(f.id)));
+}
+
+function listEmpresasContratantes() {
+  return (state.empresasCadastro ?? []).filter((e) => Boolean(e?.ativo));
+}
+
+function getFornecedorIdDaEmpresaSelecionada() {
+  const select = el("cfgEmpresaId");
+  if (!select) return "";
+  const selectedOption = select.options[select.selectedIndex];
+  return String(selectedOption?.dataset?.fornecedorId || "").trim();
 }
 
 function findFornecedoresByQuery(query) {
@@ -1566,19 +1792,28 @@ function resolveCadastroFornecedorFromSearch(strict) {
 }
 
 async function refreshDashboard() {
+  atualizarIndicadorModoOperacao();
   state.dashboard = await apiRequest(buildDashboardQuery());
+  const operacaoResumo = await apiRequest(buildOperacaoDiaQuery());
   const promotorIds = new Set((state.dashboard.linhas ?? []).map((linha) => String(linha.promotorId ?? "")));
+  const promotorIdsOperacao = new Set((operacaoResumo.linhas ?? []).map((linha) => String(linha.promotorId ?? "")));
   const movimentos = await apiRequest("/movimentos");
   state.dashboardMovimentosMap = buildDashboardMovimentosMap(
     movimentos,
     String(el("dashData").value || "").slice(0, 10),
     promotorIds
   );
+  state.operacaoMovimentosMap = buildDashboardMovimentosMap(
+    movimentos,
+    operacaoDataSelecionadaISO(),
+    promotorIdsOperacao
+  );
   renderDashboard(state.dashboard);
-  renderOperacaoDia(state.dashboard);
+  renderOperacaoDia(operacaoResumo);
 }
 
 async function refreshData() {
+  state.empresasCadastro = await apiRequest("/empresas-cadastro");
   state.fornecedores = await apiRequest("/fornecedores");
   state.promotores = await apiRequest("/promotores");
   renderFornecedores(state.fornecedores);
@@ -1819,6 +2054,7 @@ async function criarPromotor() {
 }
 
 async function registrarEntrada() {
+  validarMovimentacaoNaDataSelecionada();
   const promotorId = el("mPromotorId").value;
   if (!promotorId) {
     throw new Error("Informe um promotor válido no campo de busca");
@@ -1837,6 +2073,7 @@ async function registrarEntrada() {
 }
 
 async function registrarSaida() {
+  validarMovimentacaoNaDataSelecionada();
   const promotorId = el("mPromotorId").value;
   if (!promotorId) {
     throw new Error("Informe um promotor válido no campo de busca");
@@ -2132,6 +2369,8 @@ async function criarUsuario() {
 
   const username = el("uUsername").value.trim();
   const perfil = el("uPerfil").value;
+  const acessaWeb = el("uAcessaWeb").value === "true";
+  const acessaMobile = el("uAcessaMobile").value === "true";
   const status = state.userFormMode === "edit"
     ? el("uStatus").value
     : "ATIVO";
@@ -2163,14 +2402,14 @@ async function criarUsuario() {
     await apiRequest(
       `/auth/admin/usuarios/${encodeURIComponent(state.editingUser)}`,
       "PATCH",
-      { username, perfil, status }
+      { username, perfil, status, acessaWeb, acessaMobile }
     );
     setUsuarioMessage("");
-    log("Usuário atualizado por gestor/admin", { usernameAnterior: state.editingUser, usernameNovo: username, perfil, status });
+    log("Usuário atualizado por gestor/admin", { usernameAnterior: state.editingUser, usernameNovo: username, perfil, status, acessaWeb, acessaMobile });
   } else {
-    const response = await apiRequest("/auth/admin/usuarios", "POST", { username, perfil, status });
+    const response = await apiRequest("/auth/admin/usuarios", "POST", { username, perfil, status, acessaWeb, acessaMobile });
     setUsuarioMessage("");
-    log("Usuário criado por gestor/admin", { username: response.username, perfil: response.perfil, status: response.status });
+    log("Usuário criado por gestor/admin", { username: response.username, perfil: response.perfil, status: response.status, acessaWeb: response.acessaWeb, acessaMobile: response.acessaMobile });
     await showConfirmDialog({
       title: "Senha temporária",
       message: "",
@@ -2184,6 +2423,7 @@ async function criarUsuario() {
 
   clearUserForm();
   setUserFormMode("view");
+  closeUserModal();
   await refreshUsuarios();
 }
 
@@ -2202,8 +2442,7 @@ function logout() {
   el("loginPassword").value = "";
   el("profileUserName").textContent = "user";
   el("profileRoleName").textContent = getRoleDisplayName("OPERATOR");
-  clearUserForm();
-  setUserFormMode("view");
+  cancelUserEdition();
   if (el("uFiltroNome")) el("uFiltroNome").value = "";
   setUsuarioMessage("");
   clearFornecedorForm();
@@ -2218,6 +2457,8 @@ function logout() {
   setConfiguracaoFormEnabled(false);
   limparConfiguracaoForm();
   setConfiguracaoMessage("");
+  closeEmpresaContratanteModal();
+  closeUserModal();
   activateConfiguracoesTab("config-tab-gerais");
   updateProfileInitials("U");
   applyProfileToUI();
@@ -2255,9 +2496,11 @@ function bindActions() {
   };
 
   el("btnOpenProfile").addEventListener("click", () => activateTab("tab-perfil"));
+  el("btnNovaEmpresaContratante").addEventListener("click", openEmpresaContratanteModal);
   el("tabConfiguracoesBtn").addEventListener("click", () => {
-    if (!el("cfgEmpresaId").value && listCadastroFornecedores().length) {
-      el("cfgEmpresaId").value = String(listCadastroFornecedores()[0].id);
+    const empresasContratantes = listEmpresasContratantes();
+    if (!el("cfgEmpresaId").value && empresasContratantes.length) {
+      el("cfgEmpresaId").value = String(empresasContratantes[0].id);
     }
     if (el("cfgEmpresaId").value) {
       carregarConfiguracaoEmpresaSelecionada().catch((e) => {
@@ -2267,7 +2510,7 @@ function bindActions() {
     } else {
       setConfiguracaoFormEnabled(false);
       limparConfiguracaoForm();
-      setConfiguracaoMessage("Cadastre uma empresa para configurar regras.");
+      setConfiguracaoMessage("Cadastre a empresa contratante para configurar regras.");
     }
   });
   el("btnLogin").addEventListener("click", triggerLogin);
@@ -2298,6 +2541,13 @@ function bindActions() {
 
   el("btnLogout").addEventListener("click", logout);
   el("btnRefreshDashboard").addEventListener("click", () => refreshDashboard().catch((e) => log("Falha dashboard", { error: e.message })));
+  el("mDataOperacao").addEventListener("change", () => {
+    atualizarIndicadorModoOperacao();
+    refreshDashboard().catch((e) => {
+      setMovimentoMessage(`Falha ao carregar operação do dia: ${e.message}`);
+      log("Falha ao trocar data da operação", { error: e.message });
+    });
+  });
   el("cfgEncerramentoAuto").addEventListener("change", atualizarRegrasCamposConfiguracao);
   el("cfgEmpresaId").addEventListener("change", () => {
     carregarConfiguracaoEmpresaSelecionada().catch((e) => {
@@ -2324,6 +2574,28 @@ function bindActions() {
       setConfiguracaoMessage(`Falha ao restaurar configuração: ${e.message}`, true);
       log("Falha ao restaurar configuração da empresa", { error: e.message });
     });
+  });
+  el("btnConsultarCnpjEmpresa").addEventListener("click", () => {
+    consultarCnpjEmpresaContratante().catch((e) => {
+      setEmpresaContratanteModalMessage(`Falha ao consultar CNPJ: ${e.message}`, true);
+      log("Falha na consulta de CNPJ da empresa contratante", { error: e.message });
+    });
+  });
+  el("btnAbrirConsultaCnpjExterna").addEventListener("click", abrirConsultaCnpjExterna);
+  el("btnCancelarEmpresaContratanteModal").addEventListener("click", closeEmpresaContratanteModal);
+  el("btnSalvarEmpresaContratanteModal").addEventListener("click", () => {
+    salvarEmpresaContratanteModal().catch((e) => {
+      setEmpresaContratanteModalMessage(`Falha ao salvar empresa: ${e.message}`, true);
+      log("Falha ao salvar empresa contratante", { error: e.message });
+    });
+  });
+  el("empresaContratanteModal").addEventListener("click", (event) => {
+    if (event.target !== el("empresaContratanteModal")) return;
+    closeEmpresaContratanteModal();
+  });
+  el("adminUsersCard").addEventListener("click", (event) => {
+    if (event.target !== el("adminUsersCard")) return;
+    cancelUserEdition();
   });
   el("btnRefreshUsuarios").addEventListener("click", () => refreshUsuarios().catch((e) => log("Falha usuários", { error: e.message })));
   el("btnSalvarFornecedor").addEventListener("click", () => {
@@ -2397,12 +2669,6 @@ function bindActions() {
     event.preventDefault();
     resolveCadastroFornecedorFromSearch(true);
   });
-  el("btnQuickListFornecedor").addEventListener("click", () => {
-    const panel = el("pFornecedorInlinePanel");
-    const willOpen = panel.classList.contains("is-hidden");
-    closeInlinePanels();
-    if (willOpen) openFornecedorInlinePanel();
-  });
   el("btnFindFornecedor").addEventListener("click", () => {
     closeInlinePanels();
     openLookupModal("fornecedor");
@@ -2447,12 +2713,6 @@ function bindActions() {
     if (event.key !== "Enter") return;
     event.preventDefault();
     resolveMovimentoPromotorFromSearch(true);
-  });
-  el("btnQuickListPromotor").addEventListener("click", () => {
-    const panel = el("mPromotorInlinePanel");
-    const willOpen = panel.classList.contains("is-hidden");
-    closeInlinePanels();
-    if (willOpen) openPromotorInlinePanel();
   });
   el("btnFindPromotor").addEventListener("click", () => {
     closeInlinePanels();
@@ -2528,6 +2788,14 @@ function bindActions() {
       closeLookupModal();
       return;
     }
+    if (!el("empresaContratanteModal").classList.contains("is-hidden")) {
+      closeEmpresaContratanteModal();
+      return;
+    }
+    if (!el("adminUsersCard").classList.contains("is-hidden")) {
+      cancelUserEdition();
+      return;
+    }
     if (!el("ajusteHorarioModal").classList.contains("is-hidden")) {
       closeAjusteHorarioModal();
       return;
@@ -2539,16 +2807,10 @@ function bindActions() {
     clearUserForm();
     setUserFormMode("new");
     setUsuarioMessage("Preencha os campos e clique em Salvar.");
+    openUserModal();
   });
   el("btnCancelarUsuario").addEventListener("click", async () => {
-    const confirmar = await showConfirmDialog({
-      title: "Cancelar operação",
-      message: "Deseja cancelar a operação de usuário?"
-    });
-    if (!confirmar) return;
-    clearUserForm();
-    setUserFormMode("view");
-    setUsuarioMessage("");
+    cancelUserEdition();
   });
   el("btnSalvarUsuario").addEventListener("click", () => {
     criarUsuario().catch((e) => {

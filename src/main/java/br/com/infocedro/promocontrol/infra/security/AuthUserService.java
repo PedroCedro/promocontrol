@@ -80,6 +80,8 @@ public class AuthUserService implements UserDetailsService {
         user.setPerfil(perfil);
         user.setPrecisaTrocarSenha(false);
         user.setAtivo(true);
+        user.setAcessaWeb(true);
+        user.setAcessaMobile(false);
         usuarioRepository.save(user);
     }
 
@@ -120,7 +122,12 @@ public class AuthUserService implements UserDetailsService {
     }
 
     @Transactional
-    public CreatedUser createUserByAdmin(String username, String perfil, String status) {
+    public CreatedUser createUserByAdmin(
+            String username,
+            String perfil,
+            String status,
+            Boolean acessaWeb,
+            Boolean acessaMobile) {
         if (usuarioRepository.existsByUsernameIgnoreCase(username)) {
             throw new UsuarioJaExisteException();
         }
@@ -135,6 +142,8 @@ public class AuthUserService implements UserDetailsService {
         newUser.setSenhaHash(passwordEncoder.encode(temporaryPassword));
         newUser.setPrecisaTrocarSenha(true);
         newUser.setAtivo(resolveAtivo(status));
+        newUser.setAcessaWeb(resolveAcessoWeb(acessaWeb));
+        newUser.setAcessaMobile(resolveAcessoMobile(acessaMobile));
         usuarioRepository.save(newUser);
 
         return new CreatedUser(
@@ -142,11 +151,19 @@ public class AuthUserService implements UserDetailsService {
                 newUser.getCodigo(),
                 roleSetup.perfil(),
                 resolveStatus(newUser.isAtivo()),
+                newUser.isAcessaWeb(),
+                newUser.isAcessaMobile(),
                 temporaryPassword);
     }
 
     @Transactional
-    public UserSummary updateUserByAdmin(String currentUsername, String newUsername, String perfil, String status) {
+    public UserSummary updateUserByAdmin(
+            String currentUsername,
+            String newUsername,
+            String perfil,
+            String status,
+            Boolean acessaWeb,
+            Boolean acessaMobile) {
         Usuario user = getRequiredUser(currentUsername);
         String normalizedNewUsername = newUsername == null ? "" : newUsername.trim();
         if (!user.getUsername().equalsIgnoreCase(normalizedNewUsername)
@@ -157,6 +174,8 @@ public class AuthUserService implements UserDetailsService {
         RoleSetup roleSetup = resolveRoleSetup(perfil);
         user.setPerfil(roleSetup.perfil());
         user.setAtivo(resolveAtivo(status));
+        user.setAcessaWeb(resolveAcessoWeb(acessaWeb));
+        user.setAcessaMobile(resolveAcessoMobile(acessaMobile));
         usuarioRepository.save(user);
         return toSummary(user);
     }
@@ -187,7 +206,9 @@ public class AuthUserService implements UserDetailsService {
                 user.getCodigo(),
                 user.getPerfil(),
                 resolveStatus(user.isAtivo()),
-                user.isPrecisaTrocarSenha());
+                user.isPrecisaTrocarSenha(),
+                user.isAcessaWeb(),
+                user.isAcessaMobile());
     }
 
     @Transactional
@@ -210,6 +231,14 @@ public class AuthUserService implements UserDetailsService {
 
     private boolean resolveAtivo(String status) {
         return !"INATIVO".equalsIgnoreCase(status);
+    }
+
+    private boolean resolveAcessoWeb(Boolean acessaWeb) {
+        return acessaWeb == null ? true : acessaWeb;
+    }
+
+    private boolean resolveAcessoMobile(Boolean acessaMobile) {
+        return acessaMobile == null ? false : acessaMobile;
     }
 
     private String resolveStatus(boolean ativo) {
@@ -241,9 +270,23 @@ public class AuthUserService implements UserDetailsService {
     private record RoleSetup(String perfil, List<String> roles) {
     }
 
-    public record CreatedUser(String username, Integer codigo, String perfil, String status, String temporaryPassword) {
+    public record CreatedUser(
+            String username,
+            Integer codigo,
+            String perfil,
+            String status,
+            boolean acessaWeb,
+            boolean acessaMobile,
+            String temporaryPassword) {
     }
 
-    public record UserSummary(String username, Integer codigo, String perfil, String status, boolean mustChangePassword) {
+    public record UserSummary(
+            String username,
+            Integer codigo,
+            String perfil,
+            String status,
+            boolean mustChangePassword,
+            boolean acessaWeb,
+            boolean acessaMobile) {
     }
 }

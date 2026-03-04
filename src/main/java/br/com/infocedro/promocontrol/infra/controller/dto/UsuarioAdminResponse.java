@@ -5,5 +5,7 @@ public record UsuarioAdminResponse(
         Integer codigo,
         String perfil,
         String status,
-        boolean precisaTrocarSenha) {
+        boolean precisaTrocarSenha,
+        boolean acessaWeb,
+        boolean acessaMobile) {
 }

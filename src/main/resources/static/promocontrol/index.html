@@ -145,10 +145,15 @@
             <h2>Operação de Entrada e Saída</h2>
             <p class="section-note">Operação rápida para registrar movimentação do promotor.</p>
             <div class="grid two operacao-grid">
+              <label>Data da operação
+                <input id="mDataOperacao" type="date" />
+              </label>
+              <div class="operacao-modo-wrap">
+                <p id="mModoOperacaoBadge" class="operacao-modo-badge">Modo operacional de hoje</p>
+              </div>
               <label>Promotor (somente ATIVO)
                 <div class="mov-promotor-find">
                   <input id="mPromotorSearch" placeholder="Digite código ou nome do promotor" autocomplete="off" />
-                  <button id="btnQuickListPromotor" type="button" title="Abrir lista de promotores">+</button>
                   <button id="btnFindPromotor" type="button">Localizar</button>
                 </div>
                 <div id="mPromotorInlinePanel" class="inline-picker is-hidden">
@@ -166,6 +171,7 @@
                 <input id="mObservacao" placeholder="Observação opcional" />
               </label>
             </div>
+            <p class="section-note">A data selecionada serve para consulta do histórico. Entradas e saídas sempre usam data/hora atual do servidor (Brasília).</p>
             <p id="movMessage" class="form-message"></p>
             <div class="actions">
               <button id="btnRegistrarEntrada" class="btn-entry">Entrada</button>
@@ -222,7 +228,9 @@
               <label>Buscar fornecedor
                 <input id="fFiltroNome" placeholder="Digite código, nome ou status" />
               </label>
-              <div class="actions inline"><button id="btnRefreshFornecedores">Atualizar Fornecedores</button></div>
+              <div class="actions inline users-refresh-actions">
+                <button id="btnRefreshFornecedores" type="button" class="btn-refresh-icon" title="Atualizar fornecedores" aria-label="Atualizar fornecedores">&#x21bb;</button>
+              </div>
             </div>
             <div class="table-wrap">
               <table id="tblFornecedores">
@@ -245,7 +253,6 @@
               <label>Fornecedor
                 <div class="mov-promotor-find">
                   <input id="pFornecedorSearch" placeholder="Digite código ou nome do fornecedor" autocomplete="off" />
-                  <button id="btnQuickListFornecedor" type="button" title="Abrir lista de fornecedores">+</button>
                   <button id="btnFindFornecedor" type="button">Localizar</button>
                 </div>
                 <div id="pFornecedorInlinePanel" class="inline-picker is-hidden">
@@ -273,7 +280,9 @@
             <h2>Promotores Cadastrados</h2>
             <div class="grid two">
               <label>Buscar promotor <input id="pFiltroNome" placeholder="Digite código, nome, fornecedor ou status" /></label>
-              <div class="actions inline"><button id="btnRefreshPromotores">Atualizar Promotores</button></div>
+              <div class="actions inline users-refresh-actions">
+                <button id="btnRefreshPromotores" type="button" class="btn-refresh-icon" title="Atualizar promotores" aria-label="Atualizar promotores">&#x21bb;</button>
+              </div>
             </div>
             <div class="table-wrap">
               <table id="tblPromotores">
@@ -287,47 +296,23 @@
         </section>
 
         <section id="tab-usuarios" class="tab-panel">
-          <article id="adminUsersCard" class="card">
-            <h2 class="user-card-title">Cadastro de Usuários (Admin/Gestor) <span id="uEditModeBadge" class="edit-mode-badge is-hidden">Modo de Edição</span></h2>
-            <div class="grid four user-form-grid">
-              <label>Código <input id="uCodigo" readonly tabindex="-1" placeholder="Cod." /></label>
-              <label>Usuário <input id="uUsername" placeholder="novo.usuario" /></label>
-              <label>Perfil
-                <select id="uPerfil">
-                  <option value="VIEWER">Visualizar</option>
-                  <option value="OPERATOR">Prevenção</option>
-                  <option value="GESTOR">Gestor</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
-              </label>
-              <label>Status
-                <select id="uStatus">
-                  <option value="ATIVO">ATIVO</option>
-                  <option value="INATIVO">INATIVO</option>
-                </select>
-              </label>
-            </div>
-            <div class="actions user-form-actions">
-              <button id="btnNovoUsuario" type="button">Novo</button>
-              <button id="btnCancelarUsuario" type="button">Cancelar</button>
-              <button id="btnSalvarUsuario" type="button">Salvar</button>
-              <button id="btnResetSenha" type="button">Resetar Senha</button>
-            </div>
-            <p id="uMessage" class="form-message"></p>
-          </article>
-
           <article id="adminUsersListCard" class="card">
             <h2>Usuários Cadastrados</h2>
             <div class="grid two">
               <label>Buscar usuário
                 <input id="uFiltroNome" placeholder="Digite usuário, perfil ou status" />
               </label>
-              <div class="actions inline"><button id="btnRefreshUsuarios">Atualizar Usuários</button></div>
+              <div class="actions inline users-refresh-actions">
+                <button id="btnRefreshUsuarios" type="button" class="btn-refresh-icon" title="Atualizar usuários" aria-label="Atualizar usuários">&#x21bb;</button>
+              </div>
+            </div>
+            <div class="actions user-list-actions user-list-actions-top">
+              <button id="btnNovoUsuario" type="button">Novo</button>
             </div>
             <div class="table-wrap">
               <table id="tblUsuarios">
                 <thead>
-                  <tr><th>Código</th><th>Usuário</th><th>Perfil</th><th>Status</th><th>Troca Senha Pendente</th><th>Ações</th></tr>
+                  <tr><th>Código</th><th>Usuário</th><th>Perfil</th><th>Status</th><th>WEB</th><th>MOBILE</th><th>Troca Senha Pendente</th><th>Ações</th></tr>
                 </thead>
                 <tbody></tbody>
               </table>
@@ -345,12 +330,15 @@
             </div>
 
             <section id="config-tab-gerais" class="config-subtab-panel is-active">
-              <p class="section-note">Parametrização por empresa para regras operacionais de movimento.</p>
+              <p class="section-note">Parametrização da empresa contratante para regras operacionais de movimento.</p>
               <div class="grid two">
-                <label>Empresa
-                  <select id="cfgEmpresaId">
-                    <option value="">Selecione</option>
-                  </select>
+                <label>Empresa contratante
+                  <div class="config-empresa-select">
+                    <select id="cfgEmpresaId">
+                      <option value="">Selecione</option>
+                    </select>
+                    <button id="btnNovaEmpresaContratante" type="button" title="Cadastrar empresa contratante">+</button>
+                  </div>
                 </label>
                 <div class="actions inline">
                   <button id="btnLoadEmpresaConfig" type="button">Carregar configuração</button>
@@ -509,6 +497,83 @@
       <div class="actions modal-actions">
         <button id="btnLookupCancel" type="button" class="btn-modal-cancel">Cancelar</button>
         <button id="btnLookupSelect" type="button" class="btn-modal-confirm">Selecionar</button>
+      </div>
+    </article>
+  </section>
+
+  <section id="empresaContratanteModal" class="modal-backdrop is-hidden" aria-hidden="true">
+    <article class="modal-card lookup-card">
+      <h3>Cadastro da Empresa Contratante</h3>
+      <div class="grid two lookup-grid">
+        <label>CNPJ
+          <input id="ecCnpj" placeholder="Digite somente números do CNPJ" />
+        </label>
+        <label>Razão social
+          <input id="ecRazaoSocial" placeholder="Razão social" />
+        </label>
+        <label>Nome fantasia
+          <input id="ecNomeFantasia" placeholder="Nome fantasia" />
+        </label>
+        <label>E-mail
+          <input id="ecEmail" type="email" placeholder="contato@empresa.com.br" />
+        </label>
+        <label>Telefone
+          <input id="ecTelefone" placeholder="(11) 99999-9999" />
+        </label>
+        <label>UF
+          <input id="ecUf" maxlength="2" placeholder="UF" />
+        </label>
+      </div>
+      <div class="actions lookup-search-actions">
+        <button id="btnConsultarCnpjEmpresa" type="button">Consultar CNPJ</button>
+        <button id="btnAbrirConsultaCnpjExterna" type="button">Abrir consulta externa</button>
+      </div>
+      <p id="empresaContratanteModalMessage" class="form-message"></p>
+      <div class="actions modal-actions">
+        <button id="btnCancelarEmpresaContratanteModal" type="button" class="btn-modal-cancel">Cancelar</button>
+        <button id="btnSalvarEmpresaContratanteModal" type="button" class="btn-modal-confirm">Salvar empresa</button>
+      </div>
+    </article>
+  </section>
+
+  <section id="adminUsersCard" class="modal-backdrop is-hidden" aria-hidden="true">
+    <article class="modal-card users-modal-card">
+      <h3 class="user-card-title">Cadastro de Usuários (Admin/Gestor) <span id="uEditModeBadge" class="edit-mode-badge is-hidden">Modo de Edição</span></h3>
+      <div class="grid two user-modal-grid">
+        <label>Código <input id="uCodigo" readonly tabindex="-1" placeholder="Cod." /></label>
+        <label>Usuário <input id="uUsername" placeholder="novo.usuario" /></label>
+        <label>Perfil
+          <select id="uPerfil">
+            <option value="VIEWER">Visualizar</option>
+            <option value="OPERATOR">Prevenção</option>
+            <option value="GESTOR">Gestor</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+        </label>
+        <label>Status
+          <select id="uStatus">
+            <option value="ATIVO">ATIVO</option>
+            <option value="INATIVO">INATIVO</option>
+          </select>
+        </label>
+        <label>Acessa WEB
+          <select id="uAcessaWeb">
+            <option value="true">SIM</option>
+            <option value="false">NÃO</option>
+          </select>
+        </label>
+        <label>Acessa MOBILE
+          <select id="uAcessaMobile">
+            <option value="false">NÃO</option>
+            <option value="true">SIM</option>
+          </select>
+        </label>
+      </div>
+      <p id="uMessage" class="form-message"></p>
+      <div class="actions modal-actions user-modal-actions">
+        <button id="btnCancelarUsuario" type="button" class="btn-modal-cancel">Cancelar</button>
+        <button id="btnSalvarUsuario" type="button" class="btn-modal-confirm">Salvar</button>
+        <button id="btnResetSenha" type="button" class="btn-modal-save">Resetar Senha</button>
       </div>
     </article>
   </section>

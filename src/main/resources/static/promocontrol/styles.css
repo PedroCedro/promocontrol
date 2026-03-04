@@ -373,6 +373,25 @@ body {
   color: #30407f;
 }
 
+.config-empresa-select {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.config-empresa-select select {
+  flex: 1;
+}
+
+#btnNovaEmpresaContratante {
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 10px;
+  font-size: 22px;
+  line-height: 1;
+}
+
 .card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -528,6 +547,14 @@ textarea::placeholder {
   min-width: 102px;
 }
 
+#tab-movimentos .mov-promotor-find {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+#tab-promotores .mov-promotor-find {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .inline-picker {
   margin-top: 8px;
   border: 1px solid #d7defc;
@@ -564,6 +591,14 @@ textarea::placeholder {
   margin-top: 6px;
 }
 
+#lookupModal .lookup-card {
+  width: min(680px, 100%);
+}
+
+#lookupModal .lookup-grid {
+  grid-template-columns: 130px minmax(0, 1fr);
+}
+
 .lookup-search-actions {
   margin-top: 8px;
 }
@@ -596,6 +631,14 @@ button:hover {
   font-size: 0.74rem;
   font-weight: 700;
   line-height: 1.1;
+}
+
+.btn-table-delete {
+  background: linear-gradient(120deg, #c96b6b, #d98282);
+}
+
+.btn-table-delete:hover {
+  background: linear-gradient(120deg, #b95d5d, #c97272);
 }
 
 .status-badge {
@@ -696,8 +739,43 @@ button:hover {
   margin-top: 8px;
 }
 
-#adminUsersCard {
-  padding-bottom: 8px;
+.user-list-actions {
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.user-list-actions-top {
+  justify-content: flex-start;
+  margin-top: 8px;
+  margin-bottom: 2px;
+}
+
+.users-refresh-actions {
+  justify-content: flex-start;
+}
+
+.btn-refresh-icon {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.user-modal-actions {
+  justify-content: flex-end;
+}
+
+.users-modal-card {
+  width: min(760px, 100%);
+}
+
+.grid.user-modal-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .user-card-title {
@@ -729,6 +807,10 @@ button:hover {
 @media (max-width: 980px) {
   .user-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .user-modal-grid {
+    grid-template-columns: 1fr !important;
   }
 
   .fornecedor-form-grid {
@@ -864,6 +946,28 @@ tr:hover td {
   gap: 6px;
   flex-wrap: wrap;
   margin-top: 4px;
+}
+
+.operacao-modo-wrap {
+  display: flex;
+  align-items: end;
+}
+
+.operacao-modo-badge {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid #c7d2fe;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.operacao-modo-badge.is-historico {
+  border-color: #fcd34d;
+  color: #92400e;
+  background: #fffbeb;
 }
 
 #log {
@@ -1084,5 +1188,9 @@ tr:hover td {
 
   .config-subtabs {
     flex-direction: column;
+  }
+
+  .config-empresa-select {
+    width: 100%;
   }
 }
