@@ -470,6 +470,11 @@ body {
 .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
+.dashboard-filter-grid {
+  grid-template-columns: minmax(170px, 0.95fr) minmax(220px, 1.2fr) minmax(180px, 0.95fr) auto;
+  align-items: end;
+}
+
 .stats-row {
   margin-top: 10px;
   display: grid;
@@ -763,6 +768,12 @@ button:hover {
   font-size: 1.05rem;
   font-weight: 700;
   line-height: 1;
+}
+
+.btn-refresh-dashboard {
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
 }
 
 .user-modal-actions {
@@ -1178,6 +1189,7 @@ tr:hover td {
   .grid.two,
   .grid.three,
   .grid.four,
+  .dashboard-filter-grid,
   .stats-row {
     grid-template-columns: 1fr;
   }

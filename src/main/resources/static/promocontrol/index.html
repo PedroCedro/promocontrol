@@ -98,7 +98,7 @@
           <article class="card">
             <h2>Movimento diario</h2>
             <p class="section-note">Visual em planilha para acompanhamento de entradas e saídas.</p>
-            <div class="grid four">
+            <div class="grid dashboard-filter-grid">
               <label>Data <input id="dashData" type="date" /></label>
               <label>Fornecedor
                 <select id="dashFornecedorId"><option value="">Todos</option></select>
@@ -111,7 +111,9 @@
                   <option value="BLOQUEADO">BLOQUEADO</option>
                 </select>
               </label>
-              <div class="actions"><button id="btnRefreshDashboard">Atualizar planilha</button></div>
+              <div class="actions inline users-refresh-actions">
+                <button id="btnRefreshDashboard" type="button" class="btn-refresh-icon btn-refresh-dashboard" title="Atualizar planilha" aria-label="Atualizar planilha">&#x21bb;</button>
+              </div>
             </div>
             <div class="stats-row">
               <label class="metric">Em loja agora <input id="dashCardEmLoja" readonly /></label>
