@@ -121,7 +121,7 @@
               <label class="metric">Saídas hoje <input id="dashCardSaidas" readonly /></label>
               <label class="metric">Ajustes hoje <input id="dashCardAjustes" readonly /></label>
             </div>
-            <div class="table-wrap">
+            <div class="table-wrap dashboard-table-wrap">
               <table id="tblDashboardPrincipal">
                 <thead>
                   <tr>
@@ -143,8 +143,8 @@
         </section>
 
         <section id="tab-movimentos" class="tab-panel">
-          <article class="card">
-            <h2>Operação de Entrada e Saída</h2>
+          <details class="card card-compact card-collapsible operacao-form-card" open>
+            <summary>Operação de Entrada e Saída</summary>
             <p class="section-note">Operação rápida para registrar movimentação do promotor.</p>
             <div class="grid two operacao-grid">
               <label>Data da operação
@@ -166,24 +166,28 @@
               <label>Fornecedor
                 <input id="mFornecedorNome" readonly />
               </label>
-              <label>Liberado por (obrigatório na saída)
-                <input id="mLiberadoPor" placeholder="Nome de quem autorizou" />
-              </label>
               <label class="operacao-observacao">Observação
                 <input id="mObservacao" placeholder="Observação opcional" />
               </label>
             </div>
-            <p class="section-note">A data selecionada serve para consulta do histórico. Entradas e saídas sempre usam data/hora atual do servidor (Brasília).</p>
+            <p class="section-note">A data selecionada serve para consulta do histórico. Entradas usam a data/hora atual do servidor (Brasília) e saídas são registradas pelo botão inline da tabela.</p>
             <p id="movMessage" class="form-message"></p>
             <div class="actions">
               <button id="btnRegistrarEntrada" class="btn-entry">Entrada</button>
-              <button id="btnRegistrarSaida" class="btn-exit">Saída</button>
             </div>
-          </article>
+          </details>
 
           <article class="card">
             <h2>Acompanhamento do Dia</h2>
-            <div class="table-wrap">
+            <div class="grid two">
+              <label>Buscar acompanhamento
+                <input id="mFiltroNome" placeholder="Digite código, promotor, fornecedor ou usuário" />
+              </label>
+              <div class="actions inline users-refresh-actions">
+                <button id="btnRefreshOperacaoDia" type="button" class="btn-refresh-icon" title="Atualizar acompanhamento" aria-label="Atualizar acompanhamento">&#x21bb;</button>
+              </div>
+            </div>
+            <div class="table-wrap operacao-dia-table-wrap">
               <table id="tblOperacaoDia">
                 <thead>
                   <tr>
@@ -234,7 +238,7 @@
                 <button id="btnRefreshFornecedores" type="button" class="btn-refresh-icon" title="Atualizar fornecedores" aria-label="Atualizar fornecedores">&#x21bb;</button>
               </div>
             </div>
-            <div class="table-wrap">
+            <div class="table-wrap fornecedores-table-wrap">
               <table id="tblFornecedores">
                 <thead>
                   <tr><th>Código</th><th>Nome</th><th>Status</th><th>Ações</th></tr>
@@ -286,7 +290,7 @@
                 <button id="btnRefreshPromotores" type="button" class="btn-refresh-icon" title="Atualizar promotores" aria-label="Atualizar promotores">&#x21bb;</button>
               </div>
             </div>
-            <div class="table-wrap">
+            <div class="table-wrap promotores-table-wrap">
               <table id="tblPromotores">
                 <thead>
                   <tr><th>Código</th><th>Nome</th><th>Fornecedor</th><th>Status</th><th>Telefone</th><th>Ações</th></tr>
@@ -311,7 +315,7 @@
             <div class="actions user-list-actions user-list-actions-top">
               <button id="btnNovoUsuario" type="button">Novo</button>
             </div>
-            <div class="table-wrap">
+            <div class="table-wrap usuarios-table-wrap">
               <table id="tblUsuarios">
                 <thead>
                   <tr><th>Código</th><th>Usuário</th><th>Perfil</th><th>Status</th><th>WEB</th><th>MOBILE</th><th>Troca Senha Pendente</th><th>Ações</th></tr>

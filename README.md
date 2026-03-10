@@ -89,7 +89,7 @@ Front para validacao manual:
 http://localhost:8080/promocontrol/index.html
 ```
 
-Atualizacoes recentes (v1.0.0.0):
+Atualizacoes recentes (v1.0.1.0):
 
 * Cadastro de empresa contratante em tabela propria (`EMPRESA_CONTRATANTE`) com CRUD em `/empresas-cadastro`.
 * Parametrizacao operacional por empresa via `ConfiguracaoEmpresa` em `/empresas/{empresaId}/configuracao`.
@@ -97,6 +97,12 @@ Atualizacoes recentes (v1.0.0.0):
 * Regras por empresa para multiplas entradas no dia e exigencia de foto na entrada.
 * Cadastro de usuarios com flags de acesso `acessaWeb` e `acessaMobile`.
 * Tela de `Configuracoes` com abas (`Configuracoes gerais`, `Logs`, `Sobre`) e UX refinada nas telas administrativas.
+* Tela de `Operação` com:
+  * card de operação recolhível;
+  * saída apenas pelo atalho inline da tabela com modal;
+  * confirmação visual após entrada e limpeza automática do formulário.
+* Tabelas principais (`Painel`, `Operação`, `Fornecedores`, `Promotores`, `Usuários`) com scroll interno e cabeçalho fixo para reduzir rolagem da página.
+* Busca local em `Acompanhamento do Dia` e bloqueio de navegação ao trocar de menu com cadastro administrativo em andamento.
 
 Healthcheck e info:
 

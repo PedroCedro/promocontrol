@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.0.1.0 - 2026-03-10
+
+### Changed
+- Front `promocontrol` refinado para operação diária:
+  - `Operação de Entrada e Saída` pode ser colapsada pelo próprio título;
+  - `Saída` removida do formulário principal, ficando disponível apenas pelo botão inline da tabela com modal para `Liberado por` e `Observação`;
+  - confirmação de sucesso na `Entrada` com limpeza automática do formulário operacional.
+- Listas operacionais e administrativas com área rolável própria e cabeçalho fixo:
+  - `Painel` (`Movimento diário`);
+  - `Acompanhamento do Dia`;
+  - `Fornecedores Cadastrados`;
+  - `Promotores Cadastrados`;
+  - `Usuários Cadastrados`.
+- `Acompanhamento do Dia` atualizado com:
+  - campo de busca local;
+  - botão de refresh dedicado;
+  - maior área útil na tela após compactação do card de operação.
+- Modal `Localizar Promotor` na operação ganhou realce visual mais forte para o item selecionado.
+- Navegação entre menus agora é bloqueada quando houver cadastro em andamento em `Promotores`, `Fornecedores` ou `Usuários`.
+- Layout principal ajustado para eliminar a rolagem da página inteira, concentrando scroll apenas nas áreas internas necessárias.
+
 ## v1.0.0.0 - 2026-03-04
 
 ### Added

@@ -3,6 +3,7 @@ const state = {
   promotores: [],
   usuarios: [],
   dashboard: null,
+  operacaoResumo: null,
   dashboardMovimentosMap: new Map(),
   auth: null,
   pendingAuth: null,
@@ -34,7 +35,8 @@ const state = {
   lookupModalSelectedId: "",
   configuracaoEmpresaAtual: null,
   operacaoMovimentosMap: new Map(),
-  empresasCadastro: []
+  empresasCadastro: [],
+  operacaoFilter: ""
 };
 
 const AUTO_SYNC_INTERVAL_MS = 8000;
@@ -108,7 +110,38 @@ function setupConfiguracoesTabs() {
   });
 }
 
+function resolveCadastroEmEdicaoAoNavegar(activeTabId, targetTabId) {
+  if (activeTabId === targetTabId) return null;
+  if (state.promotorFormMode !== "view" && activeTabId === "tab-promotores") {
+    return {
+      setter: setPromotorMessage,
+      message: "Finalize ou cancele o cadastro de promotor antes de mudar de menu."
+    };
+  }
+  if (state.fornecedorFormMode !== "view" && activeTabId === "tab-fornecedores") {
+    return {
+      setter: setFornecedorMessage,
+      message: "Finalize ou cancele o cadastro de fornecedor antes de mudar de menu."
+    };
+  }
+  if (state.userFormMode !== "view" && !el("adminUsersCard")?.classList.contains("is-hidden")) {
+    return {
+      setter: setUsuarioMessage,
+      message: "Finalize ou cancele o cadastro de usuário antes de mudar de menu."
+    };
+  }
+  return null;
+}
+
 function activateTab(tabId) {
+  const activePanel = document.querySelector(".tab-panel.is-active");
+  const activeTabId = activePanel?.id || "";
+  const cadastroEmEdicao = resolveCadastroEmEdicaoAoNavegar(activeTabId, tabId);
+  if (cadastroEmEdicao) {
+    cadastroEmEdicao.setter(cadastroEmEdicao.message, true);
+    return;
+  }
+
   const tabs = document.querySelectorAll(".tab-btn");
   const panels = document.querySelectorAll(".tab-panel");
   tabs.forEach((t) => t.classList.remove("is-active"));
@@ -1205,7 +1238,22 @@ function renderOperacaoDia(resumo) {
   tbody.innerHTML = "";
   const podeMovimentar = podeMovimentarNaDataSelecionada();
 
-  const linhas = resumo?.linhas ?? [];
+  const filtro = String(state.operacaoFilter || "").trim().toLowerCase();
+  const linhas = (resumo?.linhas ?? []).filter((linha) => {
+    if (!filtro) return true;
+    const codigo = formatCodigo(linha.promotorCodigo);
+    const haystack = [
+      codigo,
+      linha.promotorNome,
+      linha.fornecedorNome,
+      linha.usuarioEntrada,
+      linha.usuarioSaida,
+      linha.liberadoPor
+    ]
+      .map((value) => String(value ?? "").toLowerCase())
+      .join(" ");
+    return haystack.includes(filtro);
+  });
   linhas.forEach((linha, index) => {
     const detalhe = resolveLinhaDetalhe(linha, state.operacaoMovimentosMap);
     const saidaCell = linha.saidaEm
@@ -1635,6 +1683,17 @@ function applyMovimentoPromotorSelection(promotor) {
   updateMovimentoFornecedorFromPromotor();
 }
 
+function clearMovimentoForm() {
+  const promotorInput = el("mPromotorSearch");
+  const promotorId = el("mPromotorId");
+  const observacao = el("mObservacao");
+  if (promotorInput) promotorInput.value = "";
+  if (promotorId) promotorId.value = "";
+  if (observacao) observacao.value = "";
+  updateMovimentoFornecedorFromPromotor();
+  closeInlinePanels();
+}
+
 function resolveMovimentoPromotorFromSearch(strict) {
   const input = el("mPromotorSearch");
   const hiddenPromotorId = el("mPromotorId");
@@ -1795,6 +1854,7 @@ async function refreshDashboard() {
   atualizarIndicadorModoOperacao();
   state.dashboard = await apiRequest(buildDashboardQuery());
   const operacaoResumo = await apiRequest(buildOperacaoDiaQuery());
+  state.operacaoResumo = operacaoResumo;
   const promotorIds = new Set((state.dashboard.linhas ?? []).map((linha) => String(linha.promotorId ?? "")));
   const promotorIdsOperacao = new Set((operacaoResumo.linhas ?? []).map((linha) => String(linha.promotorId ?? "")));
   const movimentos = await apiRequest("/movimentos");
@@ -2060,6 +2120,10 @@ async function registrarEntrada() {
     throw new Error("Informe um promotor válido no campo de busca");
   }
 
+  const promotorSelecionado = state.promotores.find((p) => String(p.id) === String(promotorId));
+  const promotorNome = promotorSelecionado?.nome ?? "";
+  const fornecedorNome = promotorSelecionado?.fornecedorNome ?? "";
+
   const payload = {
     promotorId,
     responsavel: state.auth?.username ?? "",
@@ -2067,26 +2131,15 @@ async function registrarEntrada() {
   };
 
   await apiRequest("/movimentos/entrada", "POST", payload);
-  el("mObservacao").value = "";
-  setMovimentoMessage("Entrada registrada com sucesso.");
+  clearMovimentoForm();
+  setMovimentoMessage("");
   await refreshData();
-}
-
-async function registrarSaida() {
-  validarMovimentacaoNaDataSelecionada();
-  const promotorId = el("mPromotorId").value;
-  if (!promotorId) {
-    throw new Error("Informe um promotor válido no campo de busca");
-  }
-
-  const liberadoPor = el("mLiberadoPor").value.trim();
-  if (!liberadoPor) {
-    throw new Error("Informe quem liberou a saída");
-  }
-
-  await registrarSaidaPorPromotor(promotorId, liberadoPor, el("mObservacao").value.trim());
-  el("mObservacao").value = "";
-  setMovimentoMessage("Saída registrada com sucesso.");
+  await showConfirmDialog({
+    title: "Entrada registrada",
+    message: `Entrada de ${promotorNome} - ${fornecedorNome} realizada com sucesso.`,
+    confirmText: "OK",
+    showCancel: false
+  });
 }
 
 async function registrarSaidaPorPromotor(promotorId, liberadoPor, observacao) {
@@ -2541,6 +2594,12 @@ function bindActions() {
 
   el("btnLogout").addEventListener("click", logout);
   el("btnRefreshDashboard").addEventListener("click", () => refreshDashboard().catch((e) => log("Falha dashboard", { error: e.message })));
+  el("btnRefreshOperacaoDia").addEventListener("click", () => {
+    refreshDashboard().catch((e) => {
+      setMovimentoMessage(`Falha ao carregar operação do dia: ${e.message}`);
+      log("Falha ao atualizar acompanhamento do dia", { error: e.message });
+    });
+  });
   el("mDataOperacao").addEventListener("change", () => {
     atualizarIndicadorModoOperacao();
     refreshDashboard().catch((e) => {
@@ -2696,12 +2755,6 @@ function bindActions() {
       log("Falha ao registrar entrada", { error: e.message });
     });
   });
-  el("btnRegistrarSaida").addEventListener("click", () => {
-    registrarSaida().catch((e) => {
-      setMovimentoMessage(`Falha ao registrar saída: ${e.message}`);
-      log("Falha ao registrar saída", { error: e.message });
-    });
-  });
   el("mPromotorSearch").addEventListener("input", () => {
     el("mPromotorId").value = "";
     updateMovimentoFornecedorFromPromotor();
@@ -2717,6 +2770,10 @@ function bindActions() {
   el("btnFindPromotor").addEventListener("click", () => {
     closeInlinePanels();
     openLookupModal("promotor");
+  });
+  el("mFiltroNome").addEventListener("input", () => {
+    state.operacaoFilter = el("mFiltroNome").value || "";
+    renderOperacaoDia(state.operacaoResumo);
   });
   el("btnCancelarSaidaModal").addEventListener("click", closeSaidaModal);
   el("btnSalvarSaidaModal").addEventListener("click", () => {
