@@ -1,4 +1,3 @@
-HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -31,15 +30,8 @@ build/
 
 ### VS Code ###
 .vscode/
-Content4You.md
-escopoBase.gpt
-.codex_app_pid
-data/*.db
-Refactor_Sequencia_Recomendada.md
 mobile/node_modules/
 mobile/android/
 mobile/ios/
 mobile/.capacitor/
 mobile/web/
-Plano_Estudo_VideoIA_PromoControl.md
-assets/release/
