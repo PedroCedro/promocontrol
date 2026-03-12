@@ -11,6 +11,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface MovimentoPromotorRepository extends JpaRepository<MovimentoPromotor, UUID> {
     Optional<MovimentoPromotor> findTopByPromotor_IdOrderByDataHoraDescIdDesc(UUID promotorId);
 
+    List<MovimentoPromotor> findByPromotor_Fornecedor_Id(Integer fornecedorId);
+
     long countByPromotor_IdAndTipo(UUID promotorId, TipoMovimentoPromotor tipo);
 
     long countByPromotor_IdAndTipoAndDataHoraBetween(

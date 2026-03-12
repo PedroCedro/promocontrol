@@ -66,6 +66,13 @@ public class MovimentoPromotorService {
         return repository.findAll();
     }
 
+    public List<MovimentoPromotor> listar(Integer fornecedorEscopoId) {
+        if (fornecedorEscopoId == null) {
+            return listar();
+        }
+        return repository.findByPromotor_Fornecedor_Id(fornecedorEscopoId);
+    }
+
     @Transactional
     public MovimentoPromotor ajustarHorario(
             UUID movimentoId,

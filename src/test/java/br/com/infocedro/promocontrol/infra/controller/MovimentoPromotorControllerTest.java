@@ -18,6 +18,8 @@ import br.com.infocedro.promocontrol.core.repository.ConfiguracaoEmpresaReposito
 import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
 import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
+import br.com.infocedro.promocontrol.core.repository.UsuarioRepository;
+import br.com.infocedro.promocontrol.core.model.Usuario;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
@@ -46,9 +49,17 @@ class MovimentoPromotorControllerTest {
     @Autowired
     private ConfiguracaoEmpresaRepository configuracaoEmpresaRepository;
 
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @BeforeEach
     void setup() {
         movimentoPromotorRepository.deleteAll();
+        usuarioRepository.findByUsernameIgnoreCase("fornecedor.teste")
+                .ifPresent(usuarioRepository::delete);
         promotorRepository.deleteAll();
         configuracaoEmpresaRepository.deleteAll();
         fornecedorRepository.deleteAll();
@@ -295,10 +306,35 @@ class MovimentoPromotorControllerTest {
                 .andExpect(jsonPath("$[0].dataHora").exists());
     }
 
+    @Test
+    void deveListarApenasMovimentosDoFornecedorNoEscopo() throws Exception {
+        Fornecedor fornecedorEscopado = criarFornecedor("Fornecedor Escopado");
+        Fornecedor outroFornecedor = criarFornecedor("Fornecedor Externo");
+        criarUsuarioFornecedor("fornecedor.teste", "fornecedor123", fornecedorEscopado);
+
+        MovimentoPromotor movimentoEscopado = criarMovimento(fornecedorEscopado);
+        criarMovimento(outroFornecedor);
+
+        mockMvc.perform(get("/movimentos")
+                        .with(httpBasic("fornecedor.teste", "fornecedor123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(movimentoEscopado.getId().toString()))
+                .andExpect(jsonPath("$[0].promotorId").value(movimentoEscopado.getPromotor().getId().toString()));
+    }
+
     private Promotor criarPromotor() {
         Fornecedor fornecedor = criarFornecedor();
+        return criarPromotor(fornecedor);
+    }
+
+    private Promotor criarPromotor(Fornecedor fornecedor) {
+        return criarPromotor(fornecedor, "Promotor Teste");
+    }
+
+    private Promotor criarPromotor(Fornecedor fornecedor, String nome) {
         Promotor promotor = new Promotor();
-        promotor.setNome("Promotor Teste");
+        promotor.setNome(nome);
         promotor.setTelefone("123456789");
         promotor.setFornecedor(fornecedor);
         promotor.setStatus(StatusPromotor.ATIVO);
@@ -307,8 +343,12 @@ class MovimentoPromotorControllerTest {
     }
 
     private Fornecedor criarFornecedor() {
+        return criarFornecedor("Fornecedor Teste");
+    }
+
+    private Fornecedor criarFornecedor(String nome) {
         Fornecedor fornecedor = new Fornecedor();
-        fornecedor.setNome("Fornecedor Teste");
+        fornecedor.setNome(nome);
         fornecedor.setAtivo(true);
         Fornecedor salvo = fornecedorRepository.save(fornecedor);
         configuracaoEmpresaRepository.save(ConfiguracaoEmpresa.padrao(salvo));
@@ -317,6 +357,15 @@ class MovimentoPromotorControllerTest {
 
     private MovimentoPromotor criarMovimento() {
         Promotor promotor = criarPromotor();
+        return criarMovimento(promotor);
+    }
+
+    private MovimentoPromotor criarMovimento(Fornecedor fornecedor) {
+        Promotor promotor = criarPromotor(fornecedor, "Promotor " + fornecedor.getNome());
+        return criarMovimento(promotor);
+    }
+
+    private MovimentoPromotor criarMovimento(Promotor promotor) {
         MovimentoPromotor movimento = new MovimentoPromotor();
         movimento.setPromotor(promotor);
         movimento.setTipo(TipoMovimentoPromotor.ENTRADA);
@@ -330,5 +379,25 @@ class MovimentoPromotorControllerTest {
         configuracao.setExigirFotoNaEntrada(exigirFoto);
         configuracao.setPermitirMultiplasEntradasNoDia(permitirMultiplasEntradasNoDia);
         configuracaoEmpresaRepository.save(configuracao);
+    }
+
+    private void criarUsuarioFornecedor(String username, String senha, Fornecedor fornecedor) {
+        Usuario usuario = new Usuario();
+        usuario.setUsername(username);
+        usuario.setCodigo(proximoCodigoUsuario());
+        usuario.setSenhaHash(passwordEncoder.encode(senha));
+        usuario.setPerfil("FORNECEDOR");
+        usuario.setPrecisaTrocarSenha(false);
+        usuario.setAtivo(true);
+        usuario.setAcessaWeb(true);
+        usuario.setAcessaMobile(false);
+        usuario.setFornecedor(fornecedor);
+        usuarioRepository.save(usuario);
+    }
+
+    private int proximoCodigoUsuario() {
+        return usuarioRepository.findTopByOrderByCodigoDesc()
+                .map(codigo -> codigo.getCodigo() + 1)
+                .orElse(1);
     }
 }
