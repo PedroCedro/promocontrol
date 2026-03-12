@@ -55,7 +55,6 @@ homolog
 
 - Execucao, perfis, variaveis e validacao local: [docs/execucao-e-ambiente.md](docs/execucao-e-ambiente.md)
 - Endpoints, perfis e regras operacionais: [docs/api-e-regras.md](docs/api-e-regras.md)
-- Visao tecnica mais ampla do codigo: [Content4You.md](Content4You.md)
 - Historico de entregas: [CHANGELOG.md](CHANGELOG.md)
 - Bootstrap mobile/Capacitor: [mobile/README.md](mobile/README.md)
 
