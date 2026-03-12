@@ -40,6 +40,8 @@ const state = {
 };
 
 const AUTO_SYNC_INTERVAL_MS = 8000;
+const USERNAME_STORAGE_KEY = "pc_username";
+const API_BASE_URL_STORAGE_KEY = "pc_api_base_url";
 
 const el = (id) => document.getElementById(id);
 
@@ -215,7 +217,31 @@ function atualizarIndicadorModoOperacao() {
 }
 
 function loadSavedLogin() {
+  if (el("loginUsername")) {
+    el("loginUsername").value = localStorage.getItem(USERNAME_STORAGE_KEY) || "";
+  }
+  if (el("loginApiBaseUrl")) {
+    el("loginApiBaseUrl").value = getConfiguredApiBaseUrl();
+  }
   loadProfileSettings();
+}
+
+function normalizeBaseUrl(value) {
+  return String(value || "").trim().replace(/\/+$/, "");
+}
+
+function getConfiguredApiBaseUrl() {
+  const savedBaseUrl = normalizeBaseUrl(localStorage.getItem(API_BASE_URL_STORAGE_KEY) || "");
+  if (savedBaseUrl) {
+    return savedBaseUrl;
+  }
+
+  const envBaseUrl = normalizeBaseUrl(window.PromoControlEnv?.apiBaseUrl || "");
+  if (envBaseUrl) {
+    return envBaseUrl;
+  }
+
+  return normalizeBaseUrl(window.location.origin);
 }
 
 function setLoginMessage(message) {
@@ -609,6 +635,7 @@ function setPromotorFieldError(fieldId, hasError) {
 
 function openUserModal() {
   if (!state.auth?.canManageUsers) return;
+  syncUserFornecedorOptions();
   el("adminUsersCard").classList.remove("is-hidden");
   el("adminUsersCard").setAttribute("aria-hidden", "false");
   el("uUsername").focus();
@@ -633,6 +660,7 @@ function setUserFormMode(mode) {
 
   el("uUsername").disabled = isView;
   el("uPerfil").disabled = isView;
+  el("uFornecedorId").disabled = isView;
   el("uStatus").disabled = !isEdit;
   el("uAcessaWeb").disabled = isView;
   el("uAcessaMobile").disabled = isView;
@@ -648,27 +676,64 @@ function setUserFormMode(mode) {
     el("uAcessaWeb").value = "true";
     el("uAcessaMobile").value = "false";
   }
+  updateUserFornecedorFieldState();
 }
 
 function clearUserForm() {
   state.editingUser = null;
+  syncUserFornecedorOptions();
   el("uCodigo").value = "";
   el("uUsername").value = "";
   el("uPerfil").value = "VIEWER";
+  el("uFornecedorId").value = "";
   el("uStatus").value = "ATIVO";
   el("uAcessaWeb").value = "true";
   el("uAcessaMobile").value = "false";
   setUserFieldError("uUsername", false);
+  setUserFieldError("uFornecedorId", false);
+  updateUserFornecedorFieldState();
 }
 
 function fillUserFormForEdit(user) {
   state.editingUser = user.username;
+  syncUserFornecedorOptions();
   el("uCodigo").value = formatCodigo(user.codigo);
   el("uUsername").value = user.username ?? "";
   el("uPerfil").value = user.perfil ?? "VIEWER";
+  el("uFornecedorId").value = user.fornecedorId != null ? String(user.fornecedorId) : "";
   el("uStatus").value = user.status ?? "ATIVO";
   el("uAcessaWeb").value = String(user.acessaWeb !== false);
   el("uAcessaMobile").value = String(Boolean(user.acessaMobile));
+  updateUserFornecedorFieldState();
+}
+
+function listUsuarioFornecedores() {
+  return listCadastroFornecedores();
+}
+
+function syncUserFornecedorOptions() {
+  const select = el("uFornecedorId");
+  if (!select) return;
+  const current = String(select.value || "");
+  select.innerHTML = [
+    '<option value="">Selecione</option>',
+    ...listUsuarioFornecedores().map((fornecedor) =>
+      `<option value="${fornecedor.id}">${buildFornecedorSearchLabel(fornecedor)}</option>`)
+  ].join("");
+  if (current && Array.from(select.options).some((option) => option.value === current)) {
+    select.value = current;
+  }
+}
+
+function updateUserFornecedorFieldState() {
+  const select = el("uFornecedorId");
+  if (!select) return;
+  const required = el("uPerfil").value === "FORNECEDOR";
+  select.required = required;
+  if (!required) {
+    select.value = "";
+    setUserFieldError("uFornecedorId", false);
+  }
 }
 
 function setFornecedorFormMode(mode) {
@@ -740,7 +805,11 @@ function fillPromotorFormForEdit(promotor) {
 }
 
 function saveLogin(username) {
-  localStorage.setItem("pc_username", username);
+  localStorage.setItem(USERNAME_STORAGE_KEY, username);
+}
+
+function saveApiBaseUrl(baseUrl) {
+  localStorage.setItem(API_BASE_URL_STORAGE_KEY, normalizeBaseUrl(baseUrl));
 }
 
 function loadProfileSettings() {
@@ -939,6 +1008,7 @@ async function loadSession(auth) {
   const role = sessionData.perfil;
   const isAdmin = role === "ADMIN";
   const isGestor = role === "GESTOR";
+  const isFornecedor = role === "FORNECEDOR";
   const canManageUsers = isAdmin || isGestor;
   const canOperate = role === "OPERATOR" || isAdmin;
   const canManageCatalog = canOperate || isGestor;
@@ -947,10 +1017,13 @@ async function loadSession(auth) {
     role,
     isAdmin,
     isGestor,
+    isFornecedor,
     canManageUsers,
     canOperate,
     canManageCatalog,
-    mustChangePassword: sessionData.precisaTrocarSenha
+    mustChangePassword: sessionData.precisaTrocarSenha,
+    fornecedorId: sessionData.fornecedorId ?? null,
+    fornecedorNome: sessionData.fornecedorNome ?? ""
   };
 }
 
@@ -1102,6 +1175,7 @@ function renderUsuarios(list) {
       const username = normalizeText(u.username);
       const perfil = normalizeText(u.perfil);
       const perfilLabel = normalizeText(getRoleDisplayName(u.perfil));
+      const fornecedor = normalizeText(u.fornecedorNome);
       const status = normalizeText(u.status);
       const acessaWeb = normalizeText(u.acessaWeb ? "WEB" : "");
       const acessaMobile = normalizeText(u.acessaMobile ? "MOBILE" : "");
@@ -1109,6 +1183,7 @@ function renderUsuarios(list) {
         || username.includes(termo)
         || perfil.includes(termo)
         || perfilLabel.includes(termo)
+        || fornecedor.includes(termo)
         || status.includes(termo)
         || acessaWeb.includes(termo)
         || acessaMobile.includes(termo);
@@ -1123,6 +1198,7 @@ function renderUsuarios(list) {
       <td>${formatCodigo(u.codigo)}</td>
       <td>${u.username ?? ""}</td>
       <td>${getRoleDisplayName(u.perfil ?? "")}</td>
+      <td>${u.fornecedorNome ?? "-"}</td>
       <td><span class="${statusClass}">${status}</span></td>
       <td>${u.acessaWeb ? "SIM" : "NÃO"}</td>
       <td>${u.acessaMobile ? "SIM" : "NÃO"}</td>
@@ -1879,6 +1955,7 @@ async function refreshData() {
   renderFornecedores(state.fornecedores);
   renderPromotores(state.promotores);
   syncFornecedorSelect();
+  syncUserFornecedorOptions();
   const empresaSelecionada = String(el("cfgEmpresaId")?.value || "").trim();
   if (empresaSelecionada) {
     try {
@@ -2307,11 +2384,11 @@ async function salvarSaidaModal() {
 }
 
 async function login() {
-  const baseUrl = window.location.origin;
+  const baseUrl = normalizeBaseUrl(el("loginApiBaseUrl")?.value || getConfiguredApiBaseUrl());
   const username = el("loginUsername").value.trim();
   const password = el("loginPassword").value;
-  if (!username || !password) {
-    throw new Error("Digite Usuário e Senha");
+  if (!baseUrl || !username || !password) {
+    throw new Error("Digite API base URL, Usuário e Senha");
   }
 
   const session = {
@@ -2342,6 +2419,7 @@ async function completeLogin(fullSession) {
   state.pendingAuth = null;
   state.auth = fullSession;
   saveLogin(fullSession.username);
+  saveApiBaseUrl(fullSession.baseUrl);
   hideForceChangeBox();
   applySessionToUI();
   showAppView();
@@ -2422,6 +2500,8 @@ async function criarUsuario() {
 
   const username = el("uUsername").value.trim();
   const perfil = el("uPerfil").value;
+  const fornecedorIdRaw = String(el("uFornecedorId").value || "").trim();
+  const fornecedorId = fornecedorIdRaw ? Number(fornecedorIdRaw) : null;
   const acessaWeb = el("uAcessaWeb").value === "true";
   const acessaMobile = el("uAcessaMobile").value === "true";
   const status = state.userFormMode === "edit"
@@ -2435,6 +2515,11 @@ async function criarUsuario() {
   if (!perfil) {
     throw new Error("Informe o perfil");
   }
+  if (perfil === "FORNECEDOR" && !fornecedorId) {
+    setUserFieldError("uFornecedorId", true);
+    throw new Error("Informe o fornecedor vinculado");
+  }
+  setUserFieldError("uFornecedorId", false);
   if (!status) {
     throw new Error("Informe o status");
   }
@@ -2455,14 +2540,14 @@ async function criarUsuario() {
     await apiRequest(
       `/auth/admin/usuarios/${encodeURIComponent(state.editingUser)}`,
       "PATCH",
-      { username, perfil, status, acessaWeb, acessaMobile }
+      { username, perfil, status, acessaWeb, acessaMobile, fornecedorId }
     );
     setUsuarioMessage("");
-    log("Usuário atualizado por gestor/admin", { usernameAnterior: state.editingUser, usernameNovo: username, perfil, status, acessaWeb, acessaMobile });
+    log("Usuário atualizado por gestor/admin", { usernameAnterior: state.editingUser, usernameNovo: username, perfil, status, acessaWeb, acessaMobile, fornecedorId });
   } else {
-    const response = await apiRequest("/auth/admin/usuarios", "POST", { username, perfil, status, acessaWeb, acessaMobile });
+    const response = await apiRequest("/auth/admin/usuarios", "POST", { username, perfil, status, acessaWeb, acessaMobile, fornecedorId });
     setUsuarioMessage("");
-    log("Usuário criado por gestor/admin", { username: response.username, perfil: response.perfil, status: response.status, acessaWeb: response.acessaWeb, acessaMobile: response.acessaMobile });
+    log("Usuário criado por gestor/admin", { username: response.username, perfil: response.perfil, status: response.status, acessaWeb: response.acessaWeb, acessaMobile: response.acessaMobile, fornecedorId: response.fornecedorId });
     await showConfirmDialog({
       title: "Senha temporária",
       message: "",
@@ -2492,6 +2577,9 @@ function logout() {
   el("currentUser").value = "";
   el("currentRole").value = "";
   el("baseUrl").value = "";
+  if (el("loginApiBaseUrl")) {
+    el("loginApiBaseUrl").value = getConfiguredApiBaseUrl();
+  }
   el("loginPassword").value = "";
   el("profileUserName").textContent = "user";
   el("profileRoleName").textContent = getRoleDisplayName("OPERATOR");
@@ -2523,6 +2611,7 @@ function getRoleDisplayName(role) {
   if (role === "OPERATOR") return "Prevenção";
   if (role === "GESTOR") return "Gestor";
   if (role === "ADMIN") return "Admin";
+  if (role === "FORNECEDOR") return "Fornecedor";
   return role || "";
 }
 
@@ -2581,6 +2670,11 @@ function bindActions() {
     triggerLogin();
   });
   el("loginPassword").addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    triggerLogin();
+  });
+  el("loginApiBaseUrl").addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
     triggerLogin();
@@ -2888,6 +2982,20 @@ function bindActions() {
   el("uUsername").addEventListener("input", () => {
     if (el("uUsername").value.trim()) {
       setUserFieldError("uUsername", false);
+      if (el("uMessage").classList.contains("is-error")) {
+        setUsuarioMessage("");
+      }
+    }
+  });
+  el("uPerfil").addEventListener("change", () => {
+    updateUserFornecedorFieldState();
+    if (el("uPerfil").value !== "FORNECEDOR") {
+      setUserFieldError("uFornecedorId", false);
+    }
+  });
+  el("uFornecedorId").addEventListener("change", () => {
+    if (String(el("uFornecedorId").value || "").trim()) {
+      setUserFieldError("uFornecedorId", false);
       if (el("uMessage").classList.contains("is-error")) {
         setUsuarioMessage("");
       }

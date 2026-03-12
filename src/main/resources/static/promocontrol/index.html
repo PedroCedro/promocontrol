@@ -4,17 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PromoControl - Operação</title>
-  <link rel="icon" type="image/svg+xml" href="/promocontrol/favicon.svg">
-  <link rel="shortcut icon" href="/promocontrol/favicon.svg">
-  <link rel="stylesheet" href="/promocontrol/styles.css">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="shortcut icon" href="./favicon.svg">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <section id="loginView" class="login-view">
     <article class="login-card">
-      <img src="/promocontrol/promocontrol-icon.svg" alt="Ícone PromoControl" class="login-brand-icon" />
+      <img src="./promocontrol-icon.svg" alt="Ícone PromoControl" class="login-brand-icon" />
       <h1>PromoControl</h1>
       <div class="grid one">
         <label>Usuário <input id="loginUsername" placeholder="Digite seu usuário" autocomplete="off" /></label>
+        <label>API base URL <input id="loginApiBaseUrl" placeholder="https://api.seudominio.com" autocomplete="off" /></label>
         <label class="password-label-row">
           <span>Senha</span>
           <button id="btnForgotPassword" class="forgot-password-link" type="button">Esqueceu a senha?</button>
@@ -43,7 +44,7 @@
     <aside class="side-nav">
       <div class="brand-block">
         <div class="brand-title-row">
-          <img src="/promocontrol/promocontrol-icon.svg" alt="Ícone PromoControl" class="brand-icon" />
+          <img src="./promocontrol-icon.svg" alt="Ícone PromoControl" class="brand-icon" />
           <h1>PromoControl</h1>
         </div>
         <p class="kicker">v1.0.0</p>
@@ -318,7 +319,7 @@
             <div class="table-wrap usuarios-table-wrap">
               <table id="tblUsuarios">
                 <thead>
-                  <tr><th>Código</th><th>Usuário</th><th>Perfil</th><th>Status</th><th>WEB</th><th>MOBILE</th><th>Troca Senha Pendente</th><th>Ações</th></tr>
+                  <tr><th>Código</th><th>Usuário</th><th>Perfil</th><th>Fornecedor</th><th>Status</th><th>WEB</th><th>MOBILE</th><th>Troca Senha Pendente</th><th>Ações</th></tr>
                 </thead>
                 <tbody></tbody>
               </table>
@@ -553,7 +554,13 @@
             <option value="VIEWER">Visualizar</option>
             <option value="OPERATOR">Prevenção</option>
             <option value="GESTOR">Gestor</option>
+            <option value="FORNECEDOR">Fornecedor</option>
             <option value="ADMIN">Admin</option>
+          </select>
+        </label>
+        <label>Fornecedor vinculado
+          <select id="uFornecedorId">
+            <option value="">Selecione</option>
           </select>
         </label>
         <label>Status
@@ -586,6 +593,7 @@
 
   <footer class="app-footer">&copy; 2026 InfoCedro. Todos os direitos reservados.</footer>
 
-  <script src="/promocontrol/app.js"></script>
+  <script src="./env.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
