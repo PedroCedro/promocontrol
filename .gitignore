@@ -31,7 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
-Content4You.md
 escopoBase.gpt
 .codex_app_pid
 data/*.db
