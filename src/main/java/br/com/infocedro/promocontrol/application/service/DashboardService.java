@@ -50,9 +50,11 @@ public class DashboardService {
     public DashboardPlanilhaResumoResponse obterPlanilhaPrincipal(
             LocalDate data,
             Integer fornecedorId,
-            StatusPromotor status) {
+            StatusPromotor status,
+            Integer fornecedorEscopoId) {
         LocalDate dataRef = data == null ? LocalDate.now(appClock) : data;
-        List<Promotor> promotores = buscarPromotoresFiltrados(fornecedorId, status);
+        Integer fornecedorEfetivo = fornecedorEscopoId != null ? fornecedorEscopoId : fornecedorId;
+        List<Promotor> promotores = buscarPromotoresFiltrados(fornecedorEfetivo, status);
         if (promotores.isEmpty()) {
             return new DashboardPlanilhaResumoResponse(dataRef, 0, 0, 0, 0, List.of());
         }
@@ -105,7 +107,8 @@ public class DashboardService {
 
     public DashboardCumprimentoResumoResponse obterCumprimentoFornecedores(
             LocalDate data,
-            double percentualMinimo) {
+            double percentualMinimo,
+            Integer fornecedorEscopoId) {
         LocalDate dataRef = data == null ? LocalDate.now(appClock) : data;
         double percentualMeta = percentualMinimo <= 0 ? 80.0 : percentualMinimo;
         LocalDateTime inicioDia = dataRef.atStartOfDay();
@@ -113,10 +116,13 @@ public class DashboardService {
 
         List<Fornecedor> fornecedores = fornecedorRepository.findAll().stream()
                 .filter(f -> !isFornecedorSistema(f))
+                .filter(f -> fornecedorEscopoId == null || fornecedorEscopoId.equals(f.getId()))
                 .sorted(Comparator.comparing(Fornecedor::getNome))
                 .toList();
 
-        List<Promotor> promotoresAtivos = promotorRepository.findByStatus(StatusPromotor.ATIVO);
+        List<Promotor> promotoresAtivos = fornecedorEscopoId == null
+                ? promotorRepository.findByStatus(StatusPromotor.ATIVO)
+                : promotorRepository.findByFornecedor_IdAndStatus(fornecedorEscopoId, StatusPromotor.ATIVO);
         Map<Integer, List<Promotor>> ativosPorFornecedor = promotoresAtivos.stream()
                 .collect(Collectors.groupingBy(p -> p.getFornecedor().getId()));
 

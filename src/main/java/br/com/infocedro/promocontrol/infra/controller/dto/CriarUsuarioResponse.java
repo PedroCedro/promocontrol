@@ -7,5 +7,7 @@ public record CriarUsuarioResponse(
         String status,
         boolean acessaWeb,
         boolean acessaMobile,
+        Integer fornecedorId,
+        String fornecedorNome,
         String senhaTemporaria) {
 }

@@ -49,6 +49,13 @@ public class PromotorService {
         return repository.findAll();
     }
 
+    public List<Promotor> listar(Integer fornecedorEscopoId) {
+        if (fornecedorEscopoId == null) {
+            return listar();
+        }
+        return repository.findByFornecedor_Id(fornecedorEscopoId);
+    }
+
     @Transactional
     public Promotor atualizar(UUID id, Promotor promotorAtualizado, Integer fornecedorId) {
         Promotor existente = repository.findById(id)

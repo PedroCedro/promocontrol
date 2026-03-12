@@ -18,7 +18,9 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import br.com.infocedro.promocontrol.infra.security.UserAccessScopeService;
 
 @RestController
 @RequestMapping("/promotores")
@@ -28,10 +30,12 @@ public class PromotorController {
 
     private final PromotorService service;
     private final ApiMapper mapper;
+    private final UserAccessScopeService userAccessScopeService;
 
-    public PromotorController(PromotorService service, ApiMapper mapper) {
+    public PromotorController(PromotorService service, ApiMapper mapper, UserAccessScopeService userAccessScopeService) {
         this.service = service;
         this.mapper = mapper;
+        this.userAccessScopeService = userAccessScopeService;
     }
 
     @PostMapping
@@ -57,8 +61,10 @@ public class PromotorController {
             @ApiResponse(responseCode = "401", description = "Nao autenticado",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
-    public List<PromotorResponse> listar() {
-        return service.listar().stream()
+    public List<PromotorResponse> listar(Authentication authentication) {
+        UserAccessScopeService.UserScope scope = userAccessScopeService.resolveScope(authentication.getName());
+        Integer fornecedorEscopoId = scope.fornecedorScoped() ? scope.fornecedorId() : null;
+        return service.listar(fornecedorEscopoId).stream()
                 .map(mapper::toPromotorResponse)
                 .toList();
     }

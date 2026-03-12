@@ -6,19 +6,23 @@ import br.com.infocedro.promocontrol.infra.controller.dto.DashboardCumprimentoRe
 import br.com.infocedro.promocontrol.infra.controller.dto.DashboardPlanilhaResumoResponse;
 import java.time.LocalDate;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import br.com.infocedro.promocontrol.infra.security.UserAccessScopeService;
 
 @RestController
 @RequestMapping("/dashboard")
 public class DashboardController {
 
     private final DashboardService service;
+    private final UserAccessScopeService userAccessScopeService;
 
-    public DashboardController(DashboardService service) {
+    public DashboardController(DashboardService service, UserAccessScopeService userAccessScopeService) {
         this.service = service;
+        this.userAccessScopeService = userAccessScopeService;
     }
 
     @GetMapping("/planilha-principal")
@@ -26,15 +30,21 @@ public class DashboardController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
             @RequestParam(required = false) Integer fornecedorId,
-            @RequestParam(required = false) StatusPromotor status) {
-        return service.obterPlanilhaPrincipal(data, fornecedorId, status);
+            @RequestParam(required = false) StatusPromotor status,
+            Authentication authentication) {
+        UserAccessScopeService.UserScope scope = userAccessScopeService.resolveScope(authentication.getName());
+        Integer fornecedorEscopoId = scope.fornecedorScoped() ? scope.fornecedorId() : null;
+        return service.obterPlanilhaPrincipal(data, fornecedorId, status, fornecedorEscopoId);
     }
 
     @GetMapping("/cumprimento-fornecedores")
     public DashboardCumprimentoResumoResponse cumprimentoFornecedores(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
-            @RequestParam(required = false, defaultValue = "80") double percentualMinimo) {
-        return service.obterCumprimentoFornecedores(data, percentualMinimo);
+            @RequestParam(required = false, defaultValue = "80") double percentualMinimo,
+            Authentication authentication) {
+        UserAccessScopeService.UserScope scope = userAccessScopeService.resolveScope(authentication.getName());
+        Integer fornecedorEscopoId = scope.fornecedorScoped() ? scope.fornecedorId() : null;
+        return service.obterCumprimentoFornecedores(data, percentualMinimo, fornecedorEscopoId);
     }
 }

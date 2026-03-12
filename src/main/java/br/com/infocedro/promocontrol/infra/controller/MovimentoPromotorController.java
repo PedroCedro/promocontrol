@@ -18,7 +18,9 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.security.Principal;
 import java.util.UUID;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import br.com.infocedro.promocontrol.infra.security.UserAccessScopeService;
 
 @RestController
 @RequestMapping("/movimentos")
@@ -28,10 +30,12 @@ public class MovimentoPromotorController {
 
     private final MovimentoPromotorService service;
     private final ApiMapper mapper;
+    private final UserAccessScopeService userAccessScopeService;
 
-    public MovimentoPromotorController(MovimentoPromotorService service, ApiMapper mapper) {
+    public MovimentoPromotorController(MovimentoPromotorService service, ApiMapper mapper, UserAccessScopeService userAccessScopeService) {
         this.service = service;
         this.mapper = mapper;
+        this.userAccessScopeService = userAccessScopeService;
     }
 
     @PostMapping("/entrada")
@@ -110,8 +114,10 @@ public class MovimentoPromotorController {
             @ApiResponse(responseCode = "401", description = "Nao autenticado",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
-    public List<MovimentoPromotorResponse> listar() {
-        return service.listar().stream()
+    public List<MovimentoPromotorResponse> listar(Authentication authentication) {
+        UserAccessScopeService.UserScope scope = userAccessScopeService.resolveScope(authentication.getName());
+        Integer fornecedorEscopoId = scope.fornecedorScoped() ? scope.fornecedorId() : null;
+        return service.listar(fornecedorEscopoId).stream()
                 .map(mapper::toMovimentoResponse)
                 .toList();
     }

@@ -54,8 +54,22 @@ public class FornecedorService {
         return repository.findAll();
     }
 
+    public List<Fornecedor> listar(Integer fornecedorEscopoId) {
+        if (fornecedorEscopoId == null) {
+            return listar();
+        }
+        return repository.findById(fornecedorEscopoId).stream().toList();
+    }
+
     public Fornecedor buscarPorId(Integer id) {
         return repository.findById(id).orElseThrow(FornecedorNaoEncontradoException::new);
+    }
+
+    public Fornecedor buscarPorId(Integer id, Integer fornecedorEscopoId) {
+        if (fornecedorEscopoId != null && !fornecedorEscopoId.equals(id)) {
+            throw new FornecedorNaoEncontradoException();
+        }
+        return buscarPorId(id);
     }
 
     @Transactional

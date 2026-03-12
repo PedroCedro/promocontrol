@@ -1,9 +1,13 @@
 package br.com.infocedro.promocontrol.infra.security;
 
+import br.com.infocedro.promocontrol.core.exception.FornecedorNaoEncontradoException;
+import br.com.infocedro.promocontrol.core.exception.UsuarioFornecedorObrigatorioException;
+import br.com.infocedro.promocontrol.core.model.Fornecedor;
 import br.com.infocedro.promocontrol.core.exception.UsuarioNaoEncontradoException;
 import br.com.infocedro.promocontrol.core.exception.UsuarioAutoExclusaoNaoPermitidaException;
 import br.com.infocedro.promocontrol.core.exception.UsuarioJaExisteException;
 import br.com.infocedro.promocontrol.core.model.Usuario;
+import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
 import br.com.infocedro.promocontrol.core.repository.UsuarioRepository;
 import java.security.SecureRandom;
 import java.util.List;
@@ -25,6 +29,7 @@ public class AuthUserService implements UserDetailsService {
             "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 
     private final UsuarioRepository usuarioRepository;
+    private final FornecedorRepository fornecedorRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecureRandom secureRandom = new SecureRandom();
     private final String defaultUserUsername;
@@ -38,6 +43,7 @@ public class AuthUserService implements UserDetailsService {
 
     public AuthUserService(
             UsuarioRepository usuarioRepository,
+            FornecedorRepository fornecedorRepository,
             PasswordEncoder passwordEncoder,
             @Value("${app.security.user.username:user}") String userUsername,
             @Value("${app.security.user.password:user123}") String userPassword,
@@ -48,6 +54,7 @@ public class AuthUserService implements UserDetailsService {
             @Value("${app.security.admin.username:admin}") String adminUsername,
             @Value("${app.security.admin.password:admin123}") String adminPassword) {
         this.usuarioRepository = usuarioRepository;
+        this.fornecedorRepository = fornecedorRepository;
         this.passwordEncoder = passwordEncoder;
         this.defaultUserUsername = userUsername;
         this.defaultUserPassword = userPassword;
@@ -127,7 +134,8 @@ public class AuthUserService implements UserDetailsService {
             String perfil,
             String status,
             Boolean acessaWeb,
-            Boolean acessaMobile) {
+            Boolean acessaMobile,
+            Integer fornecedorId) {
         if (usuarioRepository.existsByUsernameIgnoreCase(username)) {
             throw new UsuarioJaExisteException();
         }
@@ -144,6 +152,7 @@ public class AuthUserService implements UserDetailsService {
         newUser.setAtivo(resolveAtivo(status));
         newUser.setAcessaWeb(resolveAcessoWeb(acessaWeb));
         newUser.setAcessaMobile(resolveAcessoMobile(acessaMobile));
+        newUser.setFornecedor(resolveFornecedorVinculado(roleSetup.perfil(), fornecedorId));
         usuarioRepository.save(newUser);
 
         return new CreatedUser(
@@ -153,6 +162,8 @@ public class AuthUserService implements UserDetailsService {
                 resolveStatus(newUser.isAtivo()),
                 newUser.isAcessaWeb(),
                 newUser.isAcessaMobile(),
+                newUser.getFornecedor() != null ? newUser.getFornecedor().getId() : null,
+                newUser.getFornecedor() != null ? newUser.getFornecedor().getNome() : null,
                 temporaryPassword);
     }
 
@@ -163,7 +174,8 @@ public class AuthUserService implements UserDetailsService {
             String perfil,
             String status,
             Boolean acessaWeb,
-            Boolean acessaMobile) {
+            Boolean acessaMobile,
+            Integer fornecedorId) {
         Usuario user = getRequiredUser(currentUsername);
         String normalizedNewUsername = newUsername == null ? "" : newUsername.trim();
         if (!user.getUsername().equalsIgnoreCase(normalizedNewUsername)
@@ -176,6 +188,7 @@ public class AuthUserService implements UserDetailsService {
         user.setAtivo(resolveAtivo(status));
         user.setAcessaWeb(resolveAcessoWeb(acessaWeb));
         user.setAcessaMobile(resolveAcessoMobile(acessaMobile));
+        user.setFornecedor(resolveFornecedorVinculado(roleSetup.perfil(), fornecedorId));
         usuarioRepository.save(user);
         return toSummary(user);
     }
@@ -208,7 +221,9 @@ public class AuthUserService implements UserDetailsService {
                 resolveStatus(user.isAtivo()),
                 user.isPrecisaTrocarSenha(),
                 user.isAcessaWeb(),
-                user.isAcessaMobile());
+                user.isAcessaMobile(),
+                user.getFornecedor() != null ? user.getFornecedor().getId() : null,
+                user.getFornecedor() != null ? user.getFornecedor().getNome() : null);
     }
 
     @Transactional
@@ -250,8 +265,24 @@ public class AuthUserService implements UserDetailsService {
             case "ADMIN" -> new RoleSetup("ADMIN", List.of("ADMIN", "GESTOR", "OPERATOR", "VIEWER"));
             case "GESTOR" -> new RoleSetup("GESTOR", List.of("GESTOR", "VIEWER"));
             case "OPERATOR" -> new RoleSetup("OPERATOR", List.of("OPERATOR", "VIEWER"));
+            case "FORNECEDOR" -> new RoleSetup("FORNECEDOR", List.of("FORNECEDOR"));
             default -> new RoleSetup("VIEWER", List.of("VIEWER"));
         };
+    }
+
+    private Fornecedor resolveFornecedorVinculado(String perfil, Integer fornecedorId) {
+        if ("FORNECEDOR".equalsIgnoreCase(perfil)) {
+            if (fornecedorId == null) {
+                throw new UsuarioFornecedorObrigatorioException();
+            }
+            return fornecedorRepository.findById(fornecedorId)
+                    .orElseThrow(FornecedorNaoEncontradoException::new);
+        }
+        if (fornecedorId == null) {
+            return null;
+        }
+        return fornecedorRepository.findById(fornecedorId)
+                .orElseThrow(FornecedorNaoEncontradoException::new);
     }
 
     private List<String> resolveRoles(String perfil) {
@@ -277,6 +308,8 @@ public class AuthUserService implements UserDetailsService {
             String status,
             boolean acessaWeb,
             boolean acessaMobile,
+            Integer fornecedorId,
+            String fornecedorNome,
             String temporaryPassword) {
     }
 
@@ -287,6 +320,8 @@ public class AuthUserService implements UserDetailsService {
             String status,
             boolean mustChangePassword,
             boolean acessaWeb,
-            boolean acessaMobile) {
+            boolean acessaMobile,
+            Integer fornecedorId,
+            String fornecedorNome) {
     }
 }

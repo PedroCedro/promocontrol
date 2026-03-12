@@ -1,0 +1,5 @@
+ALTER TABLE USUARIO ADD COLUMN fornecedor_id INTEGER;
+
+ALTER TABLE USUARIO
+    ADD CONSTRAINT fk_usuario_fornecedor
+    FOREIGN KEY (fornecedor_id) REFERENCES FORNECEDOR (id);

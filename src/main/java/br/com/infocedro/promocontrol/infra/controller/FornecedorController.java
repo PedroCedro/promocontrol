@@ -7,6 +7,7 @@ import br.com.infocedro.promocontrol.infra.controller.dto.CriarFornecedorRequest
 import br.com.infocedro.promocontrol.infra.controller.dto.FornecedorResponse;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import br.com.infocedro.promocontrol.infra.security.UserAccessScopeService;
 
 @RestController
 @RequestMapping("/fornecedores")
@@ -22,10 +24,12 @@ public class FornecedorController {
 
     private final FornecedorService service;
     private final ApiMapper mapper;
+    private final UserAccessScopeService userAccessScopeService;
 
-    public FornecedorController(FornecedorService service, ApiMapper mapper) {
+    public FornecedorController(FornecedorService service, ApiMapper mapper, UserAccessScopeService userAccessScopeService) {
         this.service = service;
         this.mapper = mapper;
+        this.userAccessScopeService = userAccessScopeService;
     }
 
     @PostMapping
@@ -34,13 +38,17 @@ public class FornecedorController {
     }
 
     @GetMapping
-    public List<FornecedorResponse> listar() {
-        return service.listar().stream().map(mapper::toFornecedorResponse).toList();
+    public List<FornecedorResponse> listar(Authentication authentication) {
+        UserAccessScopeService.UserScope scope = userAccessScopeService.resolveScope(authentication.getName());
+        Integer fornecedorEscopoId = scope.fornecedorScoped() ? scope.fornecedorId() : null;
+        return service.listar(fornecedorEscopoId).stream().map(mapper::toFornecedorResponse).toList();
     }
 
     @GetMapping("/{id}")
-    public FornecedorResponse buscar(@PathVariable Integer id) {
-        return mapper.toFornecedorResponse(service.buscarPorId(id));
+    public FornecedorResponse buscar(@PathVariable Integer id, Authentication authentication) {
+        UserAccessScopeService.UserScope scope = userAccessScopeService.resolveScope(authentication.getName());
+        Integer fornecedorEscopoId = scope.fornecedorScoped() ? scope.fornecedorId() : null;
+        return mapper.toFornecedorResponse(service.buscarPorId(id, fornecedorEscopoId));
     }
 
     @PutMapping("/{id}")

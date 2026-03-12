@@ -7,5 +7,7 @@ public record UsuarioAdminResponse(
         String status,
         boolean precisaTrocarSenha,
         boolean acessaWeb,
-        boolean acessaMobile) {
+        boolean acessaMobile,
+        Integer fornecedorId,
+        String fornecedorNome) {
 }

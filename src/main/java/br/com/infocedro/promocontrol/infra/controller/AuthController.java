@@ -9,11 +9,10 @@ import br.com.infocedro.promocontrol.infra.controller.dto.ResetarSenhaUsuarioRes
 import br.com.infocedro.promocontrol.infra.controller.dto.SessaoUsuarioResponse;
 import br.com.infocedro.promocontrol.infra.controller.dto.UsuarioAdminResponse;
 import br.com.infocedro.promocontrol.infra.security.AuthUserService;
+import br.com.infocedro.promocontrol.infra.security.UserAccessScopeService;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Set;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,18 +27,23 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthUserService authUserService;
+    private final UserAccessScopeService userAccessScopeService;
 
-    public AuthController(AuthUserService authUserService) {
+    public AuthController(AuthUserService authUserService, UserAccessScopeService userAccessScopeService) {
         this.authUserService = authUserService;
+        this.userAccessScopeService = userAccessScopeService;
     }
 
     @GetMapping("/sessao")
     public SessaoUsuarioResponse sessao(Authentication authentication) {
         String username = authentication.getName();
+        UserAccessScopeService.UserScope scope = userAccessScopeService.resolveScope(username);
         return new SessaoUsuarioResponse(
                 username,
-                resolvePerfil(authentication),
-                authUserService.isPasswordChangeRequired(username));
+                scope.perfil(),
+                authUserService.isPasswordChangeRequired(username),
+                scope.fornecedorId(),
+                scope.fornecedorNome());
     }
 
     @PostMapping("/alterar-senha")
@@ -67,7 +71,9 @@ public class AuthController {
                         u.status(),
                         u.mustChangePassword(),
                         u.acessaWeb(),
-                        u.acessaMobile()))
+                        u.acessaMobile(),
+                        u.fornecedorId(),
+                        u.fornecedorNome()))
                 .toList();
     }
 
@@ -79,7 +85,8 @@ public class AuthController {
                         request.perfil(),
                         request.status(),
                         request.acessaWeb(),
-                        request.acessaMobile());
+                        request.acessaMobile(),
+                        request.fornecedorId());
         return new CriarUsuarioResponse(
                 created.username(),
                 created.codigo(),
@@ -87,6 +94,8 @@ public class AuthController {
                 created.status(),
                 created.acessaWeb(),
                 created.acessaMobile(),
+                created.fornecedorId(),
+                created.fornecedorNome(),
                 created.temporaryPassword());
     }
 
@@ -101,7 +110,8 @@ public class AuthController {
                         request.perfil(),
                         request.status(),
                         request.acessaWeb(),
-                        request.acessaMobile());
+                        request.acessaMobile(),
+                        request.fornecedorId());
         return new UsuarioAdminResponse(
                 updated.username(),
                 updated.codigo(),
@@ -109,7 +119,9 @@ public class AuthController {
                 updated.status(),
                 updated.mustChangePassword(),
                 updated.acessaWeb(),
-                updated.acessaMobile());
+                updated.acessaMobile(),
+                updated.fornecedorId(),
+                updated.fornecedorNome());
     }
 
     @DeleteMapping("/admin/usuarios/{username}")
@@ -119,21 +131,4 @@ public class AuthController {
         authUserService.deleteUserByAdmin(username, authentication.getName());
     }
 
-    private String resolvePerfil(Authentication authentication) {
-        Set<String> authorities = authentication.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(java.util.stream.Collectors.toSet());
-
-        if (authorities.contains("ROLE_ADMIN")) {
-            return "ADMIN";
-        }
-        if (authorities.contains("ROLE_GESTOR")) {
-            return "GESTOR";
-        }
-        if (authorities.contains("ROLE_OPERATOR")) {
-            return "OPERATOR";
-        }
-        return "VIEWER";
-    }
 }
