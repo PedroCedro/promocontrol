@@ -26,6 +26,8 @@ public interface MovimentoPromotorRepository extends JpaRepository<MovimentoProm
             LocalDateTime inicio,
             LocalDateTime fim);
 
+    List<MovimentoPromotor> findByPromotor_IdInOrderByPromotor_IdAscDataHoraDescIdDesc(List<UUID> promotorIds);
+
     long countByPromotor_IdInAndTipoAndDataHoraBetween(
             List<UUID> promotorIds,
             TipoMovimentoPromotor tipo,

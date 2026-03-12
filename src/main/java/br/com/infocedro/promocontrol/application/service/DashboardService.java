@@ -65,15 +65,13 @@ public class DashboardService {
 
         List<MovimentoPromotor> movimentosDia = movimentoRepository
                 .findByPromotor_IdInAndDataHoraBetween(promotorIds, inicioDia, fimDia);
+        Map<UUID, MovimentoPromotor> ultimoMovimentoPorPromotor = buscarUltimoMovimentoPorPromotor(promotorIds);
 
         Map<UUID, List<MovimentoPromotor>> movimentosPorPromotor = movimentosDia.stream()
                 .sorted(Comparator.comparing(MovimentoPromotor::getDataHora))
                 .collect(Collectors.groupingBy(m -> m.getPromotor().getId()));
 
-        long emLojaAgora = promotores.stream()
-                .map(Promotor::getId)
-                .map(movimentoRepository::findTopByPromotor_IdOrderByDataHoraDescIdDesc)
-                .flatMap(Optional -> Optional.stream())
+        long emLojaAgora = ultimoMovimentoPorPromotor.values().stream()
                 .filter(m -> m.getTipo() == TipoMovimentoPromotor.ENTRADA)
                 .count();
 
@@ -168,6 +166,14 @@ public class DashboardService {
             return promotorRepository.findByStatus(status);
         }
         return promotorRepository.findAll();
+    }
+
+    private Map<UUID, MovimentoPromotor> buscarUltimoMovimentoPorPromotor(List<UUID> promotorIds) {
+        return movimentoRepository.findByPromotor_IdInOrderByPromotor_IdAscDataHoraDescIdDesc(promotorIds).stream()
+                .collect(Collectors.toMap(
+                        movimento -> movimento.getPromotor().getId(),
+                        Function.identity(),
+                        (existente, ignorado) -> existente));
     }
 
     private DashboardPlanilhaLinhaResponse montarLinha(Promotor promotor, List<MovimentoPromotor> movimentosDia) {

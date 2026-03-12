@@ -97,6 +97,25 @@ class DashboardControllerTest {
                 .andExpect(jsonPath("$.itens[0].alerta").exists());
     }
 
+    @Test
+    void deveCalcularEmLojaAgoraPeloUltimoMovimentoEmLote() throws Exception {
+        Fornecedor fornecedor = criarFornecedor("Fornecedor Lote");
+        Promotor emLoja = criarPromotor("Promotor Em Loja", fornecedor, StatusPromotor.ATIVO);
+        Promotor saiu = criarPromotor("Promotor Saiu", fornecedor, StatusPromotor.ATIVO);
+
+        criarMovimento(emLoja, TipoMovimentoPromotor.ENTRADA, "Operador A", null, LocalDateTime.now().minusHours(2));
+        criarMovimento(saiu, TipoMovimentoPromotor.ENTRADA, "Operador B", null, LocalDateTime.now().minusHours(3));
+        criarMovimento(saiu, TipoMovimentoPromotor.SAIDA, "Operador C", "Gerente B", LocalDateTime.now().minusHours(1));
+
+        String hoje = LocalDate.now().toString();
+        mockMvc.perform(get("/dashboard/planilha-principal?data=" + hoje)
+                        .with(httpBasic("user", "user123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.emLojaAgora").value(1))
+                .andExpect(jsonPath("$.entradasHoje").value(2))
+                .andExpect(jsonPath("$.saidasHoje").value(1));
+    }
+
     private Fornecedor criarFornecedor(String nome) {
         Fornecedor fornecedor = new Fornecedor();
         fornecedor.setNome(nome);
