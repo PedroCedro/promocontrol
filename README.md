@@ -1,673 +1,85 @@
 # PromoControl
-**Controle inteligente de acesso e movimento diário de promotores**
 
-Sistema web para **controle de acesso e movimento diário de promotores**.
-Projeto desenvolvido com foco em resolver dores reais de operação de loja, substituindo controles manuais em planilhas por uma API segura e estruturada.
+Sistema web para controle operacional de promotores em loja, com backend Spring Boot e frontend estatico integrado ao proprio projeto.
 
----
+## Resumo
 
-## Objetivo
+O sistema cobre:
 
-Registrar e gerenciar:
+- cadastro de fornecedores, promotores e usuarios
+- registro de entrada e saida
+- dashboard operacional e acompanhamento por fornecedor
+- configuracao por empresa
+- seguranca por perfil, auditoria e observabilidade
 
-* Cadastro de promotores
-* Entrada e saída diária
-* Responsáveis pela autorização
-* Rastreabilidade e consistência do fluxo operacional
+Arquitetura:
 
----
-
-## Arquitetura
-
-O projeto segue uma estrutura em camadas:
-
-```
-core        → domínio (modelos e repositórios)
-application → regras de negócio (services)
-infra       → controllers e configurações
+```text
+core        -> dominio e repositorios
+application -> services e regras de negocio
+infra       -> controllers, seguranca e configuracoes
 ```
 
-Stack utilizada:
+Stack principal:
 
-* Java 21
-* Spring Boot
-* Spring Security
-* Spring Data JPA
-* H2 Database (desenvolvimento e homologacao local)
-* Maven
+- Java 21
+- Spring Boot
+- Spring Security
+- Spring Data JPA
+- Flyway
+- H2 / PostgreSQL
+- Maven
 
----
+## Inicio rapido
 
-## Como rodar o projeto
-
-### Pré-requisitos
-
-* JDK 21 instalado
-* Maven Wrapper (já incluso)
-
-### Executar
-
-```bash
-./mvnw spring-boot:run
-```
-
-No Windows (PowerShell):
+Subir localmente:
 
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-Executar com perfil especifico:
+Aplicacao local:
 
-```powershell
-.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=dev
-.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=homolog
-.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=prod
-```
+- API: `http://localhost:8080`
+- Swagger: `http://localhost:8080/swagger-ui/index.html`
+- Front: `http://localhost:8080/promocontrol/index.html`
+- Health: `http://localhost:8080/actuator/health`
 
 Perfil padrao atual:
 
-```
+```text
 homolog
 ```
 
-Aplicação sobe em:
+## Onde encontrar cada informacao
 
-```
-http://localhost:8080
-```
+- Execucao, perfis, variaveis e validacao local: [docs/execucao-e-ambiente.md](docs/execucao-e-ambiente.md)
+- Endpoints, perfis e regras operacionais: [docs/api-e-regras.md](docs/api-e-regras.md)
+- Visao tecnica mais ampla do codigo: [Content4You.md](Content4You.md)
+- Historico de entregas: [CHANGELOG.md](CHANGELOG.md)
+- Bootstrap mobile/Capacitor: [mobile/README.md](mobile/README.md)
 
-Documentacao OpenAPI/Swagger:
+## Estado atual
 
-```
-http://localhost:8080/swagger-ui/index.html
-```
+Entrega recente consolidada:
 
-Front para validacao manual:
+- escopo por fornecedor no backend
+- dashboard principal sem N+1 para ultimo estado por promotor
+- frontend preparado para `API base URL` configuravel
+- base pronta para sincronizacao com app mobile via Capacitor
 
-```
-http://localhost:8080/promocontrol/index.html
-```
+## Qualidade
 
-Atualizacoes recentes (v1.0.1.0):
+Checklist atual:
 
-* Cadastro de empresa contratante em tabela propria (`EMPRESA_CONTRATANTE`) com CRUD em `/empresas-cadastro`.
-* Parametrizacao operacional por empresa via `ConfiguracaoEmpresa` em `/empresas/{empresaId}/configuracao`.
-* Encerramento automatico de movimentos abertos do dia anterior com job agendado e regra por empresa.
-* Regras por empresa para multiplas entradas no dia e exigencia de foto na entrada.
-* Cadastro de usuarios com flags de acesso `acessaWeb` e `acessaMobile`.
-* Tela de `Configuracoes` com abas (`Configuracoes gerais`, `Logs`, `Sobre`) e UX refinada nas telas administrativas.
-* Tela de `Operação` com:
-  * card de operação recolhível;
-  * saída apenas pelo atalho inline da tabela com modal;
-  * confirmação visual após entrada e limpeza automática do formulário.
-* Tabelas principais (`Painel`, `Operação`, `Fornecedores`, `Promotores`, `Usuários`) com scroll interno e cabeçalho fixo para reduzir rolagem da página.
-* Busca local em `Acompanhamento do Dia` e bloqueio de navegação ao trocar de menu com cadastro administrativo em andamento.
-
-Healthcheck e info:
-
-```
-http://localhost:8080/actuator/health
-http://localhost:8080/actuator/info
-```
-
----
-
-## Autenticação
-
-O projeto utiliza **Basic Auth** via Spring Security.
-
-Usuários padrão (modo dev):
-
-```
-user / user123
-viewer / viewer123
-gestor / gestor123
-admin / admin123
-```
-
-As credenciais podem ser sobrescritas por variáveis de ambiente:
-
-```
-APP_SECURITY_USER_USERNAME
-APP_SECURITY_USER_PASSWORD
-APP_SECURITY_VIEWER_USERNAME
-APP_SECURITY_VIEWER_PASSWORD
-APP_SECURITY_GESTOR_USERNAME
-APP_SECURITY_GESTOR_PASSWORD
-APP_SECURITY_ADMIN_USERNAME
-APP_SECURITY_ADMIN_PASSWORD
-```
-
-Origem CORS permitida (front):
-
-```
-APP_CORS_ALLOWED_ORIGINS
-```
-
-Valor padrao em dev: `http://localhost:3000,http://127.0.0.1:3000`.
-
-Cabecalho de correlacao para rastreio de requisicoes:
-
-```
-APP_CORRELATION_HEADER
-```
-
-Padrao: `X-Correlation-Id`.
-
-Cron do job de encerramento automatico:
-
-```
-APP_MOVIMENTO_ENCERRAMENTO_AUTOMATICO_CRON
-```
-
-Padrao: `0 */15 * * * *`.
-
-Perfis de acesso:
-
-* `VIEWER`: leitura (`GET`) de promotores, fornecedores, movimentos e dashboards.
-* `OPERATOR`: leitura + operacoes de cadastro e movimentos.
-* `GESTOR`: leitura + cadastro (fornecedores, promotores e usuarios), sem operacao de entrada/saida e sem acesso a logs.
-* `ADMIN`: mesmas permissoes de operador + gestao completa de usuarios + ajuste de horario (`PATCH /movimentos/{id}/ajuste-horario`) + logs.
-
-Fluxo de senha (v0.5.2.0):
-
-* `ADMIN` pode resetar senha de qualquer usuario via `POST /auth/admin/resetar-senha`.
-* O reset retorna uma senha temporaria apenas na resposta da operacao.
-* Login com senha temporaria exige troca imediata via `POST /auth/alterar-senha`.
-* Enquanto a troca nao for concluida, o sistema bloqueia os demais endpoints.
-
----
-
-## Endpoints atuais
-
-### CRUD de Fornecedor
-
-```
-POST /fornecedores
-GET /fornecedores
-GET /fornecedores/{id}
-PUT /fornecedores/{id}
-DELETE /fornecedores/{id}
-```
-
-Body (POST/PUT):
-
-```json
-{
-  "nome": "Fornecedor Exemplo",
-  "ativo": true
-}
-```
-
----
-
-### Criar Promotor
-
-```
-POST /promotores
-PUT /promotores/{id}
-DELETE /promotores/{id}
-```
-
-Body:
-
-```json
-{
-  "nome": "Promotor Teste",
-  "telefone": "123456789",
-  "fornecedorId": 1,
-  "status": "ATIVO",
-  "fotoPath": ""
-}
-```
-
----
-
-### Listar Promotores
-
-```
-GET /promotores
-```
-
----
-
-### Registrar Entrada de Promotor
-
-```
-POST /movimentos/entrada
-```
-
-Body:
-
-```json
-{
-  "promotorId": "uuid-do-promotor",
-  "responsavel": "Joao",
-  "observacao": "Entrada na portaria"
-}
-```
-
-Regras:
-
-* A data/hora é gerada no servidor no momento da requisição.
-* Não permite nova entrada se já existir entrada em aberto.
-* Pode bloquear multiplas entradas no mesmo dia conforme configuracao da empresa.
-* Pode exigir foto do promotor para entrada conforme configuracao da empresa.
-* Apenas promotor com status `ATIVO` pode registrar movimento.
-
----
-
-### Registrar Saída de Promotor
-
-```
-POST /movimentos/saida
-```
-
-Body:
-
-```json
-{
-  "promotorId": "uuid-do-promotor",
-  "responsavel": "Joao",
-  "liberadoPor": "Gerente Loja",
-  "observacao": "Saida final"
-}
-```
-
-Regras:
-
-* A data/hora é gerada no servidor no momento da requisição.
-* Não permite saída sem entrada em aberto.
-* Apenas promotor com status `ATIVO` pode registrar movimento.
-* Campo `liberadoPor` é obrigatório na saída.
-
----
-
-### Listar Movimentos
-
-```
-GET /movimentos
-DELETE /movimentos/{movimentoId}
-```
-
----
-
-### Configuracao por Empresa
-
-```
-POST /empresas/{empresaId}/configuracao
-GET /empresas/{empresaId}/configuracao
-PUT /empresas/{empresaId}/configuracao
-DELETE /empresas/{empresaId}/configuracao
-```
-
-Body (`POST/PUT`):
-
-```json
-{
-  "encerramentoAutomaticoHabilitado": true,
-  "horarioEncerramentoAutomatico": "21:00:00",
-  "textoObservacaoEncerramentoAutomatico": "Encerramento automatico do dia anterior",
-  "permitirMultiplasEntradasNoDia": false,
-  "exigirFotoNaEntrada": true
-}
-```
-
-`DELETE` redefine a configuracao da empresa para os valores padrao do sistema.
-
-Observacao:
-
-* O `empresaId` deste endpoint representa a empresa/base operacional usada no movimento (id vinculado ao fornecedor).
-
----
-
-### Cadastro de Empresa Contratante
-
-```
-POST /empresas-cadastro
-GET /empresas-cadastro
-GET /empresas-cadastro/{id}
-PUT /empresas-cadastro/{id}
-DELETE /empresas-cadastro/{id}
-```
-
-Body (`POST`):
-
-```json
-{
-  "nome": "Bon Atacarejo",
-  "cnpj": "00000000000191",
-  "email": "contato@empresa.com.br",
-  "telefone": "(11) 99999-9999",
-  "uf": "SP",
-  "ativo": true,
-  "fornecedorId": 1
-}
-```
-
-Body (`PUT`):
-
-```json
-{
-  "nome": "Bon Atacarejo",
-  "cnpj": "00000000000191",
-  "email": "contato@empresa.com.br",
-  "telefone": "(11) 99999-9999",
-  "uf": "SP",
-  "ativo": true
-}
-```
-
----
-
-### Dashboard Principal (Planilha)
-
-```
-GET /dashboard/planilha-principal?data=YYYY-MM-DD&fornecedorId={id}&status=ATIVO
-```
-
-Retorna cards do dia e linhas da planilha com:
-
-* promotor e fornecedor;
-* entrada (horario e usuario);
-* saida (horario, usuario);
-* liberacao da saida (`liberadoPor`);
-* flag de estado (`saiu`) para consumo de regras de exibicao no front.
-
----
-
-### Dashboard de Cumprimento por Fornecedor
-
-```
-GET /dashboard/cumprimento-fornecedores?data=YYYY-MM-DD&percentualMinimo=80
-```
-
-Retorna previsto x realizado por fornecedor, percentual de cumprimento e alertas de desvio.
-
----
-
-### Ajustar Horário de Movimento (somente ADMIN)
-
-```
-PATCH /movimentos/{movimentoId}/ajuste-horario
-```
-
-Body:
-
-```json
-{
-  "novaDataHora": "2026-02-12T08:30:00",
-  "motivo": "Correcao por falha de registro"
-}
-```
-
-Observações:
-
-* Endpoint restrito ao perfil `ADMIN`.
-* O sistema registra auditoria do ajuste (`dataHoraOriginal`, `ajustadoPor`, `ajustadoEm`, `ajusteMotivo`).
-
----
-
-### Sessao e senha
-
-```
-GET /auth/sessao
-POST /auth/alterar-senha
-POST /auth/admin/resetar-senha
-GET /auth/admin/usuarios
-POST /auth/admin/usuarios
-PATCH /auth/admin/usuarios/{username}
-DELETE /auth/admin/usuarios/{username}
-```
-
-Body (`POST /auth/alterar-senha`):
-
-```json
-{
-  "novaSenha": "NovaSenhaSegura123"
-}
-```
-
-Body (`POST /auth/admin/resetar-senha`):
-
-```json
-{
-  "username": "user"
-}
-```
-
-Resposta (`POST /auth/admin/resetar-senha`):
-
-```json
-{
-  "username": "user",
-  "senhaTemporaria": "AbC93kLm2Q"
-}
-```
-
-Body (`POST /auth/admin/usuarios`):
-
-```json
-{
-  "username": "novo.usuario",
-  "perfil": "GESTOR",
-  "status": "ATIVO",
-  "acessaWeb": true,
-  "acessaMobile": false
-}
-```
-
-Body (`PATCH /auth/admin/usuarios/{username}`):
-
-```json
-{
-  "username": "novo.usuario",
-  "perfil": "GESTOR",
-  "status": "ATIVO",
-  "acessaWeb": true,
-  "acessaMobile": true
-}
-```
-
-Resposta (`POST /auth/admin/usuarios`):
-
-```json
-{
-  "username": "novo.usuario",
-  "codigo": 7,
-  "perfil": "OPERATOR",
-  "status": "ATIVO",
-  "acessaWeb": true,
-  "acessaMobile": false,
-  "senhaTemporaria": "AbC93kLm2Q"
-}
-```
-
----
-
-## Exemplos cURL
-
-Considere `http://localhost:8080` e ajuste os UUIDs conforme seu ambiente.
-
-### Criar promotor
-
-```bash
-curl -X POST "http://localhost:8080/promotores" \
-  -u user:user123 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nome": "Promotor Teste",
-    "telefone": "123456789",
-    "fornecedorId": 1,
-    "status": "ATIVO",
-    "fotoPath": ""
-  }'
-```
-
-### Listar promotores
-
-```bash
-curl -X GET "http://localhost:8080/promotores" \
-  -u user:user123
-```
-
-### Registrar entrada
-
-```bash
-curl -X POST "http://localhost:8080/movimentos/entrada" \
-  -u user:user123 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "promotorId": "UUID_PROMOTOR",
-    "responsavel": "Joao",
-    "observacao": "Entrada na portaria"
-  }'
-```
-
-### Registrar saída
-
-```bash
-curl -X POST "http://localhost:8080/movimentos/saida" \
-  -u user:user123 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "promotorId": "UUID_PROMOTOR",
-    "responsavel": "Joao",
-    "liberadoPor": "Gerente Loja",
-    "observacao": "Saida final"
-  }'
-```
-
-### Listar movimentos
-
-```bash
-curl -X GET "http://localhost:8080/movimentos" \
-  -u user:user123
-```
-
-### Ajustar horário (ADMIN)
-
-```bash
-curl -X PATCH "http://localhost:8080/movimentos/UUID_MOVIMENTO/ajuste-horario" \
-  -u admin:admin123 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "novaDataHora": "2026-02-12T08:30:00",
-    "motivo": "Correcao por falha de registro"
-  }'
-```
-
----
-
-## Erros esperados
-
-Formato padrao de erro da API:
-
-```json
-{
-  "timestamp": "2026-02-12T12:34:56.123-03:00",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Promotor nao possui entrada em aberto",
-  "path": "/movimentos/saida",
-  "details": []
-}
-```
-
-Principais cenarios:
-
-* `400 Bad Request`:
-  * dupla entrada em aberto;
-  * saida sem entrada em aberto;
-  * payload invalido ou JSON mal formatado;
-  * motivo ausente no ajuste de horario.
-* `401 Unauthorized`: sem credenciais ou credenciais invalidas.
-* `403 Forbidden`: usuario autenticado sem permissao (ex.: ajuste de horario sem perfil `ADMIN`).
-* `404 Not Found`: promotor ou movimento inexistente.
-* `500 Internal Server Error`: erro inesperado nao mapeado.
-
----
-
-## Roadmap
-
-Próximos passos planejados:
-
-* [x] Entrada e saída de promotor
-* [x] Ajuste manual de horário com trilha de auditoria (ADMIN)
-* [x] Melhorias de integridade e auditoria
-* [ ] Upload de foto
-* [x] Status lógico (bloqueado/inativo)
-* [ ] Dashboard de movimento do dia
-
----
-
-## Pronto Para Front
-
-Checklist de prontidao do backend:
-
-* [x] Contrato de API documentado em OpenAPI/Swagger
-* [x] Migracao versionada de banco com Flyway
-* [x] Perfis de ambiente (`dev`, `homolog`, `prod`)
-* [x] CORS configuravel por variavel de ambiente
-* [x] Observabilidade com `/actuator/health` e `/actuator/info`
-* [x] Correlacao de requisicoes via `X-Correlation-Id`
-* [x] Testes automatizados (`.\mvnw.cmd -q test`)
-* [x] Pipeline CI em `.github/workflows/ci.yml`
-* [x] Smoke test de API em `scripts/smoke_test.ps1`
-
-Executar smoke test local/homolog:
-
-```powershell
-.\scripts\smoke_test.ps1 -BaseUrl "http://localhost:8080"
-```
-
-Executar checklist de prontidao para homolog:
-
-```powershell
-.\scripts\homolog_readiness_check.ps1 -BaseUrl "http://localhost:8080" -RunSmoke
-```
-
----
-
-## Migração de Banco
-
-As migracoes de schema agora sao versionadas com **Flyway** em:
-
-```
-src/main/resources/db/migration
-```
-
-A aplicacao executa as migracoes automaticamente na inicializacao.
-
-Para bancos legados com o modelo antigo (campo `empresa_id` em `PROMOTOR`), use a migration `V2__fornecedor_e_relacao_promotor.sql` para normalizacao em `FORNECEDOR`.
-
-Para perfil `prod` (PostgreSQL), configure:
-
-```
-APP_DB_URL
-APP_DB_USERNAME
-APP_DB_PASSWORD
-```
-
-Para perfil `homolog` (H2 em arquivo local), configure opcionalmente:
-
-```
-APP_HOMOLOG_DB_URL
-APP_HOMOLOG_DB_USERNAME
-APP_HOMOLOG_DB_PASSWORD
-APP_DB_FILE_PATH
-```
-
----
+- contrato de API em Swagger/OpenAPI
+- migracoes versionadas com Flyway
+- perfis `dev`, `homolog` e `prod`
+- observabilidade com `actuator`
+- testes automatizados
+- smoke test e checklist de homolog
 
 ## Autor
 
-Projeto idealizado por **Pedro Cedro**
+Projeto idealizado por **Pedro Cedro**  
 InfoCedro Software
-
----
-
-## Versão
-
-`v1.0.0.0` - Cadastro de empresa contratante dedicado, configuracao operacional por empresa, flags WEB/MOBILE em usuarios e refinamentos de UX no front promocontrol.
