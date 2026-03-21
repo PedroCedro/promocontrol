@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
   <link rel="shortcut icon" href="./favicon.svg">
   <link rel="stylesheet" href="./styles.css">
 </head>
+
 <body>
   <section id="loginView" class="login-view">
     <article class="login-card">
@@ -15,7 +17,6 @@
       <h1>PromoControl</h1>
       <div class="grid one">
         <label>Usuário <input id="loginUsername" placeholder="Digite seu usuário" autocomplete="off" /></label>
-        <label>API base URL <input id="loginApiBaseUrl" placeholder="https://api.seudominio.com" autocomplete="off" /></label>
         <label class="password-label-row">
           <span>Senha</span>
           <button id="btnForgotPassword" class="forgot-password-link" type="button">Esqueceu a senha?</button>
@@ -102,7 +103,9 @@
             <div class="grid dashboard-filter-grid">
               <label>Data <input id="dashData" type="date" /></label>
               <label>Fornecedor
-                <select id="dashFornecedorId"><option value="">Todos</option></select>
+                <select id="dashFornecedorId">
+                  <option value="">Todos</option>
+                </select>
               </label>
               <label>Status
                 <select id="dashStatus">
@@ -113,7 +116,8 @@
                 </select>
               </label>
               <div class="actions inline users-refresh-actions">
-                <button id="btnRefreshDashboard" type="button" class="btn-refresh-icon btn-refresh-dashboard" title="Atualizar planilha" aria-label="Atualizar planilha">&#x21bb;</button>
+                <button id="btnRefreshDashboard" type="button" class="btn-refresh-icon btn-refresh-dashboard"
+                  title="Atualizar planilha" aria-label="Atualizar planilha">&#x21bb;</button>
               </div>
             </div>
             <div class="stats-row">
@@ -171,9 +175,11 @@
                 <input id="mObservacao" placeholder="Observação opcional" />
               </label>
             </div>
-            <p class="section-note">A data selecionada serve para consulta do histórico. Entradas usam a data/hora atual do servidor (Brasília) e saídas são registradas pelo botão inline da tabela.</p>
+            <p class="section-note">A data selecionada serve para consulta do histórico. Entradas usam a data/hora atual
+              do servidor (Brasília) e saídas são registradas pelo botão inline da tabela.</p>
             <p id="movMessage" class="form-message"></p>
             <div class="actions">
+              <button id="btnEntradasSemSaida" type="button" class="btn-pending-entries is-hidden">Entradas sem saídas</button>
               <button id="btnRegistrarEntrada" class="btn-entry">Entrada</button>
             </div>
           </details>
@@ -185,7 +191,8 @@
                 <input id="mFiltroNome" placeholder="Digite código, promotor, fornecedor ou usuário" />
               </label>
               <div class="actions inline users-refresh-actions">
-                <button id="btnRefreshOperacaoDia" type="button" class="btn-refresh-icon" title="Atualizar acompanhamento" aria-label="Atualizar acompanhamento">&#x21bb;</button>
+                <button id="btnRefreshOperacaoDia" type="button" class="btn-refresh-icon"
+                  title="Atualizar acompanhamento" aria-label="Atualizar acompanhamento">&#x21bb;</button>
               </div>
             </div>
             <div class="table-wrap operacao-dia-table-wrap">
@@ -210,7 +217,8 @@
 
         <section id="tab-fornecedores" class="tab-panel">
           <article class="card">
-            <h2 class="user-card-title">Cadastro de Fornecedores <span id="fEditModeBadge" class="edit-mode-badge is-hidden">Modo de Edição</span></h2>
+            <h2 class="user-card-title">Cadastro de Fornecedores <span id="fEditModeBadge"
+                class="edit-mode-badge is-hidden">Modo de Edição</span></h2>
             <div class="grid three fornecedor-form-grid">
               <label>Código <input id="fCodigo" readonly disabled tabindex="-1" placeholder="Cod." /></label>
               <label>Nome <input id="fNome" placeholder="novo.fornecedor" /></label>
@@ -236,13 +244,19 @@
                 <input id="fFiltroNome" placeholder="Digite código, nome ou status" />
               </label>
               <div class="actions inline users-refresh-actions">
-                <button id="btnRefreshFornecedores" type="button" class="btn-refresh-icon" title="Atualizar fornecedores" aria-label="Atualizar fornecedores">&#x21bb;</button>
+                <button id="btnRefreshFornecedores" type="button" class="btn-refresh-icon"
+                  title="Atualizar fornecedores" aria-label="Atualizar fornecedores">&#x21bb;</button>
               </div>
             </div>
             <div class="table-wrap fornecedores-table-wrap">
               <table id="tblFornecedores">
                 <thead>
-                  <tr><th>Código</th><th>Nome</th><th>Status</th><th>Ações</th></tr>
+                  <tr>
+                    <th>Código</th>
+                    <th>Nome</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
                 </thead>
                 <tbody></tbody>
               </table>
@@ -252,7 +266,8 @@
 
         <section id="tab-promotores" class="tab-panel">
           <article class="card card-compact">
-            <h2 class="user-card-title">Cadastro de Promotores <span id="pEditModeBadge" class="edit-mode-badge is-hidden">Modo de Edição</span></h2>
+            <h2 class="user-card-title">Cadastro de Promotores <span id="pEditModeBadge"
+                class="edit-mode-badge is-hidden">Modo de Edição</span></h2>
             <div class="grid four promotor-form-grid">
               <label>Código <input id="pCodigo" readonly disabled tabindex="-1" placeholder="Cod." /></label>
               <label>Nome <input id="pNome" placeholder="novo.promotor" /></label>
@@ -286,15 +301,24 @@
           <article class="card">
             <h2>Promotores Cadastrados</h2>
             <div class="grid two">
-              <label>Buscar promotor <input id="pFiltroNome" placeholder="Digite código, nome, fornecedor ou status" /></label>
+              <label>Buscar promotor <input id="pFiltroNome"
+                  placeholder="Digite código, nome, fornecedor ou status" /></label>
               <div class="actions inline users-refresh-actions">
-                <button id="btnRefreshPromotores" type="button" class="btn-refresh-icon" title="Atualizar promotores" aria-label="Atualizar promotores">&#x21bb;</button>
+                <button id="btnRefreshPromotores" type="button" class="btn-refresh-icon" title="Atualizar promotores"
+                  aria-label="Atualizar promotores">&#x21bb;</button>
               </div>
             </div>
             <div class="table-wrap promotores-table-wrap">
               <table id="tblPromotores">
                 <thead>
-                  <tr><th>Código</th><th>Nome</th><th>Fornecedor</th><th>Status</th><th>Telefone</th><th>Ações</th></tr>
+                  <tr>
+                    <th>Código</th>
+                    <th>Nome</th>
+                    <th>Fornecedor</th>
+                    <th>Status</th>
+                    <th>Telefone</th>
+                    <th>Ações</th>
+                  </tr>
                 </thead>
                 <tbody></tbody>
               </table>
@@ -310,7 +334,8 @@
                 <input id="uFiltroNome" placeholder="Digite usuário, perfil ou status" />
               </label>
               <div class="actions inline users-refresh-actions">
-                <button id="btnRefreshUsuarios" type="button" class="btn-refresh-icon" title="Atualizar usuários" aria-label="Atualizar usuários">&#x21bb;</button>
+                <button id="btnRefreshUsuarios" type="button" class="btn-refresh-icon" title="Atualizar usuários"
+                  aria-label="Atualizar usuários">&#x21bb;</button>
               </div>
             </div>
             <div class="actions user-list-actions user-list-actions-top">
@@ -319,7 +344,17 @@
             <div class="table-wrap usuarios-table-wrap">
               <table id="tblUsuarios">
                 <thead>
-                  <tr><th>Código</th><th>Usuário</th><th>Perfil</th><th>Fornecedor</th><th>Status</th><th>WEB</th><th>MOBILE</th><th>Troca Senha Pendente</th><th>Ações</th></tr>
+                  <tr>
+                    <th>Código</th>
+                    <th>Usuário</th>
+                    <th>Perfil</th>
+                    <th>Fornecedor</th>
+                    <th>Status</th>
+                    <th>WEB</th>
+                    <th>MOBILE</th>
+                    <th>Troca Senha Pendente</th>
+                    <th>Ações</th>
+                  </tr>
                 </thead>
                 <tbody></tbody>
               </table>
@@ -331,9 +366,12 @@
           <article class="card">
             <h2>Configurações</h2>
             <div class="config-subtabs">
-              <button id="cfgSubtabGeraisBtn" class="config-subtab-btn is-active" type="button" data-config-tab="config-tab-gerais">Configurações gerais</button>
-              <button id="cfgSubtabLogsBtn" class="config-subtab-btn" type="button" data-config-tab="config-tab-logs">Logs</button>
-              <button id="cfgSubtabSobreBtn" class="config-subtab-btn" type="button" data-config-tab="config-tab-sobre">Sobre</button>
+              <button id="cfgSubtabGeraisBtn" class="config-subtab-btn is-active" type="button"
+                data-config-tab="config-tab-gerais">Configurações gerais</button>
+              <button id="cfgSubtabLogsBtn" class="config-subtab-btn" type="button"
+                data-config-tab="config-tab-logs">Logs</button>
+              <button id="cfgSubtabSobreBtn" class="config-subtab-btn" type="button"
+                data-config-tab="config-tab-sobre">Sobre</button>
             </div>
 
             <section id="config-tab-gerais" class="config-subtab-panel is-active">
@@ -344,7 +382,8 @@
                     <select id="cfgEmpresaId">
                       <option value="">Selecione</option>
                     </select>
-                    <button id="btnNovaEmpresaContratante" type="button" title="Cadastrar empresa contratante">+</button>
+                    <button id="btnNovaEmpresaContratante" type="button"
+                      title="Cadastrar empresa contratante">+</button>
                   </div>
                 </label>
                 <div class="actions inline">
@@ -417,7 +456,8 @@
                   <input value="03/03/2026" readonly />
                 </label>
               </div>
-              <p class="section-note">Este software e seus componentes são protegidos por direitos autorais. Uso restrito aos termos contratuais vigentes.</p>
+              <p class="section-note">Este software e seus componentes são protegidos por direitos autorais. Uso
+                restrito aos termos contratuais vigentes.</p>
             </section>
           </article>
         </section>
@@ -463,6 +503,26 @@
       <div class="actions modal-actions">
         <button id="btnCancelarAjusteHorarioModal" type="button" class="btn-modal-cancel">Cancelar</button>
         <button id="btnSalvarAjusteHorarioModal" type="button" class="btn-modal-save">Salvar</button>
+      </div>
+    </article>
+  </section>
+
+  <section id="entradasSemSaidaModal" class="modal-backdrop is-hidden" aria-hidden="true">
+    <article class="modal-card">
+      <h3>Entradas sem saídas</h3>
+      <p class="section-note">Informe o período para localizar entradas antigas sem saída e encerrá-las automaticamente.</p>
+      <div class="grid one">
+        <label>Data inicial
+          <input id="entradasSemSaidaDataInicio" type="date" />
+        </label>
+        <label>Data final
+          <input id="entradasSemSaidaDataFim" type="date" />
+        </label>
+      </div>
+      <p id="entradasSemSaidaMessage" class="form-message"></p>
+      <div class="actions modal-actions">
+        <button id="btnCancelarEntradasSemSaidaModal" type="button" class="btn-modal-cancel">Cancelar</button>
+        <button id="btnSalvarEntradasSemSaidaModal" type="button" class="btn-modal-save">Processar período</button>
       </div>
     </article>
   </section>
@@ -545,7 +605,8 @@
 
   <section id="adminUsersCard" class="modal-backdrop is-hidden" aria-hidden="true">
     <article class="modal-card users-modal-card">
-      <h3 class="user-card-title">Cadastro de Usuários (Admin/Gestor) <span id="uEditModeBadge" class="edit-mode-badge is-hidden">Modo de Edição</span></h3>
+      <h3 class="user-card-title">Cadastro de Usuários (Admin/Gestor) <span id="uEditModeBadge"
+          class="edit-mode-badge is-hidden">Modo de Edição</span></h3>
       <div class="grid two user-modal-grid">
         <label>Código <input id="uCodigo" readonly tabindex="-1" placeholder="Cod." /></label>
         <label>Usuário <input id="uUsername" placeholder="novo.usuario" /></label>
@@ -596,4 +657,5 @@
   <script src="./env.js"></script>
   <script src="./app.js"></script>
 </body>
+
 </html>

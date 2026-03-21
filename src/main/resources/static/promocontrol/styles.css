@@ -1151,6 +1151,15 @@ tr:hover td {
   background: linear-gradient(120deg, #337a60, #4a9578);
 }
 
+.btn-pending-entries {
+  background: linear-gradient(120deg, #e8d98c, #f2e5a7);
+  color: #5f4b16;
+}
+
+.btn-pending-entries:hover {
+  background: linear-gradient(120deg, #dccd81, #e8da99);
+}
+
 .btn-exit {
   min-width: 180px;
   background: linear-gradient(120deg, #b45454, #cb6a6a);

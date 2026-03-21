@@ -54,7 +54,7 @@ public class ConfiguracaoEmpresa extends AuditableEntity {
         ConfiguracaoEmpresa config = new ConfiguracaoEmpresa();
         config.setEmpresa(empresa);
         config.setEncerramentoAutomaticoHabilitado(false);
-        config.setHorarioEncerramentoAutomatico(LocalTime.of(22, 0));
+        config.setHorarioEncerramentoAutomatico(LocalTime.of(23, 59));
         config.setTextoObservacaoEncerramentoAutomatico(OBSERVACAO_ENCERRAMENTO_PADRAO);
         config.setPermitirMultiplasEntradasNoDia(true);
         config.setExigirFotoNaEntrada(false);

@@ -22,7 +22,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
+@SpringBootTest(properties = "api.base.url=http://localhost:8080")
 @AutoConfigureMockMvc
 class ConfiguracaoEmpresaControllerTest {
 
@@ -97,7 +97,7 @@ class ConfiguracaoEmpresaControllerTest {
                         .with(httpBasic("user", "user123")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.encerramentoAutomaticoHabilitado").value(false))
-                .andExpect(jsonPath("$.horarioEncerramentoAutomatico").value("22:00:00"))
+                .andExpect(jsonPath("$.horarioEncerramentoAutomatico").value("23:59:00"))
                 .andExpect(jsonPath("$.permitirMultiplasEntradasNoDia").value(true));
     }
 

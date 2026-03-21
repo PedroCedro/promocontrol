@@ -7,6 +7,7 @@ import br.com.infocedro.promocontrol.core.exception.MotivoAjusteObrigatorioExcep
 import br.com.infocedro.promocontrol.core.exception.MovimentoNaoEncontradoException;
 import br.com.infocedro.promocontrol.core.exception.MultiplasEntradasNoDiaNaoPermitidasException;
 import br.com.infocedro.promocontrol.core.exception.NovaDataHoraObrigatoriaException;
+import br.com.infocedro.promocontrol.core.exception.PeriodoEncerramentoPendenteInvalidoException;
 import br.com.infocedro.promocontrol.core.exception.PromotorInativoOuBloqueadoException;
 import br.com.infocedro.promocontrol.core.exception.PromotorNaoEncontradoException;
 import br.com.infocedro.promocontrol.core.exception.SemEntradaEmAbertoException;
@@ -71,6 +72,36 @@ public class MovimentoPromotorService {
             return listar();
         }
         return repository.findByPromotor_Fornecedor_Id(fornecedorEscopoId);
+    }
+
+    @Transactional
+    public int encerrarEntradasSemSaida(LocalDate dataInicio, LocalDate dataFim) {
+        if (dataInicio == null || dataFim == null || dataFim.isBefore(dataInicio)) {
+            throw new PeriodoEncerramentoPendenteInvalidoException();
+        }
+
+        LocalDateTime inicio = dataInicio.atStartOfDay();
+        LocalDateTime fim = dataFim.plusDays(1).atStartOfDay().minusNanos(1);
+        List<MovimentoPromotor> entradasNoPeriodo = repository.findByTipoAndDataHoraBetween(
+                TipoMovimentoPromotor.ENTRADA,
+                inicio,
+                fim);
+
+        int totalEncerrado = 0;
+        for (MovimentoPromotor entrada : entradasNoPeriodo) {
+            if (repository.existsByPromotor_IdAndTipoAndDataHoraGreaterThanEqual(
+                    entrada.getPromotor().getId(),
+                    TipoMovimentoPromotor.SAIDA,
+                    entrada.getDataHora())) {
+                continue;
+            }
+
+            ConfiguracaoEmpresa configuracao = buscarConfiguracaoEmpresa(entrada.getPromotor());
+            repository.save(entrada.encerrarAutomaticamente(configuracao));
+            totalEncerrado++;
+        }
+
+        return totalEncerrado;
     }
 
     @Transactional

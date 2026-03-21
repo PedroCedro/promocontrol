@@ -14,7 +14,7 @@
 Perfil padrao atual:
 
 ```text
-homolog
+prod
 ```
 
 ## Subir a aplicacao
@@ -95,6 +95,13 @@ APP_HOMOLOG_DB_URL
 APP_HOMOLOG_DB_USERNAME
 APP_HOMOLOG_DB_PASSWORD
 APP_DB_FILE_PATH
+```
+
+Migracao da base cadastral H2 para PostgreSQL:
+
+```text
+docs/migracao-cadastro-h2-para-postgres.md
+scripts/migrate_catalog_to_postgres.ps1
 ```
 
 ## Banco e migracoes

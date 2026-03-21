@@ -48,12 +48,13 @@ Aplicacao local:
 Perfil padrao atual:
 
 ```text
-homolog
+prod
 ```
 
 ## Onde encontrar cada informacao
 
 - Execucao, perfis, variaveis e validacao local: [docs/execucao-e-ambiente.md](docs/execucao-e-ambiente.md)
+- Migracao da base cadastral H2 para PostgreSQL: [docs/migracao-cadastro-h2-para-postgres.md](docs/migracao-cadastro-h2-para-postgres.md)
 - Endpoints, perfis e regras operacionais: [docs/api-e-regras.md](docs/api-e-regras.md)
 - Historico de entregas: [CHANGELOG.md](CHANGELOG.md)
 - Bootstrap mobile/Capacitor: [mobile/README.md](mobile/README.md)

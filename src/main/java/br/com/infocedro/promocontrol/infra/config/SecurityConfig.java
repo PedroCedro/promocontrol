@@ -67,6 +67,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/auth/admin/resetar-senha").hasAnyRole("GESTOR", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/auth/admin/usuarios").hasAnyRole("GESTOR", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/auth/admin/usuarios").hasAnyRole("GESTOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/movimentos/encerramentos-pendentes").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/auth/admin/usuarios/**").hasAnyRole("GESTOR", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/auth/admin/usuarios/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/movimentos/*/ajuste-horario").hasRole("ADMIN")

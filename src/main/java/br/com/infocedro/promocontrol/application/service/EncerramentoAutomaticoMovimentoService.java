@@ -5,9 +5,7 @@ import br.com.infocedro.promocontrol.core.model.MovimentoPromotor;
 import br.com.infocedro.promocontrol.core.model.TipoMovimentoPromotor;
 import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
 import java.time.Clock;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,18 +29,14 @@ public class EncerramentoAutomaticoMovimentoService {
 
     @Transactional
     public int encerrarMovimentosAbertosDiaAnterior() {
-        LocalDate ontem = LocalDate.now(appClock).minusDays(1);
-        LocalDateTime inicio = ontem.atStartOfDay();
-        LocalDateTime fim = ontem.plusDays(1).atStartOfDay().minusNanos(1);
-        LocalTime horarioAtual = LocalTime.now(appClock);
+        LocalDateTime agora = LocalDateTime.now(appClock);
 
-        List<MovimentoPromotor> entradasDiaAnterior = movimentoRepository.findByTipoAndDataHoraBetween(
+        List<MovimentoPromotor> entradasAbertasElegiveis = movimentoRepository.findByTipoAndDataHoraLessThanEqual(
                 TipoMovimentoPromotor.ENTRADA,
-                inicio,
-                fim);
+                agora);
 
         int totalEncerrado = 0;
-        for (MovimentoPromotor entrada : entradasDiaAnterior) {
+        for (MovimentoPromotor entrada : entradasAbertasElegiveis) {
             if (movimentoRepository.existsByPromotor_IdAndTipoAndDataHoraGreaterThanEqual(
                     entrada.getPromotor().getId(),
                     TipoMovimentoPromotor.SAIDA,
@@ -53,7 +47,12 @@ public class EncerramentoAutomaticoMovimentoService {
             ConfiguracaoEmpresa config = configuracaoEmpresaService
                     .buscarPorEmpresaId(entrada.getPromotor().getFornecedor().getId());
 
-            if (!config.deveEncerrarAutomaticamente(horarioAtual)) {
+            if (!Boolean.TRUE.equals(config.getEncerramentoAutomaticoHabilitado())) {
+                continue;
+            }
+
+            LocalDateTime dataHoraEncerramento = config.calcularDataHoraEncerramento(entrada.getDataHora().toLocalDate());
+            if (dataHoraEncerramento.isAfter(agora)) {
                 continue;
             }
 

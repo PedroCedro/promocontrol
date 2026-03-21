@@ -30,7 +30,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
+@SpringBootTest(properties = "api.base.url=http://localhost:8080")
 @AutoConfigureMockMvc
 class MovimentoPromotorControllerTest {
 
@@ -291,6 +291,50 @@ class MovimentoPromotorControllerTest {
                 .andExpect(jsonPath("$.ajustadoPor").value("admin"))
                 .andExpect(jsonPath("$.ajustadoEm").exists())
                 .andExpect(jsonPath("$.ajusteMotivo").value("Correcao operacional"));
+    }
+
+    @Test
+    void deveEncerrarEntradasSemSaidaNoPeriodoQuandoAdmin() throws Exception {
+        Promotor promotor = criarPromotor();
+        MovimentoPromotor entrada = new MovimentoPromotor();
+        entrada.setPromotor(promotor);
+        entrada.setTipo(TipoMovimentoPromotor.ENTRADA);
+        entrada.setDataHora(LocalDateTime.of(2026, 3, 17, 9, 0));
+        movimentoPromotorRepository.save(entrada);
+
+        mockMvc.perform(post("/movimentos/encerramentos-pendentes")
+                        .with(httpBasic("admin", "admin123"))
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "dataInicio": "2026-03-17",
+                                  "dataFim": "2026-03-17"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.dataInicio").value("2026-03-17"))
+                .andExpect(jsonPath("$.dataFim").value("2026-03-17"))
+                .andExpect(jsonPath("$.totalEncerrado").value(1));
+
+        mockMvc.perform(get("/movimentos")
+                        .with(httpBasic("admin", "admin123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    void deveRetornar403QuandoUsuarioComumTentaEncerrarEntradasSemSaida() throws Exception {
+        mockMvc.perform(post("/movimentos/encerramentos-pendentes")
+                        .with(httpBasic("user", "user123"))
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "dataInicio": "2026-03-17",
+                                  "dataFim": "2026-03-17"
+                                }
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.path").value("/movimentos/encerramentos-pendentes"));
     }
 
     @Test

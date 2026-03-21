@@ -12,16 +12,27 @@ import br.com.infocedro.promocontrol.core.repository.ConfiguracaoEmpresaReposito
 import br.com.infocedro.promocontrol.core.repository.FornecedorRepository;
 import br.com.infocedro.promocontrol.core.repository.MovimentoPromotorRepository;
 import br.com.infocedro.promocontrol.core.repository.PromotorRepository;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "spring.main.allow-bean-definition-overriding=true",
+        "api.base.url=http://localhost:8080"
+})
 class EncerramentoAutomaticoMovimentoServiceTest {
+
+    private static final ZoneId APP_ZONE = ZoneId.of("America/Sao_Paulo");
 
     @Autowired
     private EncerramentoAutomaticoMovimentoService service;
@@ -38,8 +49,12 @@ class EncerramentoAutomaticoMovimentoServiceTest {
     @Autowired
     private ConfiguracaoEmpresaRepository configuracaoEmpresaRepository;
 
+    @Autowired
+    private MutableClock appClock;
+
     @BeforeEach
     void setup() {
+        appClock.setLocalDateTime(LocalDateTime.of(2026, 3, 20, 10, 0));
         movimentoRepository.deleteAll();
         promotorRepository.deleteAll();
         configuracaoEmpresaRepository.deleteAll();
@@ -60,7 +75,7 @@ class EncerramentoAutomaticoMovimentoServiceTest {
         MovimentoPromotor entrada = new MovimentoPromotor();
         entrada.setPromotor(promotor);
         entrada.setTipo(TipoMovimentoPromotor.ENTRADA);
-        entrada.setDataHora(LocalDateTime.of(LocalDate.now().minusDays(1), LocalTime.of(9, 0)));
+        entrada.setDataHora(LocalDateTime.of(LocalDate.now(appClock).minusDays(1), LocalTime.of(9, 0)));
         movimentoRepository.save(entrada);
 
         int total = service.encerrarMovimentosAbertosDiaAnterior();
@@ -76,6 +91,55 @@ class EncerramentoAutomaticoMovimentoServiceTest {
 
         assertThat(saida.getObservacao()).isEqualTo("Auto fechamento teste");
         assertThat(saida.getLiberadoPor()).isEqualTo("system");
+    }
+
+    @Test
+    void deveEncerrarAutomaticamenteMovimentoAbertoDoMesmoDiaQuandoHorarioVence() {
+        appClock.setLocalDateTime(LocalDateTime.of(2026, 3, 20, 22, 15));
+
+        Fornecedor empresa = criarEmpresa();
+        Promotor promotor = criarPromotor(empresa);
+
+        ConfiguracaoEmpresa config = ConfiguracaoEmpresa.padrao(empresa);
+        config.setEncerramentoAutomaticoHabilitado(true);
+        config.setHorarioEncerramentoAutomatico(LocalTime.of(22, 0));
+        configuracaoEmpresaRepository.save(config);
+
+        MovimentoPromotor entrada = new MovimentoPromotor();
+        entrada.setPromotor(promotor);
+        entrada.setTipo(TipoMovimentoPromotor.ENTRADA);
+        entrada.setDataHora(LocalDateTime.of(LocalDate.now(appClock), LocalTime.of(9, 0)));
+        movimentoRepository.save(entrada);
+
+        int total = service.encerrarMovimentosAbertosDiaAnterior();
+
+        assertThat(total).isEqualTo(1);
+        assertThat(movimentoRepository.countByPromotor_IdAndTipo(promotor.getId(), TipoMovimentoPromotor.SAIDA))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void deveEncerrarMovimentoPendenteDeOntemMesmoAntesDoHorarioAtualDoNovoDia() {
+        appClock.setLocalDateTime(LocalDateTime.of(2026, 3, 21, 0, 15));
+
+        Fornecedor empresa = criarEmpresa();
+        Promotor promotor = criarPromotor(empresa);
+
+        ConfiguracaoEmpresa config = ConfiguracaoEmpresa.padrao(empresa);
+        config.setEncerramentoAutomaticoHabilitado(true);
+        config.setHorarioEncerramentoAutomatico(LocalTime.of(22, 0));
+        configuracaoEmpresaRepository.save(config);
+
+        criarEntradaDiaAnterior(promotor);
+
+        int total = service.encerrarMovimentosAbertosDiaAnterior();
+
+        assertThat(total).isEqualTo(1);
+        MovimentoPromotor saida = movimentoRepository.findAll().stream()
+                .filter(m -> m.getTipo() == TipoMovimentoPromotor.SAIDA)
+                .findFirst()
+                .orElseThrow();
+        assertThat(saida.getDataHora()).isEqualTo(LocalDateTime.of(2026, 3, 20, 22, 0));
     }
 
     @Test
@@ -153,7 +217,49 @@ class EncerramentoAutomaticoMovimentoServiceTest {
         MovimentoPromotor entrada = new MovimentoPromotor();
         entrada.setPromotor(promotor);
         entrada.setTipo(TipoMovimentoPromotor.ENTRADA);
-        entrada.setDataHora(LocalDateTime.of(LocalDate.now().minusDays(1), LocalTime.of(9, 0)));
+        entrada.setDataHora(LocalDateTime.of(LocalDate.now(appClock).minusDays(1), LocalTime.of(9, 0)));
         return movimentoRepository.save(entrada);
+    }
+
+    @TestConfiguration
+    static class FixedClockConfig {
+
+        @Bean
+        @Primary
+        MutableClock appClock() {
+            return new MutableClock(
+                    Instant.parse("2026-03-20T13:00:00Z"),
+                    APP_ZONE);
+        }
+    }
+
+    static class MutableClock extends Clock {
+
+        private final ZoneId zone;
+        private Instant instant;
+
+        MutableClock(Instant instant, ZoneId zone) {
+            this.instant = instant;
+            this.zone = zone;
+        }
+
+        void setLocalDateTime(LocalDateTime dataHora) {
+            this.instant = dataHora.atZone(zone).toInstant();
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return zone;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return new MutableClock(instant, zone);
+        }
+
+        @Override
+        public Instant instant() {
+            return instant;
+        }
     }
 }

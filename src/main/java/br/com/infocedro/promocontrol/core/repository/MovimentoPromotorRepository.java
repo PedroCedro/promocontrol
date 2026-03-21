@@ -43,6 +43,10 @@ public interface MovimentoPromotorRepository extends JpaRepository<MovimentoProm
             LocalDateTime inicio,
             LocalDateTime fim);
 
+    List<MovimentoPromotor> findByTipoAndDataHoraLessThanEqual(
+            TipoMovimentoPromotor tipo,
+            LocalDateTime dataHoraLimite);
+
     boolean existsByPromotor_IdAndTipoAndDataHoraGreaterThanEqual(
             UUID promotorId,
             TipoMovimentoPromotor tipo,

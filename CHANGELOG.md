@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.2.0 - 2026-03-20
+
+### Added
+- Script `scripts/migrate_catalog_to_postgres.ps1` para migracao da base cadastral do H2 local para PostgreSQL, cobrindo `FORNECEDOR`, `PROMOTOR`, `USUARIO`, `CONFIGURACAO_EMPRESA` e `EMPRESA_CONTRATANTE`.
+- Guia operacional em `docs/migracao-cadastro-h2-para-postgres.md` para a virada da base para `prod`.
+
+### Changed
+- Perfil padrao da aplicacao alterado para `prod`.
+- Documentacao principal atualizada para refletir a execucao padrao em `prod` e o fluxo de migracao cadastral.
+
 ## v1.0.1.0 - 2026-03-10
 
 ### Changed

@@ -3,6 +3,8 @@ package br.com.infocedro.promocontrol.infra.controller;
 import br.com.infocedro.promocontrol.application.service.ApiMapper;
 import br.com.infocedro.promocontrol.application.service.MovimentoPromotorService;
 import br.com.infocedro.promocontrol.infra.controller.dto.AjustarHorarioMovimentoRequest;
+import br.com.infocedro.promocontrol.infra.controller.dto.EncerrarEntradasSemSaidaRequest;
+import br.com.infocedro.promocontrol.infra.controller.dto.EncerrarEntradasSemSaidaResponse;
 import br.com.infocedro.promocontrol.infra.controller.dto.MovimentoPromotorResponse;
 import br.com.infocedro.promocontrol.infra.controller.dto.RegistrarMovimentoRequest;
 import br.com.infocedro.promocontrol.infra.error.ApiErrorResponse;
@@ -104,6 +106,27 @@ public class MovimentoPromotorController {
                 request.novaDataHora(),
                 request.motivo(),
                 principal.getName()));
+    }
+
+    @PostMapping("/encerramentos-pendentes")
+    @Operation(summary = "Encerrar entradas sem saida no periodo", description = "Localiza entradas sem saida no periodo informado e encerra automaticamente. Requer perfil ADMIN.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Processamento concluido",
+                    content = @Content(schema = @Schema(implementation = EncerrarEntradasSemSaidaResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Periodo invalido",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Nao autenticado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Sem permissao",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    public EncerrarEntradasSemSaidaResponse encerrarEntradasSemSaida(
+            @Valid @RequestBody EncerrarEntradasSemSaidaRequest request) {
+        int totalEncerrado = service.encerrarEntradasSemSaida(request.dataInicio(), request.dataFim());
+        return new EncerrarEntradasSemSaidaResponse(
+                request.dataInicio(),
+                request.dataFim(),
+                totalEncerrado);
     }
 
     @GetMapping

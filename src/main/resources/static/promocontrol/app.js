@@ -17,6 +17,7 @@ const state = {
   movimentoPromotorLookup: new Map(),
   saidaModalContext: null,
   ajusteHorarioModalContext: null,
+  entradasSemSaidaModalContext: null,
   autoSyncIntervalId: null,
   autoSyncSignature: null,
   autoSyncRunning: false,
@@ -220,9 +221,7 @@ function loadSavedLogin() {
   if (el("loginUsername")) {
     el("loginUsername").value = localStorage.getItem(USERNAME_STORAGE_KEY) || "";
   }
-  if (el("loginApiBaseUrl")) {
-    el("loginApiBaseUrl").value = getConfiguredApiBaseUrl();
-  }
+  // Campo removido: API base URL agora é lido apenas do env.js
   loadProfileSettings();
 }
 
@@ -847,6 +846,7 @@ function applySessionToUI() {
   el("tabConfiguracoesBtn").classList.toggle("is-hidden", !state.auth.canManageCatalog);
   el("tabMovimentosBtn").classList.toggle("is-hidden", !state.auth.canOperate);
   el("cfgSubtabLogsBtn").classList.toggle("is-hidden", !state.auth.isAdmin);
+  el("btnEntradasSemSaida").classList.toggle("is-hidden", !state.auth.isAdmin);
   if (dashboardTabButton) {
     dashboardTabButton.classList.toggle("is-hidden", hideDashboardForOperator);
   }
@@ -1515,14 +1515,14 @@ function syncFornecedorSelect() {
     .filter((f) => !isFornecedorSistema(f?.nome))
     .filter((f) => !new Set((state.empresasCadastro ?? []).map((e) => String(e.fornecedorId))).has(String(f.id)))
     .forEach((f) => {
-    const label = buildFornecedorSearchLabel(f);
-    state.cadastroFornecedorLookup.set(normalizeText(label), String(f.id));
+      const label = buildFornecedorSearchLabel(f);
+      state.cadastroFornecedorLookup.set(normalizeText(label), String(f.id));
 
-    const optDash = document.createElement("option");
-    optDash.value = f.id;
-    optDash.textContent = `${formatCodigo(f.codigo)} - ${f.nome}`;
-    dashSelect.appendChild(optDash);
-  });
+      const optDash = document.createElement("option");
+      optDash.value = f.id;
+      optDash.textContent = `${formatCodigo(f.codigo)} - ${f.nome}`;
+      dashSelect.appendChild(optDash);
+    });
 
   const selectedFornecedor = state.fornecedores
     .filter((f) => !isFornecedorSistema(f?.nome))
@@ -2016,7 +2016,7 @@ function startAutoSync() {
   stopAutoSync();
   state.autoSyncSignature = null;
   state.autoSyncIntervalId = setInterval(() => {
-    checkBackendUpdates().catch(() => {});
+    checkBackendUpdates().catch(() => { });
   }, AUTO_SYNC_INTERVAL_MS);
 }
 
@@ -2243,6 +2243,13 @@ function setAjusteHorarioModalMessage(message) {
   field.textContent = message || "";
 }
 
+function setEntradasSemSaidaModalMessage(message, isError = false) {
+  const field = el("entradasSemSaidaMessage");
+  if (!field) return;
+  field.textContent = message || "";
+  field.classList.toggle("is-error", Boolean(isError && message));
+}
+
 function toDateTimeLocalInputValue(value) {
   if (!value) return "";
   const date = new Date(value);
@@ -2287,6 +2294,60 @@ function closeAjusteHorarioModal() {
   setAjusteHorarioModalMessage("");
   el("ajusteHorarioModal").classList.add("is-hidden");
   el("ajusteHorarioModal").setAttribute("aria-hidden", "true");
+}
+
+function openEntradasSemSaidaModal() {
+  if (!state.auth?.isAdmin) return;
+  const dataOperacao = String(el("mDataOperacao")?.value || new Date().toISOString().slice(0, 10)).slice(0, 10);
+  state.entradasSemSaidaModalContext = { openedAt: Date.now() };
+  el("entradasSemSaidaDataInicio").value = dataOperacao;
+  el("entradasSemSaidaDataFim").value = dataOperacao;
+  setEntradasSemSaidaModalMessage("");
+  el("entradasSemSaidaModal").classList.remove("is-hidden");
+  el("entradasSemSaidaModal").setAttribute("aria-hidden", "false");
+  el("entradasSemSaidaDataInicio").focus();
+}
+
+function closeEntradasSemSaidaModal() {
+  state.entradasSemSaidaModalContext = null;
+  setEntradasSemSaidaModalMessage("");
+  el("entradasSemSaidaModal").classList.add("is-hidden");
+  el("entradasSemSaidaModal").setAttribute("aria-hidden", "true");
+}
+
+async function salvarEntradasSemSaidaModal() {
+  if (!state.auth?.isAdmin) {
+    throw new Error("Somente ADMIN pode encerrar entradas sem saída");
+  }
+
+  const dataInicio = el("entradasSemSaidaDataInicio").value.trim();
+  const dataFim = el("entradasSemSaidaDataFim").value.trim();
+  if (!dataInicio || !dataFim) {
+    setEntradasSemSaidaModalMessage("Informe a data inicial e a data final.", true);
+    return;
+  }
+
+  const saveBtn = el("btnSalvarEntradasSemSaidaModal");
+  saveBtn.disabled = true;
+  setEntradasSemSaidaModalMessage("Processando...");
+  try {
+    const response = await apiRequest("/movimentos/encerramentos-pendentes", "POST", {
+      dataInicio,
+      dataFim
+    });
+    const totalEncerrado = Number(response?.totalEncerrado || 0);
+    if (totalEncerrado > 0) {
+      setEntradasSemSaidaModalMessage(`${totalEncerrado} entradas automaticamente encerradas.`);
+    } else {
+      setEntradasSemSaidaModalMessage("Nenhuma entrada sem saída foi encontrada no período.");
+    }
+    await refreshData();
+  } catch (e) {
+    setEntradasSemSaidaModalMessage(`Falha ao processar período: ${e.message}`, true);
+    log("Falha ao encerrar entradas sem saída", { error: e.message, dataInicio, dataFim });
+  } finally {
+    saveBtn.disabled = false;
+  }
 }
 
 async function salvarAjusteHorarioModal() {
@@ -2384,7 +2445,7 @@ async function salvarSaidaModal() {
 }
 
 async function login() {
-  const baseUrl = normalizeBaseUrl(el("loginApiBaseUrl")?.value || getConfiguredApiBaseUrl());
+  const baseUrl = getConfiguredApiBaseUrl();
   const username = el("loginUsername").value.trim();
   const password = el("loginPassword").value;
   if (!baseUrl || !username || !password) {
@@ -2577,9 +2638,7 @@ function logout() {
   el("currentUser").value = "";
   el("currentRole").value = "";
   el("baseUrl").value = "";
-  if (el("loginApiBaseUrl")) {
-    el("loginApiBaseUrl").value = getConfiguredApiBaseUrl();
-  }
+  // Campo removido: API base URL agora é lido apenas do env.js
   el("loginPassword").value = "";
   el("profileUserName").textContent = "user";
   el("profileRoleName").textContent = getRoleDisplayName("OPERATOR");
@@ -2674,11 +2733,7 @@ function bindActions() {
     event.preventDefault();
     triggerLogin();
   });
-  el("loginApiBaseUrl").addEventListener("keydown", (event) => {
-    if (event.key !== "Enter") return;
-    event.preventDefault();
-    triggerLogin();
-  });
+  // Campo removido: API base URL agora é lido apenas do env.js
   el("btnChangePassword").addEventListener("click", () => {
     alterarSenhaObrigatoria().catch((e) => {
       setLoginMessage(`Falha ao trocar senha: ${e.message}`);
@@ -2694,6 +2749,7 @@ function bindActions() {
       log("Falha ao atualizar acompanhamento do dia", { error: e.message });
     });
   });
+  el("btnEntradasSemSaida").addEventListener("click", openEntradasSemSaidaModal);
   el("mDataOperacao").addEventListener("change", () => {
     atualizarIndicadorModoOperacao();
     refreshDashboard().catch((e) => {
@@ -2891,6 +2947,17 @@ function bindActions() {
     if (event.target !== el("ajusteHorarioModal")) return;
     closeAjusteHorarioModal();
   });
+  el("btnCancelarEntradasSemSaidaModal").addEventListener("click", closeEntradasSemSaidaModal);
+  el("btnSalvarEntradasSemSaidaModal").addEventListener("click", () => {
+    salvarEntradasSemSaidaModal().catch((e) => {
+      setEntradasSemSaidaModalMessage(`Falha ao processar período: ${e.message}`, true);
+      log("Falha ao salvar entradas sem saída", { error: e.message });
+    });
+  });
+  el("entradasSemSaidaModal").addEventListener("click", (event) => {
+    if (event.target !== el("entradasSemSaidaModal")) return;
+    closeEntradasSemSaidaModal();
+  });
   el("btnConfirmModalCancel").addEventListener("click", () => resolveConfirmDialog(false));
   el("btnConfirmModalOk").addEventListener("click", () => resolveConfirmDialog(true));
   el("confirmModalSecret").addEventListener("focus", () => el("confirmModalSecret").select());
@@ -2949,6 +3016,10 @@ function bindActions() {
     }
     if (!el("ajusteHorarioModal").classList.contains("is-hidden")) {
       closeAjusteHorarioModal();
+      return;
+    }
+    if (!el("entradasSemSaidaModal").classList.contains("is-hidden")) {
+      closeEntradasSemSaidaModal();
       return;
     }
     if (el("saidaModal").classList.contains("is-hidden")) return;
@@ -3024,4 +3095,3 @@ limparConfiguracaoForm();
 activateConfiguracoesTab("config-tab-gerais");
 loadSavedLogin();
 showLoginView();
-
