@@ -46,6 +46,44 @@ const API_BASE_URL_STORAGE_KEY = "pc_api_base_url";
 
 const el = (id) => document.getElementById(id);
 
+function extractAppVersion(payload) {
+  if (!payload || typeof payload !== "object") return "";
+  return String(
+    payload.app?.version
+    || payload.info?.app?.version
+    || payload.version
+    || ""
+  ).trim();
+}
+
+function applyAppVersion(version) {
+  const normalized = String(version || "").trim() || "--";
+  if (el("appVersionBadge")) {
+    el("appVersionBadge").textContent = normalized;
+  }
+  if (el("aboutAppVersion")) {
+    el("aboutAppVersion").value = normalized;
+  }
+}
+
+async function loadPublicAppInfo() {
+  const baseUrl = getConfiguredApiBaseUrl();
+  try {
+    const response = await fetch(`${baseUrl}/actuator/info`, {
+      headers: {
+        "X-Correlation-Id": buildCorrelationId()
+      }
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const payload = await response.json();
+    applyAppVersion(extractAppVersion(payload));
+  } catch (e) {
+    applyAppVersion("");
+  }
+}
+
 function log(message, data) {
   const panel = el("log");
   if (!panel) return;
@@ -3094,4 +3132,5 @@ setConfiguracaoFormEnabled(false);
 limparConfiguracaoForm();
 activateConfiguracoesTab("config-tab-gerais");
 loadSavedLogin();
+loadPublicAppInfo();
 showLoginView();

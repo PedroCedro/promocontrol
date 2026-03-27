@@ -6,6 +6,7 @@ import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,13 +14,18 @@ import org.springframework.context.annotation.Configuration;
 public class OpenApiConfig {
 
     private static final String BASIC_AUTH_SCHEME = "basicAuth";
+    private final String appVersion;
+
+    public OpenApiConfig(@Value("${info.app.version}") String appVersion) {
+        this.appVersion = appVersion;
+    }
 
     @Bean
     public OpenAPI promocontrolOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
                         .title("PromoControl API")
-                        .version("v1")
+                        .version(appVersion)
                         .description("API para controle de acesso e movimento diario de promotores.")
                         .contact(new Contact().name("InfoCedro Software")))
                 .addSecurityItem(new SecurityRequirement().addList(BASIC_AUTH_SCHEME))
