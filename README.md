@@ -67,6 +67,9 @@ Entrega recente consolidada:
 - dashboard principal sem N+1 para ultimo estado por promotor
 - frontend preparado para `API base URL` configuravel
 - base pronta para sincronizacao com app mobile via Capacitor
+- perfil `prod` preparado para uso local com PostgreSQL
+- cadastro local migrado do H2 para PostgreSQL
+- Maven Wrapper ajustado para execucao consistente no Windows
 
 ## Qualidade
 

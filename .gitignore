@@ -35,3 +35,4 @@ mobile/android/
 mobile/ios/
 mobile/.capacitor/
 mobile/web/
+*.local

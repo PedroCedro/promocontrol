@@ -2449,7 +2449,7 @@ async function login() {
   const username = el("loginUsername").value.trim();
   const password = el("loginPassword").value;
   if (!baseUrl || !username || !password) {
-    throw new Error("Digite API base URL, Usuário e Senha");
+    throw new Error("Digite usuário e senha");
   }
 
   const session = {

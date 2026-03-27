@@ -1179,6 +1179,10 @@ tr:hover td {
   background: rgba(10, 18, 39, 0.5);
 }
 
+#confirmModal {
+  z-index: 1300;
+}
+
 .modal-card {
   width: min(460px, 100%);
   background: #fff;

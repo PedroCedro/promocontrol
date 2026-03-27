@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.3.0 - 2026-03-27
+
+### Changed
+- Perfil `prod` ajustado para usar PostgreSQL local por padrao (`localhost:5432/promocontrol`), com credenciais parametrizaveis por variavel de ambiente.
+- `spring.flyway.enabled` passou a permitir desligamento por configuracao no `prod` local para evitar falha de startup com PostgreSQL 18 enquanto a estrategia definitiva de migracao e compatibilidade e consolidada.
+- `mvnw.cmd` corrigido para evitar falha de execucao no Windows quando o diretório Maven local nao expõe `Target`.
+- Front `promocontrol` ajustado:
+  - mensagem de login alinhada com a UI atual, sem referencia a `API base URL`;
+  - modal global de confirmacao agora abre acima do modal de cadastro de usuarios.
+- `.gitignore` atualizado para ignorar arquivos locais com extensao `.local`.
+
 ## v1.0.2.0 - 2026-03-20
 
 ### Added
