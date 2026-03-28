@@ -16,7 +16,7 @@ public class OpenApiConfig {
     private static final String BASIC_AUTH_SCHEME = "basicAuth";
     private final String appVersion;
 
-    public OpenApiConfig(@Value("${info.app.version}") String appVersion) {
+    public OpenApiConfig(@Value("${info.app.version:dev}") String appVersion) {
         this.appVersion = appVersion;
     }
 

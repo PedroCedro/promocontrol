@@ -45,6 +45,14 @@ Aplicacao local:
 - Front: `http://localhost:8080/promocontrol/index.html`
 - Health: `http://localhost:8080/actuator/health`
 
+Gerar o executavel Windows:
+
+```powershell
+.\scripts\build_exe.ps1 -SkipTests -CleanDist
+```
+
+O `.exe` abre um painel operacional desktop com status do servidor, console de inicializacao e atalho para abrir o front web.
+
 Perfil padrao atual:
 
 ```text

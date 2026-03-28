@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.1.0.0 - 2026-03-28
+
+### Added
+- Launcher desktop operacional em Swing para o `PromoControl`, com painel dedicado para acompanhar a execucao local do servidor.
+- Console embutido no launcher para exibir a inicializacao e os logs do Spring Boot em tempo real.
+- Suporte a `system tray` no Windows com menu contextual para:
+  - mostrar o painel;
+  - abrir o `PromoControl`;
+  - reiniciar o servidor;
+  - acessar configuracoes;
+  - sair da aplicacao.
+- Script `scripts/build_exe.ps1` para automatizar o empacotamento do executavel Windows.
+- Script `scripts/generate_windows_icon.py` para gerar o icone `.ico` do Windows com a identidade visual do `PromoControl`.
+
+### Changed
+- Executavel Windows passou a abrir o launcher operacional em vez de iniciar o backend sem feedback visual.
+- Fechamento da janela do launcher agora minimiza para a bandeja do sistema quando disponivel, mantendo o servidor online de forma discreta.
+- Launcher atualizado com controle de instancia unica:
+  - uma segunda abertura nao cria um novo processo util;
+  - a instancia ja existente pode ser trazida de volta para a frente.
+- Janela Swing e empacotamento Windows passaram a usar o icone visual do `PromoControl`.
+- Build do `.exe` ajustado para ler automaticamente a versao de `info.app.version` e repassar o valor correto ao `jpackage`.
+- `OpenApiConfig` e configuracao de testes ajustados para evitar falha de inicializacao quando `info.app.version` nao estiver explicitamente definido no contexto de teste.
+- README atualizado com o fluxo de geracao do executavel Windows e com a descricao do launcher operacional.
+
 ## v1.0.3.0 - 2026-03-27
 
 ### Changed
